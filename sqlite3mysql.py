@@ -2,7 +2,7 @@
 
 __author__ = "Klemen Tušar"
 __email__ = "techouse@gmail.com"
-__copyright__ = "GPL"
+__copyright__ = "MIT"
 __version__ = "1.0.1"
 __date__ = "2015-09-12"
 __status__ = "Production"

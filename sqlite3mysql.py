@@ -95,7 +95,7 @@ class SQLite3toMySQL:
                 if column['notnull']
                 else 'NULL',
                 auto_increment='AUTO_INCREMENT'
-                if column['pk']
+                if column['pk'] and column['type'].upper() != 'TEXT'
                 else ''
             )
             if column['pk']:

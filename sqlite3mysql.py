@@ -8,8 +8,8 @@ A simple Python 3 script/class to transfer the data from SQLite 3 to MySQL.
 __author__ = "Klemen Tušar"
 __email__ = "techouse@gmail.com"
 __copyright__ = "MIT"
-__version__ = "1.0.2"
-__date__ = "2018-06-08"
+__version__ = "1.0.3"
+__date__ = "2018-10-18"
 __status__ = "Production"
 
 import os.path

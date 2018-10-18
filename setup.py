@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='SQLite3toMySQL',
-    version='1.0.1',
+    version='1.0.3',
     packages=['venv.lib.python3.6.site-packages.mysql', 'venv.lib.python3.6.site-packages.mysql.connector',
               'venv.lib.python3.6.site-packages.mysql.connector.django',
               'venv.lib.python3.6.site-packages.mysql.connector.fabric',

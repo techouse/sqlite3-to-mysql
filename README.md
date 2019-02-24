@@ -8,6 +8,16 @@ to this [Stack Overflow question](https://stackoverflow.com/questions/18671/quic
 Since then quite some people have taken interest in it since it's so simple and
 effective. Therefore I finally moved my lazy bones and made a GitHub repository :octopus:.
 
+### Installation
+```bash
+git clone https://github.com/techouse/sqlite3-to-mysql
+cd sqlite3-to-mysql
+python3 -m venv env
+source env/bin/activate
+pip install -r requirements.txt
+python sqlite3mysql.py -h
+```
+
 ### Usage
 ```
 usage: sqlite3mysql.py [-h] [-f SQLITE_FILE] [-u MYSQL_USER]

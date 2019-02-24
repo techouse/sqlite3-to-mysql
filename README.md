@@ -37,5 +37,8 @@ optional arguments:
                         Chunk reading/writing SQL records
   -l LOG_FILE, --log-file LOG_FILE
                         Log file
-
 ```
+
+### Note
+After a __LONG__ time I finally found the time to write the complimentary script to transfer
+[MySQL to SQLite3](https://github.com/techouse/mysql-to-sqlite3). Check it out :)

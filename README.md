@@ -10,23 +10,22 @@ effective. Therefore I finally moved my lazy bones and made a GitHub repository 
 
 ### Usage
 ```
-usage: sqlite3mysql.py [-h] [--sqlite-file SQLITE_FILE]
-                       [--mysql-user MYSQL_USER]
-                       [--mysql-password MYSQL_PASSWORD]
-                       [--mysql-database MYSQL_DATABASE]
+usage: sqlite3mysql.py [-h] [-f SQLITE_FILE] [-u MYSQL_USER]
+                       [-p MYSQL_PASSWORD] [-d MYSQL_DATABASE]
                        [--mysql-host MYSQL_HOST]
                        [--mysql-integer-type MYSQL_INTEGER_TYPE]
-                       [--mysql-string-type MYSQL_STRING_TYPE]
+                       [--mysql-string-type MYSQL_STRING_TYPE] [-c CHUNK]
+                       [-l LOG_FILE]
 
 optional arguments:
   -h, --help            show this help message and exit
-  --sqlite-file SQLITE_FILE
+  -f SQLITE_FILE, --sqlite-file SQLITE_FILE
                         SQLite3 db file
-  --mysql-user MYSQL_USER
+  -u MYSQL_USER, --mysql-user MYSQL_USER
                         MySQL user
-  --mysql-password MYSQL_PASSWORD
+  -p MYSQL_PASSWORD, --mysql-password MYSQL_PASSWORD
                         MySQL password
-  --mysql-database MYSQL_DATABASE
+  -d MYSQL_DATABASE, --mysql-database MYSQL_DATABASE
                         MySQL host
   --mysql-host MYSQL_HOST
                         MySQL host
@@ -34,4 +33,9 @@ optional arguments:
                         MySQL default integer field type
   --mysql-string-type MYSQL_STRING_TYPE
                         MySQL default string field type
+  -c CHUNK, --chunk CHUNK
+                        Chunk reading/writing SQL records
+  -l LOG_FILE, --log-file LOG_FILE
+                        Log file
+
 ```

@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='sqlite3-to-mysql',
-    version='1.1.0',
+    version='1.1.1',
     packages=['env.lib.python3.7.site-packages.pip', 'env.lib.python3.7.site-packages.pip._vendor',
               'env.lib.python3.7.site-packages.pip._vendor.idna', 'env.lib.python3.7.site-packages.pip._vendor.pep517',
               'env.lib.python3.7.site-packages.pip._vendor.pytoml',

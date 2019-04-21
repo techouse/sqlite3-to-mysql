@@ -214,24 +214,26 @@ class SQLite3toMySQL:
             )
             total_records = int(dict(self._sqlite_cur.fetchone())["total_records"])
 
-            # populate it
-            self._logger.info("Transferring table {}".format(table["name"]))
-            self._sqlite_cur.execute('SELECT * FROM "{}"'.format(table["name"]))
-            columns = [column[0] for column in self._sqlite_cur.description]
-            sql = "INSERT IGNORE INTO `{table}` ({fields}) VALUES ({placeholders})".format(
-                table=table["name"],
-                fields=("`{}`, " * len(columns)).rstrip(" ,").format(*columns),
-                placeholders=("%s, " * len(columns)).rstrip(" ,"),
-            )
-            try:
-                self._transfer_table_data(sql=sql, total_records=total_records)
-            except mysql.connector.Error as err:
-                self._logger.error(
-                    "transfer failed inserting data into table {}: {}".format(
-                        table["name"], err
-                    )
+            # only continue if there is anything to transfer
+            if total_records > 0:
+                # populate it
+                self._logger.info("Transferring table {}".format(table["name"]))
+                self._sqlite_cur.execute('SELECT * FROM "{}"'.format(table["name"]))
+                columns = [column[0] for column in self._sqlite_cur.description]
+                sql = "INSERT IGNORE INTO `{table}` ({fields}) VALUES ({placeholders})".format(
+                    table=table["name"],
+                    fields=("`{}`, " * len(columns)).rstrip(" ,").format(*columns),
+                    placeholders=("%s, " * len(columns)).rstrip(" ,"),
                 )
-                sys.exit(1)
+                try:
+                    self._transfer_table_data(sql=sql, total_records=total_records)
+                except mysql.connector.Error as err:
+                    self._logger.error(
+                        "transfer failed inserting data into table {}: {}".format(
+                            table["name"], err
+                        )
+                    )
+                    sys.exit(1)
         self._logger.info("Done!")
 
 

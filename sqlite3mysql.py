@@ -157,7 +157,9 @@ class SQLite3toMySQL:
                 type=self._translate_type_from_sqlite_to_mysql(column["type"]),
                 notnull="NOT NULL" if column["notnull"] else "NULL",
                 auto_increment="AUTO_INCREMENT"
-                if column["pk"] and column["type"].upper() != "TEXT"
+                if column["pk"]
+                and self._translate_type_from_sqlite_to_mysql(column["type"])
+                in {"INT", "BIGINT"}
                 else "",
             )
             if column["pk"]:

@@ -52,13 +52,13 @@ if __name__ == "__main__":
     parser.add_argument(
         "--mysql-integer-type",
         dest="mysql_integer_type",
-        default="int(11)",
+        default="INT(11)",
         help="MySQL default integer field type",
     )
     parser.add_argument(
         "--mysql-string-type",
         dest="mysql_string_type",
-        default="varchar(300)",
+        default="VARCHAR(300)",
         help="MySQL default string field type",
     )
     parser.add_argument(

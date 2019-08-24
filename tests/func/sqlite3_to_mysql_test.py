@@ -167,6 +167,7 @@ class TestSQLite3toMySQL:
             )
 
     @pytest.mark.transfer
+    @pytest.mark.parametrize("chunk", [None, 1000])
     def test_transfer_transfers_all_tables_in_sqlite_file(
         self,
         fake_sqlite_database,
@@ -175,6 +176,7 @@ class TestSQLite3toMySQL:
         helpers,
         capsys,
         caplog,
+        chunk,
     ):
         proc = SQLite3toMySQL(
             sqlite_file=fake_sqlite_database,
@@ -183,7 +185,7 @@ class TestSQLite3toMySQL:
             mysql_host=mysql_credentials.host,
             mysql_port=mysql_credentials.port,
             mysql_database=mysql_credentials.database,
-            chunk=1000,
+            chunk=chunk,
         )
         caplog.set_level(logging.DEBUG)
         proc.transfer()

@@ -32,6 +32,7 @@ class ArticleFactory(factory.Factory):
     title = factory.Faker("sentence", nb_words=6)
     slug = factory.Faker("slug")
     content = factory.Faker("text", max_nb_chars=1024)
+    status = factory.Faker("pystr", max_chars=1)
     published = factory.Faker("date_between", start_date="-1y", end_date="-1d")
 
     @factory.post_generation

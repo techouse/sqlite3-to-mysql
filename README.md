@@ -20,9 +20,8 @@ python sqlite3mysql.py -h
 
 ### Usage
 ```
-usage: sqlite3mysql.py [-h] [-f SQLITE_FILE] [-u MYSQL_USER]
-                       [-p MYSQL_PASSWORD] [-d MYSQL_DATABASE]
-                       [--mysql-host MYSQL_HOST]
+usage: sqlite3mysql.py [-h] -f SQLITE_FILE -u MYSQL_USER [-p MYSQL_PASSWORD]
+                       -d MYSQL_DATABASE [-H MYSQL_HOST] [-P MYSQL_PORT]
                        [--mysql-integer-type MYSQL_INTEGER_TYPE]
                        [--mysql-string-type MYSQL_STRING_TYPE] [-c CHUNK]
                        [-l LOG_FILE]
@@ -36,9 +35,11 @@ optional arguments:
   -p MYSQL_PASSWORD, --mysql-password MYSQL_PASSWORD
                         MySQL password
   -d MYSQL_DATABASE, --mysql-database MYSQL_DATABASE
+                        MySQL database name
+  -H MYSQL_HOST, --mysql-host MYSQL_HOST
                         MySQL host
-  --mysql-host MYSQL_HOST
-                        MySQL host
+  -P MYSQL_PORT, --mysql-port MYSQL_PORT
+                        MySQL port
   --mysql-integer-type MYSQL_INTEGER_TYPE
                         MySQL default integer field type
   --mysql-string-type MYSQL_STRING_TYPE

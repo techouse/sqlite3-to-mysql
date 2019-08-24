@@ -11,9 +11,10 @@ from tqdm import tqdm
 
 
 class SQLite3toMySQL:
+    """ Use this class to transfer an SQLite 3 database to MySQL.
     """
-    Use this class to transfer an SQLite 3 database to MySQL.
-    """
+
+    COLUMN_PATTERN = re.compile(r"^[^(]+")
 
     def __init__(self, **kwargs):
         self._sqlite_file = kwargs.get("sqlite_file") or None
@@ -115,38 +116,34 @@ class SQLite3toMySQL:
                     self._mysql_database, err
                 )
             )
-            sys.exit(1)
+            raise
 
-    def _translate_type_from_sqlite_to_mysql(self, column_type):
-        """
-        This method could be optimized even further, however at the time
-        of writing it seemed adequate enough.
+    @classmethod
+    def _valid_column_type(cls, column_type):
+        return cls.COLUMN_PATTERN.match(column_type.strip())
+
+    @classmethod
+    def _translate_type_from_sqlite_to_mysql(cls, column_type):
+        """ This method could be optimized even further, however at the time of writing it
+            seemed adequate enough.
         """
         full_column_type = column_type.upper()
-        match = re.match(r"^[^(]+", column_type.strip())
+        match = cls._valid_column_type(column_type)
         if not match:
             raise ValueError("Invalid column_type!")
 
-        column_type = match.group(0).upper()
-        if column_type in {"TEXT", "CLOB"}:
+        data_type = match.group(0).upper()
+        if data_type in {"TEXT", "CLOB"}:
             return "TEXT"
-        elif column_type == "CHARACTER":
-            return "CHAR" + self._column_type_length(column_type)
-        elif column_type == "NCHAR":
-            return "CHAR" + self._column_type_length(column_type)
-        elif column_type == "NATIVE CHARACTER":
-            return "CHAR" + self._column_type_length(column_type)
-        elif column_type == "VARYING CHARACTER":
-            return "VARCHAR" + self._column_type_length(column_type, 255)
-        elif column_type == "NVARCHAR":
-            return "VARCHAR" + self._column_type_length(column_type, 255)
-        elif column_type == "VARCHAR":
-            return "VARCHAR" + self._column_type_length(column_type, 255)
-        elif column_type == "DOUBLE PRECISION":
+        elif data_type in {"CHARACTER", "NCHAR", "NATIVE CHARACTER"}:
+            return "CHAR" + cls._column_type_length(column_type)
+        elif data_type in {"VARYING CHARACTER", "NVARCHAR", "VARCHAR"}:
+            return "VARCHAR" + cls._column_type_length(column_type, 255)
+        elif data_type == "DOUBLE PRECISION":
             return "DOUBLE"
-        elif column_type == "UNSIGNED BIG INT":
-            return "BIGINT" + self._column_type_length(column_type) + " UNSIGNED"
-        elif column_type in {"INT1", "INT2"}:
+        elif data_type == "UNSIGNED BIG INT":
+            return "BIGINT" + cls._column_type_length(column_type) + " UNSIGNED"
+        elif data_type in {"INT1", "INT2"}:
             return "INT"
         else:
             return full_column_type
@@ -158,8 +155,7 @@ class SQLite3toMySQL:
             return suffix.group(0)
         elif default:
             return "({})".format(default)
-        else:
-            return ""
+        return ""
 
     def _create_table(self, table_name):
         primary_key = ""
@@ -176,8 +172,8 @@ class SQLite3toMySQL:
                 notnull="NOT NULL" if column["notnull"] else "NULL",
                 auto_increment="AUTO_INCREMENT"
                 if column["pk"]
-                and self._translate_type_from_sqlite_to_mysql(column["type"])
-                in {"INT", "BIGINT"}
+                   and self._translate_type_from_sqlite_to_mysql(column["type"])
+                   in {"INT", "BIGINT"}
                 else "",
             )
             if column["pk"]:
@@ -196,7 +192,7 @@ class SQLite3toMySQL:
             self._logger.error(
                 "_create_table failed creating table {}: {}".format(table_name, err)
             )
-            sys.exit(1)
+            raise
 
     def _transfer_table_data(self, sql, total_records=0):
         if self._chunk_size is not None and self._chunk_size > 0:
@@ -216,8 +212,7 @@ class SQLite3toMySQL:
             self._mysql.commit()
 
     def transfer(self):
-        """
-        The primary and only method with which we transfer the data
+        """ The primary and only method with which we transfer the data
         """
         self._sqlite_cur.execute(
             "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
@@ -253,5 +248,5 @@ class SQLite3toMySQL:
                             table["name"], err
                         )
                     )
-                    sys.exit(1)
+                    raise
         self._logger.info("Done!")

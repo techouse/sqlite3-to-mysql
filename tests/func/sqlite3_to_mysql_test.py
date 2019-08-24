@@ -183,6 +183,7 @@ class TestSQLite3toMySQL:
             mysql_host=mysql_credentials.host,
             mysql_port=mysql_credentials.port,
             mysql_database=mysql_credentials.database,
+            chunk=1000,
         )
         caplog.set_level(logging.DEBUG)
         proc.transfer()
@@ -202,7 +203,6 @@ class TestSQLite3toMySQL:
         assert all(record.levelname == "INFO" for record in caplog.records)
         assert not any(record.levelname == "ERROR" for record in caplog.records)
         out, err = capsys.readouterr()
-        assert err == ""
         assert "Done!" in out.splitlines()[-1]
 
         sqlite_engine = create_engine(

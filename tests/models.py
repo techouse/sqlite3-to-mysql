@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, Table, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, DateTime, Table, ForeignKey, CHAR
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, backref
 
@@ -63,6 +63,7 @@ class Article(Base):
     slug = Column(String(255), index=True)
     title = Column(String(255), index=True)
     content = Column(Text, nullable=True)
+    status = Column(CHAR(1), index=True)
     published = Column(DateTime, nullable=True)
     # relationships
     authors = relationship(

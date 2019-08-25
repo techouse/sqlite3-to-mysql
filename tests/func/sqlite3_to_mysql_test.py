@@ -10,7 +10,7 @@ from sqlalchemy import create_engine, inspect, MetaData, Table, select
 from src.sqlite3_to_mysql import SQLite3toMySQL
 
 
-@pytest.mark.usefixtures("fake_sqlite_database", "mysql_instance")
+@pytest.mark.usefixtures("sqlite_database", "mysql_instance")
 class TestSQLite3toMySQL:
     @pytest.mark.init
     def test_no_sqlite_file_raises_exception(self):
@@ -25,18 +25,18 @@ class TestSQLite3toMySQL:
         assert "SQLite file does not exist" in str(excinfo.value)
 
     @pytest.mark.init
-    def test_missing_mysql_user_raises_exception(self, fake_sqlite_database):
+    def test_missing_mysql_user_raises_exception(self, sqlite_database):
         with pytest.raises(ValueError) as excinfo:
-            SQLite3toMySQL(sqlite_file=fake_sqlite_database)
+            SQLite3toMySQL(sqlite_file=sqlite_database)
         assert "Please provide a MySQL user" in str(excinfo.value)
 
     @pytest.mark.init
     def test_valid_sqlite_file_and_valid_mysql_credentials(
-        self, fake_sqlite_database, fake_mysql_database, mysql_credentials, helpers
+        self, sqlite_database, mysql_database, mysql_credentials, helpers
     ):
         with helpers.not_raises(FileNotFoundError):
             SQLite3toMySQL(
-                sqlite_file=fake_sqlite_database,
+                sqlite_file=sqlite_database,
                 mysql_user=mysql_credentials.user,
                 mysql_password=mysql_credentials.password,
                 mysql_host=mysql_credentials.host,
@@ -47,11 +47,11 @@ class TestSQLite3toMySQL:
 
     @pytest.mark.init
     def test_valid_sqlite_file_and_invalid_mysql_credentials_raises_access_denied_exception(
-        self, fake_sqlite_database, fake_mysql_database, mysql_credentials, faker
+        self, sqlite_database, mysql_database, mysql_credentials, faker
     ):
         with pytest.raises(mysql.connector.Error) as excinfo:
             SQLite3toMySQL(
-                sqlite_file=fake_sqlite_database,
+                sqlite_file=sqlite_database,
                 mysql_user=faker.first_name().lower(),
                 mysql_password=faker.password(length=16),
                 mysql_host=mysql_credentials.host,
@@ -62,7 +62,7 @@ class TestSQLite3toMySQL:
 
     @pytest.mark.init
     def test_unspecified_mysql_error(
-        self, fake_sqlite_database, mysql_credentials, mocker, faker, caplog
+        self, sqlite_database, mysql_credentials, mocker, faker, caplog
     ):
         class FakeConnector:
             def __init__(self):
@@ -99,7 +99,7 @@ class TestSQLite3toMySQL:
         with pytest.raises(mysql.connector.Error) as excinfo:
             caplog.set_level(logging.DEBUG)
             SQLite3toMySQL(
-                sqlite_file=fake_sqlite_database,
+                sqlite_file=sqlite_database,
                 mysql_user=mysql_credentials.user,
                 mysql_password=mysql_credentials.password,
                 mysql_host=mysql_credentials.host,
@@ -115,7 +115,7 @@ class TestSQLite3toMySQL:
 
     @pytest.mark.init
     def test_bad_mysql_connection(
-        self, fake_sqlite_database, mysql_credentials, mocker
+        self, sqlite_database, mysql_credentials, mocker
     ):
         FakeConnector = namedtuple("FakeConnector", ["is_connected"])
         mocker.patch.object(
@@ -125,7 +125,7 @@ class TestSQLite3toMySQL:
         )
         with pytest.raises(ConnectionError) as excinfo:
             SQLite3toMySQL(
-                sqlite_file=fake_sqlite_database,
+                sqlite_file=sqlite_database,
                 mysql_user=mysql_credentials.user,
                 mysql_password=mysql_credentials.password,
                 mysql_host=mysql_credentials.host,
@@ -138,8 +138,8 @@ class TestSQLite3toMySQL:
     @pytest.mark.init
     def test_log_to_file(
         self,
-        fake_sqlite_database,
-        fake_mysql_database,
+        sqlite_database,
+        mysql_database,
         mysql_credentials,
         faker,
         caplog,
@@ -149,7 +149,7 @@ class TestSQLite3toMySQL:
         with pytest.raises(mysql.connector.Error):
             caplog.set_level(logging.DEBUG)
             SQLite3toMySQL(
-                sqlite_file=fake_sqlite_database,
+                sqlite_file=sqlite_database,
                 mysql_user=faker.first_name().lower(),
                 mysql_password=faker.password(length=16),
                 mysql_host=mysql_credentials.host,
@@ -170,8 +170,8 @@ class TestSQLite3toMySQL:
     @pytest.mark.parametrize("chunk", [None, 1000])
     def test_transfer_transfers_all_tables_in_sqlite_file(
         self,
-        fake_sqlite_database,
-        fake_mysql_database,
+        sqlite_database,
+        mysql_database,
         mysql_credentials,
         helpers,
         capsys,
@@ -179,7 +179,7 @@ class TestSQLite3toMySQL:
         chunk,
     ):
         proc = SQLite3toMySQL(
-            sqlite_file=fake_sqlite_database,
+            sqlite_file=sqlite_database,
             mysql_user=mysql_credentials.user,
             mysql_password=mysql_credentials.password,
             mysql_host=mysql_credentials.host,
@@ -208,7 +208,7 @@ class TestSQLite3toMySQL:
         assert "Done!" in out.splitlines()[-1]
 
         sqlite_engine = create_engine(
-            "sqlite:///{database}".format(database=fake_sqlite_database)
+            "sqlite:///{database}".format(database=sqlite_database)
         )
         sqlite_cnx = sqlite_engine.connect()
         sqlite_inspect = inspect(sqlite_engine)

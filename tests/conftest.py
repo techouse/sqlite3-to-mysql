@@ -1,7 +1,7 @@
 import socket
 from collections import namedtuple
 from contextlib import contextmanager
-from os.path import join
+from os.path import join, isfile, realpath
 from time import sleep
 
 import docker
@@ -17,6 +17,13 @@ from .factories import AuthorFactory, TagFactory, ArticleFactory, ImageFactory
 
 
 def pytest_addoption(parser):
+    parser.addoption(
+        "--sqlite-file",
+        dest="sqlite_file",
+        default=None,
+        help="SQLite database file. Defaults to none and generates one internally.",
+    )
+
     parser.addoption(
         "--mysql-user",
         dest="mysql_user",
@@ -124,11 +131,18 @@ def helpers():
 
 
 @pytest.fixture(scope="session")
-def fake_sqlite_database(faker, tmpdir_factory):
+def sqlite_database(pytestconfig, faker, tmpdir_factory):
+    db_file = pytestconfig.getoption("sqlite_file")
+    if db_file:
+        if not isfile(realpath(db_file)):
+            pytest.fail("{} does not exist".format(db_file))
+            raise FileNotFoundError("{} does not exist".format(db_file))
+        return realpath(db_file)
+
     temp_data_dir = tmpdir_factory.mktemp("data")
     temp_image_dir = tmpdir_factory.mktemp("images")
-    db_file = join(str(temp_data_dir), "db.sqlite3")
-    db = Database("sqlite:///{}".format(db_file))
+    db_file = temp_data_dir.join("db.sqlite3")
+    db = Database("sqlite:///{}".format(str(db_file)))
 
     with Helpers.session_scope(db) as session:
         for _ in range(faker.pyint(min_value=12, max_value=24)):
@@ -153,7 +167,7 @@ def fake_sqlite_database(faker, tmpdir_factory):
         except IntegrityError:
             session.rollback()
 
-    return db_file
+    return str(db_file)
 
 
 def is_port_in_use(port, host="0.0.0.0"):
@@ -277,7 +291,7 @@ def mysql_instance(mysql_credentials, pytestconfig):
 
 
 @pytest.fixture()
-def fake_mysql_database(mysql_instance, mysql_credentials):
+def mysql_database(mysql_instance, mysql_credentials):
     yield
 
     mysql_connection = mysql.connector.connect(

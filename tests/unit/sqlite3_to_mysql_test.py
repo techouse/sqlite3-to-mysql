@@ -11,13 +11,13 @@ from sqlalchemy.dialects.sqlite import __all__ as sqlite_column_types
 from src.sqlite3_to_mysql import SQLite3toMySQL
 
 
-@pytest.mark.usefixtures("fake_sqlite_database", "mysql_instance")
+@pytest.mark.usefixtures("sqlite_database", "mysql_instance")
 class TestSQLite3toMySQL:
     def test_translate_type_from_sqlite_to_mysql_invalid_column_type(
-        self, fake_sqlite_database, fake_mysql_database, mysql_credentials, mocker
+        self, sqlite_database, mysql_database, mysql_credentials, mocker
     ):
         proc = SQLite3toMySQL(
-            sqlite_file=fake_sqlite_database,
+            sqlite_file=sqlite_database,
             mysql_user=mysql_credentials.user,
             mysql_password=mysql_credentials.password,
             mysql_host=mysql_credentials.host,
@@ -39,15 +39,15 @@ class TestSQLite3toMySQL:
     )
     def test_translate_type_from_sqlite_to_mysql_all_valid_columns(
         self,
-        fake_sqlite_database,
-        fake_mysql_database,
+        sqlite_database,
+        mysql_database,
         mysql_credentials,
         faker,
         mysql_integer_type,
         mysql_string_type,
     ):
         proc = SQLite3toMySQL(
-            sqlite_file=fake_sqlite_database,
+            sqlite_file=sqlite_database,
             mysql_user=mysql_credentials.user,
             mysql_password=mysql_credentials.password,
             mysql_host=mysql_credentials.host,
@@ -123,15 +123,15 @@ class TestSQLite3toMySQL:
 
     def test_create_database_connection_error(
         self,
-        fake_sqlite_database,
-        fake_mysql_database,
+        sqlite_database,
+        mysql_database,
         mysql_credentials,
         mocker,
         faker,
         caplog,
     ):
         proc = SQLite3toMySQL(
-            sqlite_file=fake_sqlite_database,
+            sqlite_file=sqlite_database,
             mysql_user=mysql_credentials.user,
             mysql_password=mysql_credentials.password,
             mysql_host=mysql_credentials.host,
@@ -159,15 +159,15 @@ class TestSQLite3toMySQL:
 
     def test_create_table_cursor_error(
         self,
-        fake_sqlite_database,
-        fake_mysql_database,
+        sqlite_database,
+        mysql_database,
         mysql_credentials,
         mocker,
         faker,
         caplog,
     ):
         proc = SQLite3toMySQL(
-            sqlite_file=fake_sqlite_database,
+            sqlite_file=sqlite_database,
             mysql_user=mysql_credentials.user,
             mysql_password=mysql_credentials.password,
             mysql_host=mysql_credentials.host,
@@ -185,7 +185,7 @@ class TestSQLite3toMySQL:
         mocker.patch.object(proc, "_mysql_cur", FakeCursor())
 
         sqlite_engine = create_engine(
-            "sqlite:///{database}".format(database=fake_sqlite_database)
+            "sqlite:///{database}".format(database=sqlite_database)
         )
         sqlite_inspect = inspect(sqlite_engine)
         sqlite_tables = sqlite_inspect.get_table_names()
@@ -201,15 +201,15 @@ class TestSQLite3toMySQL:
 
     def test_process_cursor_error(
         self,
-        fake_sqlite_database,
-        fake_mysql_database,
+        sqlite_database,
+        mysql_database,
         mysql_credentials,
         mocker,
         faker,
         caplog,
     ):
         proc = SQLite3toMySQL(
-            sqlite_file=fake_sqlite_database,
+            sqlite_file=sqlite_database,
             mysql_user=mysql_credentials.user,
             mysql_password=mysql_credentials.password,
             mysql_host=mysql_credentials.host,

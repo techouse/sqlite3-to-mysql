@@ -53,7 +53,7 @@ class SQLite3toMySQL:
         if self._mysql_integer_type:
             self._mysql_integer_type = self._mysql_integer_type.upper()
 
-        self._mysql_string_type = kwargs.get("mysql_string_type") or "VARCHAR(300)"
+        self._mysql_string_type = kwargs.get("mysql_string_type") or "VARCHAR(255)"
         if self._mysql_string_type:
             self._mysql_string_type = self._mysql_string_type.upper()
 

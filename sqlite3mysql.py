@@ -58,7 +58,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--mysql-string-type",
         dest="mysql_string_type",
-        default="VARCHAR(300)",
+        default="VARCHAR(255)",
         help="MySQL default string field type",
     )
     parser.add_argument(
@@ -76,16 +76,23 @@ if __name__ == "__main__":
         parser.print_help()
         sys.exit(1)
 
-    converter = SQLite3toMySQL(
-        sqlite_file=args.sqlite_file,
-        mysql_user=args.mysql_user,
-        mysql_password=args.mysql_password,
-        mysql_database=args.mysql_database,
-        mysql_host=args.mysql_host,
-        mysql_port=args.mysql_port,
-        mysql_integer_type=args.mysql_integer_type,
-        mysql_string_type=args.mysql_string_type,
-        chunk=args.chunk,
-        log_file=args.log_file,
-    )
-    converter.transfer()
+    try:
+        converter = SQLite3toMySQL(
+            sqlite_file=args.sqlite_file,
+            mysql_user=args.mysql_user,
+            mysql_password=args.mysql_password,
+            mysql_database=args.mysql_database,
+            mysql_host=args.mysql_host,
+            mysql_port=args.mysql_port,
+            mysql_integer_type=args.mysql_integer_type,
+            mysql_string_type=args.mysql_string_type,
+            chunk=args.chunk,
+            log_file=args.log_file,
+        )
+        converter.transfer()
+    except KeyboardInterrupt:
+        print("Exiting ...")
+        sys.exit(1)
+    except Exception as err:
+        print(err)
+        sys.exit(1)

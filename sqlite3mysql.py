@@ -90,7 +90,7 @@ if __name__ == "__main__":
         )
         converter.transfer()
     except KeyboardInterrupt:
-        print("Exiting ...")
+        print("\nProcess interrupted. Exiting...")
         sys.exit(1)
     except Exception as err:
         print(err)

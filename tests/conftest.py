@@ -63,20 +63,35 @@ def pytest_addoption(parser):
     )
 
     parser.addoption(
-        "--docker-mysql-version",
-        dest="docker_mysql_version",
-        default="latest",
-        help="Run the tests against a specific MySQL Docker image. Defaults to latest. "
+        "--docker-mysql-image",
+        dest="docker_mysql_image",
+        default="mysql:latest",
+        help="Run the tests against a specific MySQL Docker image. Defaults to mysql:latest. "
         "Check all supported versions here https://hub.docker.com/_/mysql",
     )
 
 
+@pytest.fixture(scope="session", autouse=True)
+def cleanup_hanged_docker_containers():
+    try:
+        client = docker.from_env()
+        for container in client.containers.list():
+            if container.name == "pytest_sqlite3_to_mysql":
+                container.kill()
+                break
+    except Exception:
+        pass
+
+
 def pytest_keyboard_interrupt():
-    client = docker.from_env()
-    for container in client.containers.list():
-        if container.name == "pytest_sqlite3_to_mysql":
-            container.kill()
-            break
+    try:
+        client = docker.from_env()
+        for container in client.containers.list():
+            if container.name == "pytest_sqlite3_to_mysql":
+                container.kill()
+                break
+    except Exception:
+        pass
 
 
 class Helpers:
@@ -195,24 +210,20 @@ def mysql_instance(mysql_credentials, pytestconfig):
             pytest.fail(str(err))
             raise
 
-        docker_mysql_version = (
-            pytestconfig.getoption("docker_mysql_version") or "latest"
+        docker_mysql_image = (
+            pytestconfig.getoption("docker_mysql_image") or "mysql:latest"
         )
 
-        if not any("mysql:latest" in image.tags for image in client.images.list()):
-            print(
-                "Attempting to download Docker image 'mysql:{}'".format(
-                    docker_mysql_version
-                )
-            )
+        if not any(docker_mysql_image in image.tags for image in client.images.list()):
+            print("Attempting to download Docker image {}'".format(docker_mysql_image))
             try:
-                client.images.pull("mysql:{}".format(docker_mysql_version))
+                client.images.pull(docker_mysql_image)
             except (HTTPError, NotFound) as err:
                 pytest.fail(str(err))
                 raise
 
         container = client.containers.run(
-            image="mysql:{}".format(docker_mysql_version),
+            image=docker_mysql_image,
             name="pytest_sqlite3_to_mysql",
             ports={
                 "3306/tcp": (
@@ -244,8 +255,8 @@ def mysql_instance(mysql_credentials, pytestconfig):
             )
         except mysql.connector.Error as err:
             if err.errno == errorcode.CR_SERVER_LOST:
-                # sleep for a second and retry the connection
-                sleep(1)
+                # sleep for two seconds and retry the connection
+                sleep(2)
             else:
                 raise
         finally:

@@ -1,11 +1,10 @@
 #!/usr/bin/env python
+import argparse
 import sys
 
 from src.sqlite3_to_mysql import SQLite3toMySQL
 
 if __name__ == "__main__":
-    import argparse
-
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "-f",

@@ -40,3 +40,9 @@ before_script:
 
 script:
   - pytest --cov=src --mysql-user=tester --mysql-password=testpass --mysql-database=test_db --mysql-host=localhost --mysql-port=3306 --no-docker
+
+env:
+  - CODECOV_TOKEN="1ec34933-5c4e-491d-9c8e-1af588cf2f00"
+
+after_success:
+  - codecov

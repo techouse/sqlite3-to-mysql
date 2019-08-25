@@ -9,10 +9,8 @@ Faker==2.0.1
 idna==2.8
 importlib-metadata==0.19
 more-itertools==7.2.0
-mysql-connector-python==8.0.17
 packaging==19.1
 pluggy==0.12.0
-protobuf==3.9.1
 py==1.8.0
 pyparsing==2.4.2
 pytest==5.1.1
@@ -21,12 +19,11 @@ pytest-faker==2.0.0
 pytest-mock==1.10.4
 python-dateutil==2.8.0
 requests==2.22.0
-six==1.12.0
 SQLAlchemy==1.3.7
 SQLAlchemy-Utils==0.34.2
 text-unidecode==1.2
-tqdm==4.34.0
 urllib3==1.25.3
 wcwidth==0.1.7
 websocket-client==0.56.0
 zipp==0.5.2
+-r requirements.txt

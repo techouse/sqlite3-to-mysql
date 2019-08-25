@@ -50,6 +50,17 @@ optional arguments:
                         Log file
 ```
 
+### Testing
+In order to run the test suite run these commands using a Docker MySQL image.
+
+**Requires a running Docker instance!**
+```bash
+python3 -m venv env
+source env/bin/activate
+pip install -r requirements-test.txt
+pytest --cov=src
+```
+
 ### Note
 After a __LONG__ time I finally found the time to write the complimentary script to transfer
 [MySQL to SQLite3](https://github.com/techouse/mysql-to-sqlite3). Check it out :)

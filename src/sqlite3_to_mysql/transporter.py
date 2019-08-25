@@ -47,7 +47,7 @@ class SQLite3toMySQL:
 
         self._logger = self._setup_logger(log_file=kwargs.get("log_file") or None)
 
-        self._mysql_database = kwargs.get("mysql_database", "transfer")
+        self._mysql_database = kwargs.get("mysql_database") or "transfer"
 
         self._mysql_integer_type = kwargs.get("mysql_integer_type") or "INT(11)"
         if self._mysql_integer_type:

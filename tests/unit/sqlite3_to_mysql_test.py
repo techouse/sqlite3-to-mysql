@@ -11,7 +11,7 @@ from sqlalchemy.dialects.sqlite import __all__ as sqlite_column_types
 from src.sqlite3_to_mysql import SQLite3toMySQL
 
 
-@pytest.mark.usefixtures("fake_sqlite_database", "docker_mysql")
+@pytest.mark.usefixtures("fake_sqlite_database", "mysql_instance")
 class TestSQLite3toMySQL:
     def test_translate_type_from_sqlite_to_mysql_invalid_column_type(
         self, fake_sqlite_database, fake_mysql_database, mysql_credentials, mocker

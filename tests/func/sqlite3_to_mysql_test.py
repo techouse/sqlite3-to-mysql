@@ -10,7 +10,7 @@ from sqlalchemy import create_engine, inspect, MetaData, Table, select
 from src.sqlite3_to_mysql import SQLite3toMySQL
 
 
-@pytest.mark.usefixtures("fake_sqlite_database", "docker_mysql")
+@pytest.mark.usefixtures("fake_sqlite_database", "mysql_instance")
 class TestSQLite3toMySQL:
     @pytest.mark.init
     def test_no_sqlite_file_raises_exception(self):

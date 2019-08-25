@@ -107,9 +107,9 @@ class TestSQLite3toMySQL:
                 mysql_database=mysql_credentials.database,
                 chunk=1000,
             )
-            assert errorcode.ER_SERVER_TEST_MESSAGE in str(excinfo.value)
+            assert str(errorcode.ER_SERVER_TEST_MESSAGE) in str(excinfo.value)
             assert any(
-                errorcode.ER_SERVER_TEST_MESSAGE in message
+                str(errorcode.ER_SERVER_TEST_MESSAGE) in message
                 for message in caplog.messages
             )
 

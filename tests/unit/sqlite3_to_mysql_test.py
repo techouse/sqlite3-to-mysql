@@ -1,7 +1,11 @@
+import logging
 import re
+from random import choice
 
+import mysql.connector
 import pytest
-
+from mysql.connector import errorcode
+from sqlalchemy import create_engine, inspect
 from sqlalchemy.dialects.sqlite import __all__ as sqlite_column_types
 
 from src.sqlite3_to_mysql import SQLite3toMySQL
@@ -12,15 +16,15 @@ class TestSQLite3toMySQL:
     def test_translate_type_from_sqlite_to_mysql_invalid_column_type(
         self, fake_sqlite_database, fake_mysql_database, mysql_credentials, mocker
     ):
+        proc = SQLite3toMySQL(
+            sqlite_file=fake_sqlite_database,
+            mysql_user=mysql_credentials.user,
+            mysql_password=mysql_credentials.password,
+            mysql_host=mysql_credentials.host,
+            mysql_port=mysql_credentials.port,
+            mysql_database=mysql_credentials.database,
+        )
         with pytest.raises(ValueError) as excinfo:
-            proc = SQLite3toMySQL(
-                sqlite_file=fake_sqlite_database,
-                mysql_user=mysql_credentials.user,
-                mysql_password=mysql_credentials.password,
-                mysql_host=mysql_credentials.host,
-                mysql_port=mysql_credentials.port,
-                mysql_database=mysql_credentials.database,
-            )
             mocker.patch.object(proc, "_valid_column_type", return_value=False)
             proc._translate_type_from_sqlite_to_mysql("text")
         assert "Invalid column_type!" in str(excinfo.value)
@@ -116,3 +120,116 @@ class TestSQLite3toMySQL:
         assert proc._translate_type_from_sqlite_to_mysql(
             "INT({})".format(length)
         ) == re.sub(r"\d+", str(length), proc._mysql_integer_type)
+
+    def test_create_database_connection_error(
+        self,
+        fake_sqlite_database,
+        fake_mysql_database,
+        mysql_credentials,
+        mocker,
+        faker,
+        caplog,
+    ):
+        proc = SQLite3toMySQL(
+            sqlite_file=fake_sqlite_database,
+            mysql_user=mysql_credentials.user,
+            mysql_password=mysql_credentials.password,
+            mysql_host=mysql_credentials.host,
+            mysql_port=mysql_credentials.port,
+            mysql_database=mysql_credentials.database,
+        )
+
+        class FakeCursor:
+            def execute(self, statement):
+                raise mysql.connector.Error(
+                    msg=faker.sentence(nb_words=12, variable_nb_words=True),
+                    errno=errorcode.ER_SERVER_TEST_MESSAGE,
+                )
+
+        mocker.patch.object(proc, "_mysql_cur", FakeCursor())
+
+        with pytest.raises(mysql.connector.Error) as excinfo:
+            caplog.set_level(logging.DEBUG)
+            proc._create_database()
+        assert str(errorcode.ER_SERVER_TEST_MESSAGE) in str(excinfo.value)
+        assert any(
+            str(errorcode.ER_SERVER_TEST_MESSAGE) in message
+            for message in caplog.messages
+        )
+
+    def test_create_table_cursor_error(
+        self,
+        fake_sqlite_database,
+        fake_mysql_database,
+        mysql_credentials,
+        mocker,
+        faker,
+        caplog,
+    ):
+        proc = SQLite3toMySQL(
+            sqlite_file=fake_sqlite_database,
+            mysql_user=mysql_credentials.user,
+            mysql_password=mysql_credentials.password,
+            mysql_host=mysql_credentials.host,
+            mysql_port=mysql_credentials.port,
+            mysql_database=mysql_credentials.database,
+        )
+
+        class FakeCursor:
+            def execute(self, statement):
+                raise mysql.connector.Error(
+                    msg=faker.sentence(nb_words=12, variable_nb_words=True),
+                    errno=errorcode.ER_SERVER_TEST_MESSAGE,
+                )
+
+        mocker.patch.object(proc, "_mysql_cur", FakeCursor())
+
+        sqlite_engine = create_engine(
+            "sqlite:///{database}".format(database=fake_sqlite_database)
+        )
+        sqlite_inspect = inspect(sqlite_engine)
+        sqlite_tables = sqlite_inspect.get_table_names()
+
+        with pytest.raises(mysql.connector.Error) as excinfo:
+            caplog.set_level(logging.DEBUG)
+            proc._create_table(choice(sqlite_tables))
+        assert str(errorcode.ER_SERVER_TEST_MESSAGE) in str(excinfo.value)
+        assert any(
+            str(errorcode.ER_SERVER_TEST_MESSAGE) in message
+            for message in caplog.messages
+        )
+
+    def test_process_cursor_error(
+        self,
+        fake_sqlite_database,
+        fake_mysql_database,
+        mysql_credentials,
+        mocker,
+        faker,
+        caplog,
+    ):
+        proc = SQLite3toMySQL(
+            sqlite_file=fake_sqlite_database,
+            mysql_user=mysql_credentials.user,
+            mysql_password=mysql_credentials.password,
+            mysql_host=mysql_credentials.host,
+            mysql_port=mysql_credentials.port,
+            mysql_database=mysql_credentials.database,
+        )
+
+        def fake_transfer_table_data(sql, total_records=0):
+            raise mysql.connector.Error(
+                msg=faker.sentence(nb_words=12, variable_nb_words=True),
+                errno=errorcode.ER_SERVER_TEST_MESSAGE,
+            )
+
+        mocker.patch.object(proc, "_transfer_table_data", fake_transfer_table_data)
+
+        with pytest.raises(mysql.connector.Error) as excinfo:
+            caplog.set_level(logging.DEBUG)
+            proc.transfer()
+        assert str(errorcode.ER_SERVER_TEST_MESSAGE) in str(excinfo.value)
+        assert any(
+            str(errorcode.ER_SERVER_TEST_MESSAGE) in message
+            for message in caplog.messages
+        )

@@ -1,18 +1,4 @@
 [
-  {
-    "host": "0.0.0.0",
-    "port": 3306,
-    "user": "root",
-    "passwd": "",
-    "db": "test_db",
-    "use_unicode": true,
-    "local_infile": true
-  },
-  {
-    "host": "0.0.0.0",
-    "port": 3306,
-    "user": "tester",
-    "password": "testpass",
-    "db": "test_db"
-  }
+    {"host": "127.0.0.1", "port": 3306, "user": "root",  "passwd": "", "db": "test1",  "use_unicode": true, "local_infile": true},
+    {"host": "127.0.0.1", "port": 3306, "user": "test2", "password": "some password", "db": "test2" }
 ]

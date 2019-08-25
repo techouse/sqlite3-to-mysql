@@ -15,7 +15,7 @@ do
 done
 docker logs mysqld
 
-if [[ $DB == 'mysql:8.0' ]]; then
+if [ $DB == 'mysql:8.0' ]; then
     WITH_PLUGIN='with mysql_native_password'
     mysql -e 'SET GLOBAL local_infile=on'
     docker cp mysqld:/var/lib/mysql/public_key.pem "${HOME}"
@@ -37,9 +37,10 @@ else
     WITH_PLUGIN=''
 fi
 
-mysql -uroot -e 'create database test_db DEFAULT CHARACTER SET utf8mb4'
+mysql -uroot -e 'create database test1 DEFAULT CHARACTER SET utf8mb4'
+mysql -uroot -e 'create database test2 DEFAULT CHARACTER SET utf8mb4'
 
-mysql -u root -e "create user tester           identified ${WITH_PLUGIN} by 'testpass'; grant all on test_db.* to test_db;"
-mysql -u root -e "create user tester@localhost identified ${WITH_PLUGIN} by 'testpass'; grant all on test_db.* to test_db@localhost;"
+mysql -u root -e "create user test2           identified ${WITH_PLUGIN} by 'some password'; grant all on test2.* to test2;"
+mysql -u root -e "create user test2@localhost identified ${WITH_PLUGIN} by 'some password'; grant all on test2.* to test2@localhost;"
 
 cp .travis/docker.json pymysql/tests/databases.json

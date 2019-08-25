@@ -1,4 +1,4 @@
-dist: bionic
+dist: xenial
 language: python
 cache: pip
 
@@ -27,17 +27,15 @@ matrix:
       python: "3.7"
     - env:
         - DB=mysql:8.0
-        - TEST_AUTH=yes
       python: "3.7"
 
 install:
   - pip install -r requirements-test.txt
 
 before_script:
-  - ./.travis/initializedb.sh
+  - sh ./.travis/initializedb.sh
   - python -VV
   - rm -f ~/.my.cnf
-  - export COVERALLS_PARALLEL=true
 
 script:
   - pytest --cov=src --mysql-user=tester --mysql-password=testpass --mysql-database=test_db --mysql-host=localhost --mysql-port=3306 --no-docker

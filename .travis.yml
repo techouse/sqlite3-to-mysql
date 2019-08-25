@@ -1,3 +1,4 @@
+# Adapted from https://github.com/PyMySQL/PyMySQL/blob/master/.travis.yml
 dist: xenial
 language: python
 cache: pip
@@ -33,9 +34,9 @@ install:
   - pip install -r requirements-test.txt
 
 before_script:
-  - bash ./.travis/initializedb.sh
+  - bash ./.travis/initdb.sh
   - python -VV
   - rm -f ~/.my.cnf
 
 script:
-  - pytest --cov=src --mysql-user=test2 --mysql-password=testpass --mysql-database=test2 --mysql-host=localhost --mysql-port=3306 --no-docker
+  - pytest --cov=src --mysql-user=tester --mysql-password=testpass --mysql-database=test_db --mysql-host=localhost --mysql-port=3306 --no-docker

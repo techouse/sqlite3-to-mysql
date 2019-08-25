@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Adapted from https://github.com/PyMySQL/PyMySQL/blob/master/.travis/initializedb.sh
+
 set -ex
 
 docker pull ${DB}
@@ -37,8 +39,7 @@ else
     WITH_PLUGIN=''
 fi
 
-mysql -uroot -e 'create database test1 DEFAULT CHARACTER SET utf8mb4'
-mysql -uroot -e 'create database test2 DEFAULT CHARACTER SET utf8mb4'
+mysql -uroot -e 'create database test_db DEFAULT CHARACTER SET utf8mb4'
 
-mysql -u root -e "create user test2           identified ${WITH_PLUGIN} by 'testpass'; grant all on test2.* to test2;"
-mysql -u root -e "create user test2@localhost identified ${WITH_PLUGIN} by 'testpass'; grant all on test2.* to test2@localhost;"
+mysql -u root -e "create user tester           identified ${WITH_PLUGIN} by 'testpass'; grant all on test_db.* to tester;"
+mysql -u root -e "create user tester@localhost identified ${WITH_PLUGIN} by 'testpass'; grant all on test_db.* to tester@localhost;"

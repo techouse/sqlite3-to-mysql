@@ -10,7 +10,9 @@ import pytest
 from docker.errors import NotFound
 from mysql.connector import errorcode
 from requests import HTTPError
+from sqlalchemy import create_engine
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy_utils import database_exists, drop_database
 
 from .database import Database
 from .factories import AuthorFactory, TagFactory, ArticleFactory, ImageFactory
@@ -294,30 +296,15 @@ def mysql_instance(mysql_credentials, pytestconfig):
 def mysql_database(mysql_instance, mysql_credentials):
     yield
 
-    mysql_connection = mysql.connector.connect(
-        user=mysql_credentials.user,
-        password=mysql_credentials.password,
-        host=mysql_credentials.host,
-        port=mysql_credentials.port,
+    engine = create_engine(
+        "mysql+mysqlconnector://{user}:{password}@{host}:{port}/{database}".format(
+            user=mysql_credentials.user,
+            password=mysql_credentials.password,
+            host=mysql_credentials.host,
+            port=mysql_credentials.port,
+            database=mysql_credentials.database,
+        )
     )
-    if not mysql_connection.is_connected():
-        raise ConnectionError("Unable to connect to MySQL")
 
-    cursor = mysql_connection.cursor()
-
-    try:
-        cursor.execute(
-            """DROP DATABASE IF EXISTS `{}`""".format(mysql_credentials.database)
-        )
-        mysql_connection.commit()
-    except mysql.connector.Error as err:
-        pytest.fail(
-            "Failed to drop MySQL database {}: {}".format(
-                mysql_credentials.database, err
-            )
-        )
-        raise
-    finally:
-        if mysql_connection.is_connected():
-            cursor.close()
-            mysql_connection.close()
+    if database_exists(engine.url):
+        drop_database(engine.url)

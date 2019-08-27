@@ -1,13 +1,18 @@
 import logging
 import re
+import sys
 from collections import namedtuple
 
 import mysql.connector
 import pytest
-from mysql.connector import errorcode
+import six
+from mysql.connector import errorcode, MySQLConnection
 from sqlalchemy import create_engine, inspect, MetaData, Table, select
 
 from src.sqlite3_to_mysql import SQLite3toMySQL
+
+if six.PY2:
+    from ..sixeptions import *
 
 
 @pytest.mark.usefixtures("sqlite_database", "mysql_instance")
@@ -20,7 +25,7 @@ class TestSQLite3toMySQL:
 
     @pytest.mark.init
     def test_invalid_sqlite_file_raises_exception(self, faker):
-        with pytest.raises(FileNotFoundError) as excinfo:
+        with pytest.raises((FileNotFoundError, IOError)) as excinfo:
             SQLite3toMySQL(sqlite_file=faker.file_path(depth=1, extension=".sqlite3"))
         assert "SQLite file does not exist" in str(excinfo.value)
 
@@ -62,12 +67,36 @@ class TestSQLite3toMySQL:
 
     @pytest.mark.init
     def test_unspecified_mysql_error(
-        self, sqlite_database, mysql_credentials, mocker, faker, caplog
+        self, sqlite_database, mysql_credentials, mocker, caplog
     ):
-        class FakeConnector:
-            def __init__(self):
-                self._database = None
+        mocker.patch.object(
+            mysql.connector,
+            "connect",
+            side_effect=mysql.connector.Error(
+                msg="Error Code: 2000. Unknown MySQL error",
+                errno=errorcode.CR_UNKNOWN_ERROR,
+            ),
+        )
+        caplog.set_level(logging.DEBUG)
+        with pytest.raises(mysql.connector.Error) as excinfo:
+            SQLite3toMySQL(
+                sqlite_file=sqlite_database,
+                mysql_user=mysql_credentials.user,
+                mysql_password=mysql_credentials.password,
+                mysql_host=mysql_credentials.host,
+                mysql_port=mysql_credentials.port,
+                mysql_database=mysql_credentials.database,
+                chunk=1000,
+            )
+        assert str(errorcode.CR_UNKNOWN_ERROR) in str(excinfo.value)
+        assert any(
+            str(errorcode.CR_UNKNOWN_ERROR) in message for message in caplog.messages
+        )
 
+    def test_bad_database_error(
+        self, sqlite_database, mysql_credentials, mocker, caplog
+    ):
+        class FakeMySQLConnection(MySQLConnection):
             @property
             def database(self):
                 return self._database
@@ -77,7 +106,7 @@ class TestSQLite3toMySQL:
                 self._database = value
                 # raise a fake exception
                 raise mysql.connector.Error(
-                    msg=faker.sentence(nb_words=12, variable_nb_words=True),
+                    msg="This is a test",
                     errno=errorcode.ER_SERVER_TEST_MESSAGE,
                 )
 
@@ -95,8 +124,8 @@ class TestSQLite3toMySQL:
             ):
                 return True
 
-        mocker.patch.object(mysql.connector, "connect", return_value=FakeConnector())
-        with pytest.raises(mysql.connector.Error) as excinfo:
+        mocker.patch.object(mysql.connector, "connect", return_value=FakeMySQLConnection())
+        with pytest.raises(mysql.connector.Error):
             caplog.set_level(logging.DEBUG)
             SQLite3toMySQL(
                 sqlite_file=sqlite_database,
@@ -107,23 +136,17 @@ class TestSQLite3toMySQL:
                 mysql_database=mysql_credentials.database,
                 chunk=1000,
             )
-            assert str(errorcode.ER_SERVER_TEST_MESSAGE) in str(excinfo.value)
-            assert any(
-                str(errorcode.ER_SERVER_TEST_MESSAGE) in message
-                for message in caplog.messages
-            )
+
 
     @pytest.mark.init
-    def test_bad_mysql_connection(
-        self, sqlite_database, mysql_credentials, mocker
-    ):
+    def test_bad_mysql_connection(self, sqlite_database, mysql_credentials, mocker):
         FakeConnector = namedtuple("FakeConnector", ["is_connected"])
         mocker.patch.object(
             mysql.connector,
             "connect",
             return_value=FakeConnector(is_connected=lambda: False),
         )
-        with pytest.raises(ConnectionError) as excinfo:
+        with pytest.raises((ConnectionError, IOError)) as excinfo:
             SQLite3toMySQL(
                 sqlite_file=sqlite_database,
                 mysql_user=mysql_credentials.user,
@@ -137,13 +160,7 @@ class TestSQLite3toMySQL:
 
     @pytest.mark.init
     def test_log_to_file(
-        self,
-        sqlite_database,
-        mysql_database,
-        mysql_credentials,
-        faker,
-        caplog,
-        tmpdir,
+        self, sqlite_database, mysql_database, mysql_credentials, faker, caplog, tmpdir
     ):
         log_file = tmpdir.join("db.log")
         with pytest.raises(mysql.connector.Error):

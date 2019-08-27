@@ -1,13 +1,19 @@
+from __future__ import division
+
 import logging
+import re
 import sqlite3
 import sys
-import re
 from math import ceil
 from os.path import realpath, isfile
 
 import mysql.connector
+import six
 from mysql.connector import errorcode
-from tqdm import tqdm
+from tqdm import trange
+
+if six.PY2:
+    from .sixeptions import *
 
 
 class SQLite3toMySQL:
@@ -216,7 +222,7 @@ class SQLite3toMySQL:
 
     def _transfer_table_data(self, sql, total_records=0):
         if self._chunk_size is not None and self._chunk_size > 0:
-            for _ in tqdm(range(0, ceil(total_records / self._chunk_size))):
+            for _ in trange(0, int(ceil(total_records / self._chunk_size))):
                 self._mysql_cur.executemany(
                     sql,
                     (
@@ -224,12 +230,11 @@ class SQLite3toMySQL:
                         for row in self._sqlite_cur.fetchmany(self._chunk_size)
                     ),
                 )
-                self._mysql.commit()
         else:
             self._mysql_cur.executemany(
                 sql, (tuple(row) for row in self._sqlite_cur.fetchall())
             )
-            self._mysql.commit()
+        self._mysql.commit()
 
     def transfer(self):
         """ The primary and only method with which we transfer the data

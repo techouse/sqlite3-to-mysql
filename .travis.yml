@@ -15,8 +15,14 @@ matrix:
         - DB=mariadb:10.0
       python: "3.6"
     - env:
+        - DB=mariadb:10.2
+      python: "2.7"
+    - env:
         - DB=mariadb:10.3
       python: "3.7"
+    - env:
+        - DB=mariadb:10.3
+        python: "3.7-dev"
     - env:
         - DB=mysql:5.5
       python: "3.5"
@@ -29,6 +35,12 @@ matrix:
     - env:
         - DB=mysql:8.0
       python: "3.7"
+    - env:
+        - DB=mysql:8.0
+        python: "3.7-dev"
+    - env:
+        - DB=mysql:8.0
+      python: "2.7"
 
 install:
   - pip install -r requirements-test.txt

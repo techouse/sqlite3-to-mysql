@@ -1,12 +1,13 @@
 import socket
 from collections import namedtuple
-from contextlib import contextmanager
+from contextlib import contextmanager, closing
 from os.path import join, isfile, realpath
 from time import sleep
 
 import docker
 import mysql.connector
 import pytest
+import six
 from docker.errors import NotFound
 from mysql.connector import errorcode
 from requests import HTTPError
@@ -16,6 +17,10 @@ from sqlalchemy_utils import database_exists, drop_database
 
 from .database import Database
 from .factories import AuthorFactory, TagFactory, ArticleFactory, ImageFactory
+
+
+if six.PY2:
+    from sixeptions import *
 
 
 def pytest_addoption(parser):
@@ -173,8 +178,12 @@ def sqlite_database(pytestconfig, faker, tmpdir_factory):
 
 
 def is_port_in_use(port, host="0.0.0.0"):
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        return s.connect_ex((host, port)) == 0
+    if six.PY2:
+        with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as s:
+            return s.connect_ex((host, port)) == 0
+    else:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            return s.connect_ex((host, port)) == 0
 
 
 @pytest.fixture(scope="session")

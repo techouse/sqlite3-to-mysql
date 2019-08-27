@@ -22,7 +22,7 @@ matrix:
       python: "3.7"
     - env:
         - DB=mariadb:10.3
-        python: "3.7-dev"
+      python: "3.7-dev"
     - env:
         - DB=mysql:5.5
       python: "3.5"

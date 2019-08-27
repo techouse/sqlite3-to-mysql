@@ -6,13 +6,15 @@
 
 # SQLite3 to MySQL
 
-#### A simple Python 3 script to transfer the data from SQLite 3 to MySQL. 
+#### A simple Python script to transfer the data from SQLite 3 to MySQL.
 
 I originally wrote this simple program as a standalone script and published it
 as a [gist](https://gist.github.com/techouse/4deb94eee58a02d104c6) as an answer
 to this [Stack Overflow question](https://stackoverflow.com/questions/18671/quick-easy-way-to-migrate-sqlite3-to-mysql/32243979#32243979).
 Since then quite some people have taken interest in it since it's so simple and
 effective. Therefore I finally moved my lazy bones and made a GitHub repository :octopus:.
+
+#### Tested to work on Python 2.7 and 3.5+
 
 ### Installation
 ```bash

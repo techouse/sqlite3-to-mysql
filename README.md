@@ -16,10 +16,18 @@ effective. Therefore I finally moved my lazy bones and made a GitHub repository 
 
 #### Tested to work on Python 2.7 and 3.5+
 
-### Installation
+### How to run
+
+- using Python 2.7
 ```bash
-git clone https://github.com/techouse/sqlite3-to-mysql
-cd sqlite3-to-mysql
+virtualenv -p $(which python2) env
+source env/bin/activate
+pip install -r requirements.txt
+python sqlite3mysql.py -h
+```
+
+- using Python 3.5+
+```bash
 python3 -m venv env
 source env/bin/activate
 pip install -r requirements.txt
@@ -62,6 +70,16 @@ optional arguments:
 In order to run the test suite run these commands using a Docker MySQL image.
 
 **Requires a running Docker instance!**
+
+- using Python 2.7
+```bash
+virtualenv -p $(which python2) env
+source env/bin/activate
+pip install -r requirements-test.txt
+pytest --cov=src
+```
+
+- using Python 3.5+
 ```bash
 python3 -m venv env
 source env/bin/activate

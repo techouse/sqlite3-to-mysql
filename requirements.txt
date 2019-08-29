@@ -1,3 +1,4 @@
+Click==7.0
 mysql-connector-python==8.0.17
 protobuf==3.9.1
 six==1.12.0

@@ -6,7 +6,7 @@
 
 # SQLite3 to MySQL
 
-#### A simple Python script to transfer the data from SQLite 3 to MySQL.
+#### A simple Python script to transfer data from SQLite 3 to MySQL.
 
 I originally wrote this simple program as a standalone script and published it
 as a [gist](https://gist.github.com/techouse/4deb94eee58a02d104c6) as an answer
@@ -23,7 +23,7 @@ effective. Therefore I finally moved my lazy bones and made a GitHub repository 
 virtualenv -p $(which python2) env
 source env/bin/activate
 pip install -r requirements.txt
-python sqlite3mysql.py -h
+python sqlite3mysql.py --help
 ```
 
 - using Python 3.5+
@@ -31,39 +31,27 @@ python sqlite3mysql.py -h
 python3 -m venv env
 source env/bin/activate
 pip install -r requirements.txt
-python sqlite3mysql.py -h
+python sqlite3mysql.py --help
 ```
 
 ### Usage
 ```
-usage: sqlite3mysql.py [-h] -f SQLITE_FILE -u MYSQL_USER [-p MYSQL_PASSWORD]
-                       -d MYSQL_DATABASE [-H MYSQL_HOST] [-P MYSQL_PORT]
-                       [--mysql-integer-type MYSQL_INTEGER_TYPE]
-                       [--mysql-string-type MYSQL_STRING_TYPE] [-c CHUNK]
-                       [-l LOG_FILE]
+Usage: sqlite3mysql [OPTIONS]
 
-optional arguments:
-  -h, --help            show this help message and exit
-  -f SQLITE_FILE, --sqlite-file SQLITE_FILE
-                        SQLite3 db file
-  -u MYSQL_USER, --mysql-user MYSQL_USER
-                        MySQL user
-  -p MYSQL_PASSWORD, --mysql-password MYSQL_PASSWORD
-                        MySQL password
-  -d MYSQL_DATABASE, --mysql-database MYSQL_DATABASE
-                        MySQL database name
-  -H MYSQL_HOST, --mysql-host MYSQL_HOST
-                        MySQL host
-  -P MYSQL_PORT, --mysql-port MYSQL_PORT
-                        MySQL port
-  --mysql-integer-type MYSQL_INTEGER_TYPE
-                        MySQL default integer field type
-  --mysql-string-type MYSQL_STRING_TYPE
-                        MySQL default string field type
-  -c CHUNK, --chunk CHUNK
-                        Chunk reading/writing SQL records
-  -l LOG_FILE, --log-file LOG_FILE
-                        Log file
+Options:
+  -f, --sqlite-file PATH     SQLite3 db file  [required]
+  -d, --mysql-database TEXT  MySQL database name  [required]
+  -u, --mysql-user TEXT      MySQL user  [required]
+  -p, --mysql-password TEXT  MySQL password
+  -h, --mysql-host TEXT      MySQL host. Defaults to localhost.
+  -P, --mysql-port INTEGER   MySQL port. Defaults to 3306.
+  --mysql-integer-type TEXT  MySQL default integer field type. Defaults to
+                             INT(11).
+  --mysql-string-type TEXT   MySQL default string field type. Defaults to
+                             VARCHAR(255).
+  -c, --chunk INTEGER        Chunk reading/writing SQL records
+  -l, --log-file PATH        Log file
+  --help                     Show this message and exit.
 ```
 
 ### Testing

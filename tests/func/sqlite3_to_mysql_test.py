@@ -1,6 +1,5 @@
 import logging
 import re
-import sys
 from collections import namedtuple
 
 import mysql.connector
@@ -9,7 +8,7 @@ import six
 from mysql.connector import errorcode, MySQLConnection
 from sqlalchemy import create_engine, inspect, MetaData, Table, select
 
-from src.sqlite3_to_mysql import SQLite3toMySQL
+from sqlite3_to_mysql import SQLite3toMySQL
 
 if six.PY2:
     from ..sixeptions import *

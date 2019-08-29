@@ -2,7 +2,7 @@
 import argparse
 import sys
 
-from src.sqlite3_to_mysql import SQLite3toMySQL
+from sqlite3_to_mysql import SQLite3toMySQL
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

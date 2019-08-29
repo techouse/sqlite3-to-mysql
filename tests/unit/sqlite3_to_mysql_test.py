@@ -8,7 +8,7 @@ from mysql.connector import errorcode
 from sqlalchemy import create_engine, inspect
 from sqlalchemy.dialects.sqlite import __all__ as sqlite_column_types
 
-from src.sqlite3_to_mysql import SQLite3toMySQL
+from sqlite3_to_mysql import SQLite3toMySQL
 
 
 @pytest.mark.usefixtures("sqlite_database", "mysql_instance")

@@ -1,4 +1,3 @@
-![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/techouse/sqlite3-to-mysql)
 [![GitHub license](https://img.shields.io/github/license/techouse/sqlite3-to-mysql)](https://github.com/techouse/sqlite3-to-mysql/blob/master/LICENSE)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 [![Build Status](https://travis-ci.org/techouse/sqlite3-to-mysql.svg?branch=master)](https://travis-ci.org/techouse/sqlite3-to-mysql)
@@ -22,7 +21,7 @@ effective. Therefore I finally moved my lazy bones and made a GitHub repository 
 ```bash
 virtualenv -p $(which python2) env
 source env/bin/activate
-pip install -e .
+pip install sqlite3-to-mysql
 sqlite3mysql --help
 ```
 
@@ -30,7 +29,7 @@ sqlite3mysql --help
 ```bash
 python3 -m venv env
 source env/bin/activate
-pip install -e .
+pip install sqlite3-to-mysql
 sqlite3mysql --help
 ```
 
@@ -61,20 +60,24 @@ In order to run the test suite run these commands using a Docker MySQL image.
 
 - using Python 2.7
 ```bash
+git clone https://github.com/techouse/sqlite3-to-mysql
+cd sqlite3-to-mysql
 virtualenv -p $(which python2) env
 source env/bin/activate
 pip install -e .
 pip install -r requirements_dev.txt
-pytest --cov=sqlite3_to_mysql
+tox
 ```
 
 - using Python 3.5+
 ```bash
+git clone https://github.com/techouse/sqlite3-to-mysql
+cd sqlite3-to-mysql                   
 python3 -m venv env
 source env/bin/activate
 pip install -e .
 pip install -r requirements_dev.txt
-pytest --cov=sqlite3_to_mysql
+tox
 ```
 
 ### Note

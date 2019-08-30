@@ -43,3 +43,5 @@ mysql -uroot -e 'create database test_db DEFAULT CHARACTER SET utf8mb4'
 
 mysql -u root -e "create user tester           identified ${WITH_PLUGIN} by 'testpass'; grant all on test_db.* to tester;"
 mysql -u root -e "create user tester@localhost identified ${WITH_PLUGIN} by 'testpass'; grant all on test_db.* to tester@localhost;"
+
+cp .travis/db_credentials.json tests/db_credentials.json

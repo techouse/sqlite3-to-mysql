@@ -105,3 +105,6 @@ venv.bak/
 
 # PyCharm specific files
 .idea
+
+# Potential leftovers
+tests/db_credentials.json

@@ -9,42 +9,54 @@ services:
 matrix:
   include:
     - env:
+        - TOXENV=py35
         - DB=mariadb:5.5
       python: "3.5"
     - env:
+        - TOXENV=py36
         - DB=mariadb:10.0
       python: "3.6"
     - env:
+        - TOXENV=py27
         - DB=mariadb:10.2
       python: "2.7"
     - env:
+        - TOXENV=py37
         - DB=mariadb:10.3
       python: "3.7"
     - env:
+        - TOXENV=py38
         - DB=mariadb:10.3
-      python: "3.7-dev"
+      python: "nightly"
     - env:
+        - TOXENV=py35
         - DB=mysql:5.5
       python: "3.5"
     - env:
+        - TOXENV=py36
         - DB=mysql:5.6
       python: "3.6"
     - env:
+        - TOXENV=py37
         - DB=mysql:5.7
       python: "3.7"
     - env:
+        - TOXENV=py37
         - DB=mysql:8.0
       python: "3.7"
     - env:
+        - TOXENV=py38
         - DB=mysql:8.0
-      python: "3.7-dev"
+      python: "nightly"
     - env:
+        - TOXENV=py27
         - DB=mysql:8.0
       python: "2.7"
 
 install:
-  - pip install -q -r requirements-test.txt
-  - pip install -q -e .
+  - pip install -U codecov
+  - pip install -U tox-travis
+  - pip install -e .
 
 before_script:
   - bash ./.travis/initdb.sh
@@ -52,7 +64,7 @@ before_script:
   - rm -f ~/.my.cnf
 
 script:
-  - pytest --cov=sqlite3_to_mysql --mysql-user=tester --mysql-password=testpass --mysql-database=test_db --mysql-host=localhost --mysql-port=3306 --no-docker
+  - tox
 
 env:
   - CODECOV_TOKEN="1ec34933-5c4e-491d-9c8e-1af588cf2f00"

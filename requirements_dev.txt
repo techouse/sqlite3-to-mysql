@@ -1,0 +1,14 @@
+black
+Click>=7.0
+docker>=4.0.2
+factory-boy
+mysql-connector-python>=8.0.17
+pytest>=4.6.5
+pytest-cov
+pytest-faker
+pytest-mock
+six>=1.12.0
+sqlalchemy>=1.3.7
+sqlalchemy-utils>=0.34.2
+tox
+tqdm>=4.35.0

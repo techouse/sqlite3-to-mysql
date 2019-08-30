@@ -22,16 +22,16 @@ effective. Therefore I finally moved my lazy bones and made a GitHub repository 
 ```bash
 virtualenv -p $(which python2) env
 source env/bin/activate
-pip install -r requirements.txt
-python sqlite3mysql.py --help
+pip install -e .
+sqlite3mysql --help
 ```
 
 - using Python 3.5+
 ```bash
 python3 -m venv env
 source env/bin/activate
-pip install -r requirements.txt
-python sqlite3mysql.py --help
+pip install -e .
+sqlite3mysql --help
 ```
 
 ### Usage
@@ -63,16 +63,18 @@ In order to run the test suite run these commands using a Docker MySQL image.
 ```bash
 virtualenv -p $(which python2) env
 source env/bin/activate
-pip install -r requirements-test.txt
-pytest --cov=src
+pip install -e .
+pip install -r requirements_dev.txt
+tox
 ```
 
 - using Python 3.5+
 ```bash
 python3 -m venv env
 source env/bin/activate
-pip install -r requirements-test.txt
-pytest --cov=src
+pip install -e .
+pip install -r requirements_dev.txt
+tox
 ```
 
 ### Note

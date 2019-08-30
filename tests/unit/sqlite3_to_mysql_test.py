@@ -122,13 +122,7 @@ class TestSQLite3toMySQL:
         ) == re.sub(r"\d+", str(length), proc._mysql_integer_type)
 
     def test_create_database_connection_error(
-        self,
-        sqlite_database,
-        mysql_database,
-        mysql_credentials,
-        mocker,
-        faker,
-        caplog,
+        self, sqlite_database, mysql_database, mysql_credentials, mocker, faker, caplog
     ):
         proc = SQLite3toMySQL(
             sqlite_file=sqlite_database,
@@ -158,13 +152,7 @@ class TestSQLite3toMySQL:
         )
 
     def test_create_table_cursor_error(
-        self,
-        sqlite_database,
-        mysql_database,
-        mysql_credentials,
-        mocker,
-        faker,
-        caplog,
+        self, sqlite_database, mysql_database, mysql_credentials, mocker, faker, caplog
     ):
         proc = SQLite3toMySQL(
             sqlite_file=sqlite_database,
@@ -200,13 +188,7 @@ class TestSQLite3toMySQL:
         )
 
     def test_process_cursor_error(
-        self,
-        sqlite_database,
-        mysql_database,
-        mysql_credentials,
-        mocker,
-        faker,
-        caplog,
+        self, sqlite_database, mysql_database, mysql_credentials, mocker, faker, caplog
     ):
         proc = SQLite3toMySQL(
             sqlite_file=sqlite_database,

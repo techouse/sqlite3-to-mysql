@@ -24,7 +24,7 @@ test_requirements = [
     "pytest-mock",
     "sqlalchemy>=1.3.7",
     "sqlalchemy-utils>=0.34.2",
-    "tox"
+    "tox",
 ]
 
 about = {}

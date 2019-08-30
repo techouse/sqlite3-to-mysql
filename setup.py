@@ -1,7 +1,7 @@
 from codecs import open
 from os.path import abspath, dirname, join
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 here = abspath(dirname(__file__))
 
@@ -12,19 +12,6 @@ requires = [
     "mysql-connector-python>=8.0.17",
     "six>=1.12.0",
     "tqdm>=4.35.0",
-]
-
-test_requirements = [
-    "black",
-    "docker>=4.0.2",
-    "factory-boy",
-    "pytest>=4.6.5",
-    "pytest-cov",
-    "pytest-faker",
-    "pytest-mock",
-    "sqlalchemy>=1.3.7",
-    "sqlalchemy-utils>=0.34.2",
-    "tox",
 ]
 
 about = {}
@@ -68,7 +55,6 @@ setup(
         "Programming Language :: Python :: Implementation :: CPython",
         "Topic :: Database",
     ],
-    tests_require=test_requirements,
     project_urls={"Source": about["__url__"]},
     entry_points="""
         [console_scripts]

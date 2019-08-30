@@ -46,7 +46,7 @@ class TestSQLite3toMySQL:
                 mysql_host=mysql_credentials.host,
                 mysql_port=mysql_credentials.port,
                 mysql_database=mysql_credentials.database,
-                chunk=1000,
+                chunk=10,
             )
 
     @pytest.mark.init
@@ -85,7 +85,7 @@ class TestSQLite3toMySQL:
                 mysql_host=mysql_credentials.host,
                 mysql_port=mysql_credentials.port,
                 mysql_database=mysql_credentials.database,
-                chunk=1000,
+                chunk=10,
             )
         assert str(errorcode.CR_UNKNOWN_ERROR) in str(excinfo.value)
         assert any(
@@ -105,8 +105,7 @@ class TestSQLite3toMySQL:
                 self._database = value
                 # raise a fake exception
                 raise mysql.connector.Error(
-                    msg="This is a test",
-                    errno=errorcode.ER_SERVER_TEST_MESSAGE,
+                    msg="This is a test", errno=errorcode.ER_SERVER_TEST_MESSAGE
                 )
 
             def is_connected(self):
@@ -123,7 +122,9 @@ class TestSQLite3toMySQL:
             ):
                 return True
 
-        mocker.patch.object(mysql.connector, "connect", return_value=FakeMySQLConnection())
+        mocker.patch.object(
+            mysql.connector, "connect", return_value=FakeMySQLConnection()
+        )
         with pytest.raises(mysql.connector.Error):
             caplog.set_level(logging.DEBUG)
             SQLite3toMySQL(
@@ -133,9 +134,8 @@ class TestSQLite3toMySQL:
                 mysql_host=mysql_credentials.host,
                 mysql_port=mysql_credentials.port,
                 mysql_database=mysql_credentials.database,
-                chunk=1000,
+                chunk=10,
             )
-
 
     @pytest.mark.init
     def test_bad_mysql_connection(self, sqlite_database, mysql_credentials, mocker):
@@ -153,7 +153,7 @@ class TestSQLite3toMySQL:
                 mysql_host=mysql_credentials.host,
                 mysql_port=mysql_credentials.port,
                 mysql_database=mysql_credentials.database,
-                chunk=1000,
+                chunk=10,
             )
         assert "Unable to connect to MySQL" in str(excinfo.value)
 
@@ -183,7 +183,7 @@ class TestSQLite3toMySQL:
             )
 
     @pytest.mark.transfer
-    @pytest.mark.parametrize("chunk", [None, 1000])
+    @pytest.mark.parametrize("chunk", [None, 10])
     def test_transfer_transfers_all_tables_in_sqlite_file(
         self,
         sqlite_database,

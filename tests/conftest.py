@@ -10,6 +10,7 @@ import mysql.connector
 import pytest
 import six
 import json
+from click.testing import CliRunner
 from docker.errors import NotFound
 from mysql.connector import errorcode
 from requests import HTTPError
@@ -74,7 +75,7 @@ def pytest_addoption(parser):
         default=True,
         action="store_false",
         help="Do not use a Docker MySQL image to run the tests. "
-             "If you decide to use this switch you will have to use a physical MySQL server.",
+        "If you decide to use this switch you will have to use a physical MySQL server.",
     )
 
     parser.addoption(
@@ -82,7 +83,7 @@ def pytest_addoption(parser):
         dest="docker_mysql_image",
         default="mysql:latest",
         help="Run the tests against a specific MySQL Docker image. Defaults to mysql:latest. "
-             "Check all supported versions here https://hub.docker.com/_/mysql",
+        "Check all supported versions here https://hub.docker.com/_/mysql",
     )
 
 
@@ -230,7 +231,7 @@ def mysql_credentials(pytestconfig):
     )
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="session")
 def mysql_instance(mysql_credentials, pytestconfig):
     container = None
     mysql_connection = None
@@ -254,7 +255,7 @@ def mysql_instance(mysql_credentials, pytestconfig):
             raise
 
         docker_mysql_image = (
-                pytestconfig.getoption("docker_mysql_image") or "mysql:latest"
+            pytestconfig.getoption("docker_mysql_image") or "mysql:latest"
         )
 
         if not any(docker_mysql_image in image.tags for image in client.images.list()):
@@ -335,3 +336,8 @@ def mysql_database(mysql_instance, mysql_credentials):
 
     if database_exists(engine.url):
         drop_database(engine.url)
+
+
+@pytest.fixture()
+def cli_runner():
+    yield CliRunner()

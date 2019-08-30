@@ -25,9 +25,9 @@ matrix:
         - DB=mariadb:10.3
       python: "3.7"
     - env:
-        - TOXENV=py38
+        - TOXENV=py37-dev
         - DB=mariadb:10.3
-      python: "nightly"
+      python: "3.7-dev"
     - env:
         - TOXENV=py35
         - DB=mysql:5.5
@@ -45,9 +45,9 @@ matrix:
         - DB=mysql:8.0
       python: "3.7"
     - env:
-        - TOXENV=py38
+        - TOXENV=py37-dev
         - DB=mysql:8.0
-      python: "nightly"
+      python: "3.7-dev"
     - env:
         - TOXENV=py27
         - DB=mysql:8.0

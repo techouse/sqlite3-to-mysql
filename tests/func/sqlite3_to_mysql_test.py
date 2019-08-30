@@ -205,23 +205,9 @@ class TestSQLite3toMySQL:
         )
         caplog.set_level(logging.DEBUG)
         proc.transfer()
-        assert all(
-            message in [record.message for record in caplog.records]
-            for message in {
-                "Transferring table article_authors",
-                "Transferring table article_images",
-                "Transferring table article_tags",
-                "Transferring table articles",
-                "Transferring table authors",
-                "Transferring table images",
-                "Transferring table tags",
-                "Done!",
-            }
-        )
         assert all(record.levelname == "INFO" for record in caplog.records)
         assert not any(record.levelname == "ERROR" for record in caplog.records)
         out, err = capsys.readouterr()
-        assert "Done!" in out.splitlines()[-1]
 
         sqlite_engine = create_engine(
             "sqlite:///{database}".format(database=sqlite_database)

@@ -1,33 +1,35 @@
+"""Use to transfer an SQLite 3 database to MySQL."""
+
 from __future__ import division
 
 import logging
 import re
 import sqlite3
-import sys
 from math import ceil
-from os.path import realpath, isfile
+from os.path import isfile, realpath
+from sys import stdout
 
 import mysql.connector
 import six
-from mysql.connector import errorcode
+from mysql.connector import errorcode  # pylint: disable=C0412
 from tqdm import trange
 
 if six.PY2:
-    from .sixeptions import *
+    from .sixeptions import *  # pylint: disable=W0622,W0401,W0614
 
 
-class SQLite3toMySQL:
-    """ Use this class to transfer an SQLite 3 database to MySQL.
-    """
+class SQLite3toMySQL:  # pylint: disable=R0902,R0903
+    """Use this class to transfer an SQLite 3 database to MySQL."""
 
     COLUMN_PATTERN = re.compile(r"^[^(]+")
     COLUMN_LENGTH_PATTERN = re.compile(r"\(\d+\)$")
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs):  # noqa: ignore=C901  # pylint: disable=R0912
+        """Constructor."""
         self._sqlite_file = kwargs.get("sqlite_file") or None
         if not self._sqlite_file:
             raise ValueError("Please provide an SQLite file")
-        elif not isfile(self._sqlite_file):
+        if not isfile(self._sqlite_file):
             raise FileNotFoundError("SQLite file does not exist")
 
         self._mysql_user = kwargs.get("mysql_user") or None
@@ -97,7 +99,7 @@ class SQLite3toMySQL:
         formatter = logging.Formatter(
             fmt="%(asctime)s %(levelname)-8s %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
         )
-        screen_handler = logging.StreamHandler(stream=sys.stdout)
+        screen_handler = logging.StreamHandler(stream=stdout)
         screen_handler.setFormatter(formatter)
         logger = logging.getLogger(cls.__name__)
         logger.setLevel(logging.DEBUG)
@@ -113,7 +115,7 @@ class SQLite3toMySQL:
     def _create_database(self):
         try:
             self._mysql_cur.execute(
-                "CREATE DATABASE IF NOT EXISTS `{}` DEFAULT CHARACTER SET 'utf8'".format(
+                "CREATE DATABASE IF NOT EXISTS `{}` DEFAULT CHARACTER SET 'utf8'".format(  # noqa: ignore=E501  # pylint: disable=C0301
                     self._mysql_database
                 )
             )
@@ -123,9 +125,9 @@ class SQLite3toMySQL:
             self._mysql_cur = self._mysql.cursor(prepared=True)
         except mysql.connector.Error as err:
             self._logger.error(
-                "_create_database failed creating databse {}: {}".format(
-                    self._mysql_database, err
-                )
+                "_create_database failed creating databse %s: %s",
+                self._mysql_database,
+                err,
             )
             raise
 
@@ -133,10 +135,10 @@ class SQLite3toMySQL:
     def _valid_column_type(cls, column_type):
         return cls.COLUMN_PATTERN.match(column_type.strip())
 
-    def _translate_type_from_sqlite_to_mysql(self, column_type):
-        """ This method could be optimized even further, however at the time of writing it
-            seemed adequate enough.
-        """
+    def _translate_type_from_sqlite_to_mysql(  # noqa: ignore=C901  # pylint: disable=C0330
+        self, column_type
+    ):  # pylint: disable=R0911,R0912
+        """This could be optimized even further, however is seems adequate."""
         full_column_type = column_type.upper()
         match = self._valid_column_type(column_type)
         if not match:
@@ -145,9 +147,9 @@ class SQLite3toMySQL:
         data_type = match.group(0).upper()
         if data_type in {"TEXT", "CLOB"}:
             return "TEXT"
-        elif data_type in {"CHARACTER", "NCHAR", "NATIVE CHARACTER"}:
+        if data_type in {"CHARACTER", "NCHAR", "NATIVE CHARACTER"}:
             return "CHAR" + self._column_type_length(column_type)
-        elif data_type in {"VARYING CHARACTER", "NVARCHAR", "VARCHAR"}:
+        if data_type in {"VARYING CHARACTER", "NVARCHAR", "VARCHAR"}:
             if self._mysql_string_type == "TEXT":
                 return self._mysql_string_type
             length = self._column_type_length(column_type)
@@ -155,13 +157,13 @@ class SQLite3toMySQL:
                 return self._mysql_string_type
             match = self._valid_column_type(self._mysql_string_type)
             return match.group(0).upper() + length
-        elif data_type == "DOUBLE PRECISION":
+        if data_type == "DOUBLE PRECISION":
             return "DOUBLE"
-        elif data_type == "UNSIGNED BIG INT":
+        if data_type == "UNSIGNED BIG INT":
             return "BIGINT" + self._column_type_length(column_type) + " UNSIGNED"
-        elif data_type in {"INT1", "INT2"}:
+        if data_type in {"INT1", "INT2"}:
             return self._mysql_integer_type
-        elif data_type in {"INTEGER", "INT"}:
+        if data_type in {"INTEGER", "INT"}:
             length = self._column_type_length(column_type)
             if not length:
                 return self._mysql_integer_type
@@ -169,17 +171,16 @@ class SQLite3toMySQL:
             if self._mysql_integer_type.endswith("UNSIGNED"):
                 return match.group(0).upper() + length + " UNSIGNED"
             return match.group(0).upper() + length
-        elif data_type == "NUMERIC":
+        if data_type == "NUMERIC":
             return "BIGINT" + self._column_type_length(column_type, 19)
-        else:
-            return full_column_type
+        return full_column_type
 
     @classmethod
     def _column_type_length(cls, column_type, default=None):
         suffix = cls.COLUMN_LENGTH_PATTERN.search(column_type)
         if suffix:
             return suffix.group(0)
-        elif default:
+        if default:
             return "({})".format(default)
         return ""
 
@@ -216,7 +217,7 @@ class SQLite3toMySQL:
             self._mysql.commit()
         except mysql.connector.Error as err:
             self._logger.error(
-                "_create_table failed creating table {}: {}".format(table_name, err)
+                "_create_table failed creating table %s: %s", table_name, err
             )
             raise
 
@@ -237,10 +238,9 @@ class SQLite3toMySQL:
         self._mysql.commit()
 
     def transfer(self):
-        """ The primary and only method with which we transfer the data
-        """
+        """The primary and only method with which we transfer all the data."""
         self._sqlite_cur.execute(
-            "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
+            "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"  # noqa: ignore=E501  # pylint: disable=C0301
         )
         for row in self._sqlite_cur.fetchall():
             table = dict(row)
@@ -257,10 +257,10 @@ class SQLite3toMySQL:
             # only continue if there is anything to transfer
             if total_records > 0:
                 # populate it
-                self._logger.info("Transferring table {}".format(table["name"]))
+                self._logger.info("Transferring table %s", table["name"])
                 self._sqlite_cur.execute('SELECT * FROM "{}"'.format(table["name"]))
                 columns = [column[0] for column in self._sqlite_cur.description]
-                sql = "INSERT IGNORE INTO `{table}` ({fields}) VALUES ({placeholders})".format(
+                sql = "INSERT IGNORE INTO `{table}` ({fields}) VALUES ({placeholders})".format(  # noqa: ignore=E501  # pylint: disable=C0301
                     table=table["name"],
                     fields=("`{}`, " * len(columns)).rstrip(" ,").format(*columns),
                     placeholders=("%s, " * len(columns)).rstrip(" ,"),
@@ -269,9 +269,9 @@ class SQLite3toMySQL:
                     self._transfer_table_data(sql=sql, total_records=total_records)
                 except mysql.connector.Error as err:
                     self._logger.error(
-                        "transfer failed inserting data into table {}: {}".format(
-                            table["name"], err
-                        )
+                        "transfer failed inserting data into table %s: %s",
+                        table["name"],
+                        err,
                     )
                     raise
         self._logger.info("Done!")

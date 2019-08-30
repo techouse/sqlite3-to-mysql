@@ -1,7 +1,8 @@
+"""The command line interface of SQLite3toMySQL."""
+
 import sys
 
 import click
-
 from sqlite3_to_mysql import SQLite3toMySQL
 
 
@@ -39,7 +40,7 @@ from sqlite3_to_mysql import SQLite3toMySQL
     "-c", "--chunk", type=int, default=None, help="Chunk reading/writing SQL records"
 )
 @click.option("-l", "--log-file", type=click.Path(), help="Log file")
-def cli(
+def cli(  # noqa: ignore=C0330  # pylint: disable=C0330,R0913
     sqlite_file,
     mysql_user,
     mysql_password,
@@ -51,6 +52,7 @@ def cli(
     chunk,
     log_file,
 ):
+    """Transfer SQLite to MySQL using the provided CLI options."""
     try:
         converter = SQLite3toMySQL(
             sqlite_file=sqlite_file,
@@ -68,6 +70,6 @@ def cli(
     except KeyboardInterrupt:
         click.echo("\nProcess interrupted. Exiting...")
         sys.exit(1)
-    except Exception as err:
+    except Exception as err:  # pylint: disable=W0703
         click.echo(err)
         sys.exit(1)

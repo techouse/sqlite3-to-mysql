@@ -147,49 +147,34 @@ class TestSQLite3toMySQL:
         cli_runner,
         sqlite_database,
         mysql_credentials,
-        helpers,
         mysql_integer_type,
         mysql_string_type,
         chunk,
     ):
-        with helpers.not_raises(Exception):
-            result = cli_runner.invoke(
-                sqlite3mysql,
-                [
-                    "-f",
-                    sqlite_database,
-                    "-d",
-                    mysql_credentials.database,
-                    "-u",
-                    mysql_credentials.user,
-                    "-p",
-                    mysql_credentials.password,
-                    "-h",
-                    mysql_credentials.host,
-                    "-P",
-                    mysql_credentials.port,
-                    "--mysql-integer-type",
-                    mysql_integer_type,
-                    "--mysql-string-type",
-                    mysql_string_type,
-                    "-c",
-                    chunk,
-                ],
-            )
-            assert result.exit_code == 0
-            assert all(
-                message in result.output
-                for message in {
-                    "Transferring table article_authors",
-                    "Transferring table article_images",
-                    "Transferring table article_tags",
-                    "Transferring table articles",
-                    "Transferring table authors",
-                    "Transferring table images",
-                    "Transferring table tags",
-                    "Done!",
-                }
-            )
+        result = cli_runner.invoke(
+            sqlite3mysql,
+            [
+                "-f",
+                sqlite_database,
+                "-d",
+                mysql_credentials.database,
+                "-u",
+                mysql_credentials.user,
+                "-p",
+                mysql_credentials.password,
+                "-h",
+                mysql_credentials.host,
+                "-P",
+                mysql_credentials.port,
+                "--mysql-integer-type",
+                mysql_integer_type,
+                "--mysql-string-type",
+                mysql_string_type,
+                "-c",
+                chunk,
+            ],
+        )
+        assert result.exit_code == 0
 
     def test_keyboard_interrupt(
         self, cli_runner, sqlite_database, mysql_credentials, mocker

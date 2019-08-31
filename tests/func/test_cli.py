@@ -89,7 +89,7 @@ class TestSQLite3toMySQL:
         assert "1045 (28000): Access denied" in result.output
 
     def test_invalid_database_port(
-        self, cli_runner, sqlite_database, mysql_credentials, faker, capsys
+        self, cli_runner, sqlite_database, mysql_credentials, faker
     ):
         if six.PY2:
             port = choice(xrange(2, 2 ** 16 - 1))
@@ -115,7 +115,10 @@ class TestSQLite3toMySQL:
             ],
         )
         assert result.exit_code > 0
-        assert "2003: Can't connect to MySQL server" in result.output
+        assert any(message in result.output for message in {
+            "2003 (HY000): Can't connect to MySQL server on",
+            "2003: Can't connect to MySQL server"
+        })
 
     @pytest.mark.parametrize(
         "mysql_integer_type, mysql_string_type, chunk",

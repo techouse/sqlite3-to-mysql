@@ -106,5 +106,8 @@ venv.bak/
 # PyCharm specific files
 .idea
 
+# macOS specific
+.DS_Store
+
 # Potential leftovers
 tests/db_credentials.json

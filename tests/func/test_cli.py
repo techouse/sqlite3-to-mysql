@@ -1,8 +1,4 @@
-from multiprocessing import Process
 from random import choice
-from time import sleep
-from os import kill
-from signal import SIGINT
 
 import pytest
 import six

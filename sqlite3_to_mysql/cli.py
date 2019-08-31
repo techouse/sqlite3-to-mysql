@@ -12,7 +12,7 @@ from sqlite3_to_mysql import SQLite3toMySQL
     "--sqlite-file",
     type=click.Path(exists=True),
     default=None,
-    help="SQLite3 db file",
+    help="SQLite3 database file",
     required=True,
 )
 @click.option(

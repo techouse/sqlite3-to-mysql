@@ -15,11 +15,13 @@ import mysql.connector
 import six
 from mysql.connector import errorcode  # pylint: disable=C0412
 from tqdm import trange
+
 from sqlite3_to_mysql.sqlite_utils import (  # noqa: ignore=I100
     adapt_decimal,
     adapt_timedelta,
     convert_decimal,
     convert_timedelta,
+    convert_blob,
 )
 
 if six.PY2:
@@ -73,6 +75,9 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
         sqlite3.register_converter("DECIMAL", convert_decimal)
         sqlite3.register_adapter(timedelta, adapt_timedelta)
         sqlite3.register_converter("TIME", convert_timedelta)
+
+        if six.PY2:
+            sqlite3.register_converter("BLOB", convert_blob)
 
         self._sqlite = sqlite3.connect(
             realpath(self._sqlite_file), detect_types=sqlite3.PARSE_DECLTYPES

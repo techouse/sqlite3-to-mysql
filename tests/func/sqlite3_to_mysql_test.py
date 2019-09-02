@@ -1,7 +1,6 @@
 import logging
 import re
 from collections import namedtuple
-from decimal import Decimal
 
 import mysql.connector
 import pytest

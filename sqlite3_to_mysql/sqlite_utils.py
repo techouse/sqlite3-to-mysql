@@ -5,6 +5,7 @@ from __future__ import division
 from datetime import timedelta
 from decimal import Decimal
 
+import six
 from pytimeparse.timeparse import timeparse
 
 
@@ -28,3 +29,8 @@ def adapt_timedelta(value):
 def convert_timedelta(value):
     """Convert %H:%M:%S string to datetime.timedelta."""
     return timedelta(seconds=timeparse(value.decode()))
+
+
+def convert_blob(value):
+    """In Python 2 MySQL binary protocol can not handle 'buffer' objects so we have to convert them."""  # noqa: ignore=E501  # pylint: disable=C0301
+    return six.binary_type(value)

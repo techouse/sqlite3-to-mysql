@@ -237,6 +237,43 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
             )
             raise
 
+    def _add_foreign_keys(self, table_name):
+        self._sqlite_cur.execute('PRAGMA foreign_key_list("{}")'.format(table_name))
+
+        for row in self._sqlite_cur.fetchall():
+            foreign_key = dict(row)
+            sql = """
+                ALTER TABLE `{table}`
+                ADD CONSTRAINT {table}_FK_{id}_{seq}
+                FOREIGN KEY (`{column}`)
+                REFERENCES `{ref_table}`(`{ref_column}`)
+                ON DELETE {on_delete}
+                ON UPDATE {on_update}
+            """.format(
+                id=foreign_key["id"],
+                seq=foreign_key["seq"],
+                table=table_name,
+                column=foreign_key["from"],
+                ref_table=foreign_key["table"],
+                ref_column=foreign_key["to"],
+                on_delete=foreign_key["on_delete"].upper()
+                if foreign_key["on_delete"].upper() != "SET DEFAULT"
+                else "NO ACTION",
+                on_update=foreign_key["on_update"].upper()
+                if foreign_key["on_update"].upper() != "SET DEFAULT"
+                else "NO ACTION",
+            )
+            sql = " ".join(sql.split())
+
+            try:
+                self._mysql_cur.execute(sql)
+                self._mysql.commit()
+            except mysql.connector.Error as err:
+                self._logger.error(
+                    "_add_foreign_keys failed creating table %s: %s", table_name, err
+                )
+                raise
+
     def _transfer_table_data(self, sql, total_records=0):
         if self._chunk_size is not None and self._chunk_size > 0:
             for _ in trange(0, int(ceil(total_records / self._chunk_size))):
@@ -263,6 +300,9 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
 
             # create the table
             self._create_table(table["name"])
+
+            # add foreign keys
+            self._add_foreign_keys(table["name"])
 
             # get the size of the data
             self._sqlite_cur.execute(

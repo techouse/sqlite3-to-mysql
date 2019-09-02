@@ -10,12 +10,12 @@ from sqlite3_to_mysql.cli import cli as sqlite3mysql
 @pytest.mark.cli
 @pytest.mark.usefixtures("sqlite_database", "mysql_instance")
 class TestSQLite3toMySQL:
-    def test_no_arguments(self, cli_runner):
+    def test_no_arguments(self, cli_runner, mysql_database):
         result = cli_runner.invoke(sqlite3mysql)
         assert result.exit_code > 0
         assert 'Error: Missing option "-f" / "--sqlite-file"' in result.output
 
-    def test_non_existing_sqlite_file(self, cli_runner, faker):
+    def test_non_existing_sqlite_file(self, cli_runner, mysql_database, faker):
         result = cli_runner.invoke(
             sqlite3mysql, ["-f", faker.file_path(depth=1, extension=".sqlite3")]
         )
@@ -23,12 +23,14 @@ class TestSQLite3toMySQL:
         assert "Error: Invalid value" in result.output
         assert "does not exist" in result.output
 
-    def test_no_database_name(self, cli_runner, sqlite_database):
+    def test_no_database_name(self, cli_runner, sqlite_database, mysql_database):
         result = cli_runner.invoke(sqlite3mysql, ["-f", sqlite_database])
         assert result.exit_code > 0
         assert 'Error: Missing option "-d" / "--mysql-database"' in result.output
 
-    def test_no_database_user(self, cli_runner, sqlite_database, mysql_credentials):
+    def test_no_database_user(
+        self, cli_runner, sqlite_database, mysql_credentials, mysql_database
+    ):
         result = cli_runner.invoke(
             sqlite3mysql, ["-f", sqlite_database, "-d", mysql_credentials.database]
         )
@@ -36,7 +38,7 @@ class TestSQLite3toMySQL:
         assert 'Error: Missing option "-u" / "--mysql-user"' in result.output
 
     def test_invalid_database_name(
-        self, cli_runner, sqlite_database, mysql_credentials, faker
+        self, cli_runner, sqlite_database, mysql_credentials, mysql_database, faker
     ):
         result = cli_runner.invoke(
             sqlite3mysql,
@@ -53,7 +55,7 @@ class TestSQLite3toMySQL:
         assert "1045 (28000): Access denied" in result.output
 
     def test_invalid_database_user(
-        self, cli_runner, sqlite_database, mysql_credentials, faker
+        self, cli_runner, sqlite_database, mysql_credentials, mysql_database, faker
     ):
         result = cli_runner.invoke(
             sqlite3mysql,
@@ -70,7 +72,7 @@ class TestSQLite3toMySQL:
         assert "1045 (28000): Access denied" in result.output
 
     def test_invalid_database_password(
-        self, cli_runner, sqlite_database, mysql_credentials, faker
+        self, cli_runner, sqlite_database, mysql_credentials, mysql_database, faker
     ):
         result = cli_runner.invoke(
             sqlite3mysql,
@@ -89,7 +91,7 @@ class TestSQLite3toMySQL:
         assert "1045 (28000): Access denied" in result.output
 
     def test_invalid_database_port(
-        self, cli_runner, sqlite_database, mysql_credentials, faker
+        self, cli_runner, sqlite_database, mysql_credentials, mysql_database, faker
     ):
         if six.PY2:
             port = choice(xrange(2, 2 ** 16 - 1))
@@ -151,6 +153,7 @@ class TestSQLite3toMySQL:
         mysql_credentials,
         mysql_integer_type,
         mysql_string_type,
+        mysql_database,
         chunk,
     ):
         result = cli_runner.invoke(

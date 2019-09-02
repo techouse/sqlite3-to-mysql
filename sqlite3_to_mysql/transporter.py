@@ -5,6 +5,8 @@ from __future__ import division
 import logging
 import re
 import sqlite3
+from datetime import timedelta
+from decimal import Decimal
 from math import ceil
 from os.path import isfile, realpath
 from sys import stdout
@@ -13,6 +15,12 @@ import mysql.connector
 import six
 from mysql.connector import errorcode  # pylint: disable=C0412
 from tqdm import trange
+from sqlite3_to_mysql.sqlite_utils import (  # noqa: ignore=I100
+    adapt_decimal,
+    adapt_timedelta,
+    convert_decimal,
+    convert_timedelta,
+)
 
 if six.PY2:
     from .sixeptions import *  # pylint: disable=W0622,W0401,W0614
@@ -26,46 +34,49 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
 
     def __init__(self, **kwargs):  # noqa: ignore=C901  # pylint: disable=R0912
         """Constructor."""
-        self._sqlite_file = kwargs.get("sqlite_file") or None
-        if not self._sqlite_file:
+        if not kwargs.get("sqlite_file"):
             raise ValueError("Please provide an SQLite file")
-        if not isfile(self._sqlite_file):
+
+        if not isfile(kwargs.get("sqlite_file")):
             raise FileNotFoundError("SQLite file does not exist")
 
-        self._mysql_user = kwargs.get("mysql_user") or None
-        if not self._mysql_user:
+        if not kwargs.get("mysql_user"):
             raise ValueError("Please provide a MySQL user")
-        self._mysql_user = str(self._mysql_user)
 
-        self._mysql_password = kwargs.get("mysql_password") or None
-        if self._mysql_password:
-            self._mysql_password = str(self._mysql_password)
+        self._sqlite_file = realpath(kwargs.get("sqlite_file"))
 
-        self._mysql_host = kwargs.get("mysql_host") or "localhost"
-        if self._mysql_host:
-            self._mysql_host = str(self._mysql_host)
+        self._mysql_user = str(kwargs.get("mysql_user"))
 
-        self._mysql_port = kwargs.get("mysql_port") or 3306
-        if self._mysql_port:
-            self._mysql_port = int(self._mysql_port)
+        self._mysql_password = (
+            str(kwargs.get("mysql_password")) if kwargs.get("mysql_password") else None
+        )
 
-        self._chunk_size = kwargs.get("chunk") or None
-        if self._chunk_size:
-            self._chunk_size = int(self._chunk_size)
+        self._mysql_host = str(kwargs.get("mysql_host") or "localhost")
+
+        self._mysql_port = int(kwargs.get("mysql_port") or 3306)
+
+        self._chunk_size = int(kwargs.get("chunk")) if kwargs.get("chunk") else None
 
         self._logger = self._setup_logger(log_file=kwargs.get("log_file") or None)
 
-        self._mysql_database = kwargs.get("mysql_database") or "transfer"
+        self._mysql_database = str(kwargs.get("mysql_database") or "transfer")
 
-        self._mysql_integer_type = kwargs.get("mysql_integer_type") or "INT(11)"
-        if self._mysql_integer_type:
-            self._mysql_integer_type = self._mysql_integer_type.upper()
+        self._mysql_integer_type = str(
+            kwargs.get("mysql_integer_type") or "INT(11)"
+        ).upper()
 
-        self._mysql_string_type = kwargs.get("mysql_string_type") or "VARCHAR(255)"
-        if self._mysql_string_type:
-            self._mysql_string_type = self._mysql_string_type.upper()
+        self._mysql_string_type = str(
+            kwargs.get("mysql_string_type") or "VARCHAR(255)"
+        ).upper()
 
-        self._sqlite = sqlite3.connect(kwargs.get("sqlite_file") or None)
+        sqlite3.register_adapter(Decimal, adapt_decimal)
+        sqlite3.register_converter("DECIMAL", convert_decimal)
+        sqlite3.register_adapter(timedelta, adapt_timedelta)
+        sqlite3.register_converter("TIME", convert_timedelta)
+
+        self._sqlite = sqlite3.connect(
+            realpath(self._sqlite_file), detect_types=sqlite3.PARSE_DECLTYPES
+        )
         self._sqlite.row_factory = sqlite3.Row
 
         self._sqlite_cur = self._sqlite.cursor()

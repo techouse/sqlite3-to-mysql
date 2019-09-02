@@ -1,6 +1,42 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, Table, ForeignKey, CHAR
+from decimal import Decimal
+import sqlalchemy.types as types
+from sqlalchemy import (
+    Table,
+    Column,
+    ForeignKey,
+    BigInteger,
+    BLOB,
+    Boolean,
+    CHAR,
+    Date,
+    DateTime,
+    Integer,
+    JSON,
+    REAL,
+    SmallInteger,
+    String,
+    Text,
+    Time,
+    TIMESTAMP,
+    VARCHAR,
+)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, backref
+from sqlalchemy.sql.functions import current_timestamp
+
+
+class SQLiteNumeric(types.TypeDecorator):
+    impl = types.String
+
+    def load_dialect_impl(self, dialect):
+        return dialect.type_descriptor(types.VARCHAR(100))
+
+    def process_bind_param(self, value, dialect):
+        return str(value)
+
+    def process_result_value(self, value, dialect):
+        return Decimal(value)
+
 
 Base = declarative_base()
 
@@ -57,6 +93,39 @@ article_tags = Table(
 )
 
 
+class Misc(Base):
+    """This model contains all possible MySQL types"""
+
+    __tablename__ = "misc"
+    id = Column(Integer, primary_key=True)
+    big_integer_field = Column(BigInteger, default=0)
+    blob_field = Column(BLOB, nullable=True)
+    boolean_field = Column(Boolean, default=False)
+    char_field = Column(CHAR(255), nullable=True)
+    date_field = Column(Date, nullable=True)
+    date_time_field = Column(DateTime, nullable=True)
+    decimal_field = Column(SQLiteNumeric(10, 2), nullable=True)
+    float_field = Column(SQLiteNumeric(12, 4), default=0)
+    integer_field = Column(Integer, default=0)
+    json_field = Column(JSON, nullable=True)
+    numeric_field = Column(SQLiteNumeric(12, 4), default=0)
+    real_field = Column(REAL(12, 4), default=0)
+    small_integer_field = Column(SmallInteger, default=0)
+    string_field = Column(String(255), nullable=True)
+    text_field = Column(Text, nullable=True)
+    time_field = Column(Time, nullable=True)
+    varchar_field = Column(VARCHAR(255), nullable=True)
+    timestamp_field = Column(TIMESTAMP, default=current_timestamp())
+
+
+article_misc = Table(
+    "article_misc",
+    Base.metadata,
+    Column("article_id", Integer, ForeignKey("articles.id"), primary_key=True),
+    Column("misc_id", Integer, ForeignKey("misc.id"), primary_key=True),
+)
+
+
 class Article(Base):
     __tablename__ = "articles"
     id = Column(Integer, primary_key=True)
@@ -82,6 +151,12 @@ class Article(Base):
         "Image",
         secondary=article_images,
         backref=backref("images", lazy="dynamic"),
+        lazy="dynamic",
+    )
+    misc = relationship(
+        "Misc",
+        secondary=article_misc,
+        backref=backref("misc", lazy="dynamic"),
         lazy="dynamic",
     )
 

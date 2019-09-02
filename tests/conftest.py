@@ -19,7 +19,13 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy_utils import database_exists, drop_database
 
 from .database import Database
-from .factories import AuthorFactory, TagFactory, ArticleFactory, ImageFactory
+from .factories import (
+    ArticleFactory,
+    AuthorFactory,
+    ImageFactory,
+    MiscFactory,
+    TagFactory,
+)
 
 if six.PY2:
     from sixeptions import *
@@ -158,6 +164,7 @@ def sqlite_database(pytestconfig, faker, tmpdir_factory):
             article = ArticleFactory()
             article.authors.append(AuthorFactory())
             article.tags.append(TagFactory())
+            article.misc.append(MiscFactory())
             for _ in range(faker.pyint(min_value=1, max_value=4)):
                 article.images.append(
                     ImageFactory(
@@ -325,7 +332,7 @@ def mysql_database(mysql_instance, mysql_credentials):
     yield
 
     engine = create_engine(
-        "mysql+mysqlconnector://{user}:{password}@{host}:{port}/{database}".format(
+        "mysql+mysqldb://{user}:{password}@{host}:{port}/{database}".format(
             user=mysql_credentials.user,
             password=mysql_credentials.password,
             host=mysql_credentials.host,

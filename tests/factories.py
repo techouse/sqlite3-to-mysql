@@ -25,6 +25,32 @@ class TagFactory(factory.Factory):
     name = factory.Faker("sentence", nb_words=3, variable_nb_words=True)
 
 
+class MiscFactory(factory.Factory):
+    class Meta:
+        model = models.Misc
+
+    big_integer_field = factory.Faker("pyint", max_value=10 ** 9)
+    blob_field = factory.Faker("binary", length=1024 * 10)
+    boolean_field = factory.Faker("boolean")
+    char_field = factory.Faker("text", max_nb_chars=255)
+    date_field = factory.Faker("date_this_decade")
+    date_time_field = factory.Faker("date_time_this_century")
+    decimal_field = factory.Faker("pydecimal", left_digits=8, right_digits=2)
+    float_field = factory.Faker("pyfloat", left_digits=8, right_digits=4)
+    integer_field = factory.Faker("pyint", min_value=-2 ** 31, max_value=2 ** 31 - 1)
+    json_field = factory.Faker("pydict")
+    numeric_field = factory.Faker("pyfloat", left_digits=8, right_digits=4)
+    real_field = factory.Faker("pyfloat", left_digits=8, right_digits=4)
+    small_integer_field = factory.Faker(
+        "pyint", min_value=-2 ** 15, max_value=2 ** 15 - 1
+    )
+    string_field = factory.Faker("text", max_nb_chars=255)
+    text_field = factory.Faker("text", max_nb_chars=1024)
+    time_field = factory.Faker("time_object")
+    varchar_field = factory.Faker("text", max_nb_chars=255)
+    timestamp_field = factory.Faker("date_time_this_century")
+
+
 class ArticleFactory(factory.Factory):
     class Meta:
         model = models.Article
@@ -67,3 +93,14 @@ class ArticleFactory(factory.Factory):
             # A list of authors were passed in, use them
             for image in extracted:
                 self.images.add(image)
+
+    @factory.post_generation
+    def misc(self, create, extracted, **kwargs):
+        if not create:
+            # Simple build, do nothing.
+            return
+
+        if extracted:
+            # A list of authors were passed in, use them
+            for misc in extracted:
+                self.misc.add(misc)

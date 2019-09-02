@@ -115,10 +115,13 @@ class TestSQLite3toMySQL:
             ],
         )
         assert result.exit_code > 0
-        assert any(message in result.output for message in {
-            "2003 (HY000): Can't connect to MySQL server on",
-            "2003: Can't connect to MySQL server"
-        })
+        assert any(
+            message in result.output
+            for message in {
+                "2003 (HY000): Can't connect to MySQL server on",
+                "2003: Can't connect to MySQL server",
+            }
+        )
 
     @pytest.mark.parametrize(
         "mysql_integer_type, mysql_string_type, chunk",

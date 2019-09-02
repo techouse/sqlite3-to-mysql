@@ -1,9 +1,11 @@
 import logging
 import re
 from collections import namedtuple
+from decimal import Decimal
 
 import mysql.connector
 import pytest
+import simplejson as json
 import six
 from mysql.connector import errorcode, MySQLConnection
 from sqlalchemy import create_engine, inspect, MetaData, Table, select
@@ -210,19 +212,23 @@ class TestSQLite3toMySQL:
         out, err = capsys.readouterr()
 
         sqlite_engine = create_engine(
-            "sqlite:///{database}".format(database=sqlite_database)
+            "sqlite:///{database}".format(database=sqlite_database),
+            json_serializer=json.dumps,
+            json_deserializer=json.loads,
         )
         sqlite_cnx = sqlite_engine.connect()
         sqlite_inspect = inspect(sqlite_engine)
         sqlite_tables = sqlite_inspect.get_table_names()
         mysql_engine = create_engine(
-            "mysql+mysqlconnector://{user}:{password}@{host}:{port}/{database}".format(
+            "mysql+mysqldb://{user}:{password}@{host}:{port}/{database}".format(
                 user=mysql_credentials.user,
                 password=mysql_credentials.password,
                 host=mysql_credentials.host,
                 port=mysql_credentials.port,
                 database=mysql_credentials.database,
-            )
+            ),
+            json_serializer=json.dumps,
+            json_deserializer=json.loads,
         )
         mysql_cnx = mysql_engine.connect()
         mysql_inspect = inspect(mysql_engine)
@@ -249,6 +255,7 @@ class TestSQLite3toMySQL:
             sqlite_stmt = select([sqlite_table])
             sqlite_result = sqlite_cnx.execute(sqlite_stmt).fetchall()
             sqlite_result.sort()
+            sqlite_result = tuple(tuple(data for data in row) for row in sqlite_result)
             sqlite_results.append(sqlite_result)
 
         for table_name in mysql_tables:
@@ -258,6 +265,7 @@ class TestSQLite3toMySQL:
             mysql_stmt = select([mysql_table])
             mysql_result = mysql_cnx.execute(mysql_stmt).fetchall()
             mysql_result.sort()
+            mysql_result = tuple(tuple(data for data in row) for row in mysql_result)
             mysql_results.append(mysql_result)
 
         assert sqlite_results == mysql_results

@@ -10,7 +10,9 @@ packages = ["sqlite3_to_mysql"]
 requires = [
     "Click>=7.0",
     "mysql-connector-python>=8.0.17",
+    "pytimeparse>=1.1.8",
     "six>=1.12.0",
+    "simplejson>=3.16.0",
     "tqdm>=4.35.0",
 ]
 

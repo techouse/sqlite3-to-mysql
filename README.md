@@ -1,5 +1,6 @@
-![PyPI](https://img.shields.io/pypi/v/sqlite3-to-mysql)
-![PyPI - Python Version](https://img.shields.io/pypi/pyversions/sqlite3-to-mysql)
+[![PyPI](https://img.shields.io/pypi/v/sqlite3-to-mysql)](https://pypi.org/project/sqlite3-to-mysql/)
+[![Downloads](https://pepy.tech/badge/sqlite3-to-mysql)](https://pepy.tech/project/sqlite3-to-mysql)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/sqlite3-to-mysql)](https://pypi.org/project/sqlite3-to-mysql/)
 [![GitHub license](https://img.shields.io/github/license/techouse/sqlite3-to-mysql)](https://github.com/techouse/sqlite3-to-mysql/blob/master/LICENSE)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 [![Build Status](https://travis-ci.org/techouse/sqlite3-to-mysql.svg?branch=master)](https://travis-ci.org/techouse/sqlite3-to-mysql)

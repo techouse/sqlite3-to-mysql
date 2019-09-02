@@ -9,17 +9,37 @@ services:
 matrix:
   include:
     - env:
-        - TOXENV=py35
-        - DB=mariadb:5.5
-      python: "3.5"
-    - env:
-        - TOXENV=py36
-        - DB=mariadb:10.0
-      python: "3.6"
-    - env:
         - TOXENV=py27
         - DB=mariadb:10.2
       python: "2.7"
+    - env:
+        - TOXENV=py35
+        - DB=mariadb:10.2
+      python: "3.5"
+    - env:
+        - TOXENV=py36
+        - DB=mariadb:10.2
+      python: "3.6"
+    - env:
+        - TOXENV=py37
+        - DB=mariadb:10.2
+      python: "3.7"
+    - env:
+        - TOXENV=py37-dev
+        - DB=mariadb:10.2
+      python: "3.7-dev"
+    - env:
+        - TOXENV=py27
+        - DB=mariadb:10.3
+      python: "2.7"
+    - env:
+        - TOXENV=py35
+        - DB=mariadb:10.3
+      python: "3.5"
+    - env:
+        - TOXENV=py36
+        - DB=mariadb:10.3
+      python: "3.6"
     - env:
         - TOXENV=py37
         - DB=mariadb:10.3
@@ -29,12 +49,16 @@ matrix:
         - DB=mariadb:10.3
       python: "3.7-dev"
     - env:
+        - TOXENV=py27
+        - DB=mysql:5.7
+      python: "2.7"
+    - env:
         - TOXENV=py35
-        - DB=mysql:5.5
+        - DB=mysql:5.7
       python: "3.5"
     - env:
         - TOXENV=py36
-        - DB=mysql:5.6
+        - DB=mysql:5.7
       python: "3.6"
     - env:
         - TOXENV=py37
@@ -42,16 +66,28 @@ matrix:
       python: "3.7"
     - env:
         - TOXENV=py37
+        - DB=mysql:5.7
+      python: "3.7-dev"
+    - env:
+        - TOXENV=py27
+        - DB=mysql:8.0
+      python: "2.7"
+    - env:
+        - TOXENV=py35
+        - DB=mysql:8.0
+      python: "3.5"
+    - env:
+        - TOXENV=py36
+        - DB=mysql:8.0
+      python: "3.6"
+    - env:
+        - TOXENV=py37
         - DB=mysql:8.0
       python: "3.7"
     - env:
         - TOXENV=py37-dev
         - DB=mysql:8.0
       python: "3.7-dev"
-    - env:
-        - TOXENV=py27
-        - DB=mysql:8.0
-      python: "2.7"
 
 install:
   - pip install -U codecov

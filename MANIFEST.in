@@ -1,4 +1,4 @@
 include README.md LICENSE pytest.ini requirements_dev.txt
-recursive-exclude tests *
+recursive-include tests *.py
 recursive-exclude * __pycache__
 recursive-exclude * *.py[co]

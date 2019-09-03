@@ -131,7 +131,7 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
     def _create_database(self):
         try:
             self._mysql_cur.execute(
-                "CREATE DATABASE IF NOT EXISTS `{}` DEFAULT CHARACTER SET 'utf8'".format(  # noqa: ignore=E501  # pylint: disable=C0301
+                "CREATE DATABASE IF NOT EXISTS `{}` DEFAULT CHARACTER SET 'utf8mb4'".format(  # noqa: ignore=E501  # pylint: disable=C0301
                     self._mysql_database
                 )
             )
@@ -225,7 +225,7 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
         sql = sql.rstrip(", ")
         if primary_key:
             sql += ", PRIMARY KEY (`{}`)".format(primary_key)
-        sql += " ) ENGINE = InnoDB CHARACTER SET utf8"
+        sql += " ) ENGINE = InnoDB CHARACTER SET utf8mb4"
         sql = " ".join(sql.split())
 
         try:
@@ -266,6 +266,13 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
             sql = " ".join(sql.split())
 
             try:
+                self._logger.info(
+                    "Adding foreign key to %s.%s referencing %s.%s",
+                    table_name,
+                    foreign_key["from"],
+                    foreign_key["table"],
+                    foreign_key["to"],
+                )
                 self._mysql_cur.execute(sql)
                 self._mysql.commit()
             except mysql.connector.Error as err:
@@ -295,41 +302,46 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
         self._sqlite_cur.execute(
             "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"  # noqa: ignore=E501  # pylint: disable=C0301
         )
-        for row in self._sqlite_cur.fetchall():
-            table = dict(row)
-
-            # create the table
-            self._create_table(table["name"])
-
-            # get the size of the data
-            self._sqlite_cur.execute(
-                'SELECT COUNT(*) AS total_records FROM "{}"'.format(table["name"])
-            )
-            total_records = int(dict(self._sqlite_cur.fetchone())["total_records"])
-
-            # only continue if there is anything to transfer
-            if total_records > 0:
-                # populate it
-                self._logger.info("Transferring table %s", table["name"])
-                self._sqlite_cur.execute('SELECT * FROM "{}"'.format(table["name"]))
-                columns = [column[0] for column in self._sqlite_cur.description]
-                sql = "INSERT IGNORE INTO `{table}` ({fields}) VALUES ({placeholders})".format(  # noqa: ignore=E501  # pylint: disable=C0301
-                    table=table["name"],
-                    fields=("`{}`, " * len(columns)).rstrip(" ,").format(*columns),
-                    placeholders=("%s, " * len(columns)).rstrip(" ,"),
-                )
-                try:
-                    self._transfer_table_data(sql=sql, total_records=total_records)
-                except mysql.connector.Error as err:
-                    self._logger.error(
-                        "transfer failed inserting data into table %s: %s",
-                        table["name"],
-                        err,
-                    )
-                    raise
-
-            # add foreign keys
+        try:
             self._mysql_cur.execute("SET FOREIGN_KEY_CHECKS=0")
-            self._add_foreign_keys(table["name"])
+
+            for row in self._sqlite_cur.fetchall():
+                table = dict(row)
+
+                # create the table
+                self._create_table(table["name"])
+
+                # get the size of the data
+                self._sqlite_cur.execute(
+                    'SELECT COUNT(*) AS total_records FROM "{}"'.format(table["name"])
+                )
+                total_records = int(dict(self._sqlite_cur.fetchone())["total_records"])
+
+                # only continue if there is anything to transfer
+                if total_records > 0:
+                    # populate it
+                    self._logger.info("Transferring table %s", table["name"])
+                    self._sqlite_cur.execute('SELECT * FROM "{}"'.format(table["name"]))
+                    columns = [column[0] for column in self._sqlite_cur.description]
+                    sql = "INSERT IGNORE INTO `{table}` ({fields}) VALUES ({placeholders})".format(  # noqa: ignore=E501  # pylint: disable=C0301
+                        table=table["name"],
+                        fields=("`{}`, " * len(columns)).rstrip(" ,").format(*columns),
+                        placeholders=("%s, " * len(columns)).rstrip(" ,"),
+                    )
+                    try:
+                        self._transfer_table_data(sql=sql, total_records=total_records)
+                    except mysql.connector.Error as err:
+                        self._logger.error(
+                            "transfer failed inserting data into table %s: %s",
+                            table["name"],
+                            err,
+                        )
+                        raise
+
+                # add foreign keys
+                self._add_foreign_keys(table["name"])
+        except Exception:  # pylint: disable=W0706
+            raise
+        finally:
             self._mysql_cur.execute("SET FOREIGN_KEY_CHECKS=1")
         self._logger.info("Done!")

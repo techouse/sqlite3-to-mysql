@@ -301,9 +301,6 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
             # create the table
             self._create_table(table["name"])
 
-            # add foreign keys
-            self._add_foreign_keys(table["name"])
-
             # get the size of the data
             self._sqlite_cur.execute(
                 'SELECT COUNT(*) AS total_records FROM "{}"'.format(table["name"])
@@ -330,4 +327,9 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
                         err,
                     )
                     raise
+
+            # add foreign keys
+            self._mysql_cur.execute("SET FOREIGN_KEY_CHECKS=0")
+            self._add_foreign_keys(table["name"])
+            self._mysql_cur.execute("SET FOREIGN_KEY_CHECKS=1")
         self._logger.info("Done!")

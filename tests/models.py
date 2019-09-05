@@ -129,6 +129,7 @@ article_misc = Table(
 class Article(Base):
     __tablename__ = "articles"
     id = Column(Integer, primary_key=True)
+    hash = Column(String(32), unique=True)
     slug = Column(String(255), index=True)
     title = Column(String(255), index=True)
     content = Column(Text, nullable=True)

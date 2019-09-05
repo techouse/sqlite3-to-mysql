@@ -55,6 +55,7 @@ class ArticleFactory(factory.Factory):
     class Meta:
         model = models.Article
 
+    hash = factory.Faker("md5")
     title = factory.Faker("sentence", nb_words=6)
     slug = factory.Faker("slug")
     content = factory.Faker("text", max_nb_chars=1024)

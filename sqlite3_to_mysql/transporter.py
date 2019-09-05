@@ -236,6 +236,65 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
             )
             raise
 
+    def _add_indices(self, table_name):
+        self._sqlite_cur.execute('PRAGMA table_info("{}")'.format(table_name))
+        columns = {}
+        for row in self._sqlite_cur.fetchall():
+            column = dict(row)
+            columns[column["name"]] = column["type"]
+
+        self._sqlite_cur.execute('PRAGMA index_list("{}")'.format(table_name))
+        indices = [dict(row) for row in self._sqlite_cur.fetchall()]
+
+        for index in indices:
+            if index["origin"] == "pk":
+                continue
+
+            self._sqlite_cur.execute('PRAGMA index_info("{}")'.format(index["name"]))
+            index_info = dict(self._sqlite_cur.fetchone())
+
+            index_type = "UNIQUE" if int(index["unique"]) == 1 else "INDEX"
+            index_length = ""
+
+            if index_info["name"].upper() == "BLOB":
+                # Do not add indices to BLOB fields
+                continue
+            elif index_info["name"].upper() == "TEXT":
+                # Limit the max TEXT field index length to 255
+                index_type = "FULLTEXT"
+            else:
+                suffix = self.COLUMN_LENGTH_PATTERN.search(columns[index_info["name"]])
+                if suffix:
+                    index_length = suffix.group(0)
+
+            sql = """
+                ALTER TABLE `{table}`
+                ADD {index_type} `{name}`(`{column}`{length})
+            """.format(
+                table=table_name,
+                index_type=index_type,
+                name=index["name"],
+                column=index_info["name"],
+                length=index_length,
+            )
+
+            try:
+                self._logger.info(
+                    """Adding %s to column "%s" in table %s""",
+                    "unique index" if int(index["unique"]) == 1 else "index",
+                    index_info["name"],
+                    table_name,
+                )
+                self._mysql_cur.execute(sql)
+                self._mysql.commit()
+            except mysql.connector.Error as err:
+                self._logger.error(
+                    "_add_indices failed adding indices to table %s: %s",
+                    table_name,
+                    err,
+                )
+                raise
+
     def _add_foreign_keys(self, table_name):
         self._sqlite_cur.execute('PRAGMA foreign_key_list("{}")'.format(table_name))
 
@@ -275,7 +334,9 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
                 self._mysql.commit()
             except mysql.connector.Error as err:
                 self._logger.error(
-                    "_add_foreign_keys failed creating table %s: %s", table_name, err
+                    "_add_foreign_keys failed adding foreign keys to table %s: %s",
+                    table_name,
+                    err,
                 )
                 raise
 
@@ -335,6 +396,9 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
                             err,
                         )
                         raise
+
+                # add indices
+                self._add_indices(table["name"])
 
                 # add foreign keys
                 self._add_foreign_keys(table["name"])

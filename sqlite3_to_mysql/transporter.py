@@ -226,7 +226,6 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
         if primary_key:
             sql += ", PRIMARY KEY (`{}`)".format(primary_key)
         sql += " ) ENGINE = InnoDB CHARACTER SET utf8mb4"
-        sql = " ".join(sql.split())
 
         try:
             self._mysql_cur.execute(sql)
@@ -263,7 +262,6 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
                 if foreign_key["on_update"].upper() != "SET DEFAULT"
                 else "NO ACTION",
             )
-            sql = " ".join(sql.split())
 
             try:
                 self._logger.info(

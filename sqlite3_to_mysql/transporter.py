@@ -34,7 +34,7 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
     COLUMN_PATTERN = re.compile(r"^[^(]+")
     COLUMN_LENGTH_PATTERN = re.compile(r"\(\d+\)$")
 
-    def __init__(self, **kwargs):  # noqa: ignore=C901  # pylint: disable=R0912
+    def __init__(self, **kwargs):  # noqa: ignore=C901 pylint: disable=R0912
         """Constructor."""
         if not kwargs.get("sqlite_file"):
             raise ValueError("Please provide an SQLite file")
@@ -131,7 +131,7 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
     def _create_database(self):
         try:
             self._mysql_cur.execute(
-                "CREATE DATABASE IF NOT EXISTS `{}` DEFAULT CHARACTER SET 'utf8mb4'".format(  # noqa: ignore=E501  # pylint: disable=C0301
+                "CREATE DATABASE IF NOT EXISTS `{}` DEFAULT CHARACTER SET 'utf8mb4'".format(  # noqa: ignore=E501 pylint: disable=C0301
                     self._mysql_database
                 )
             )
@@ -151,7 +151,7 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
     def _valid_column_type(cls, column_type):
         return cls.COLUMN_PATTERN.match(column_type.strip())
 
-    def _translate_type_from_sqlite_to_mysql(  # noqa: ignore=C901  # pylint: disable=C0330
+    def _translate_type_from_sqlite_to_mysql(  # noqa: ignore=C901 pylint: disable=C0330
         self, column_type
     ):  # pylint: disable=R0911,R0912
         """This could be optimized even further, however is seems adequate."""
@@ -236,53 +236,71 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
             )
             raise
 
-    def _add_indices(self, table_name):
+    def _add_indices(self, table_name):  # pylint: disable=R0914
         self._sqlite_cur.execute('PRAGMA table_info("{}")'.format(table_name))
-        columns = {}
+        table_columns = {}
         for row in self._sqlite_cur.fetchall():
             column = dict(row)
-            columns[column["name"]] = column["type"]
+            table_columns[column["name"]] = column["type"]
 
         self._sqlite_cur.execute('PRAGMA index_list("{}")'.format(table_name))
-        indices = [dict(row) for row in self._sqlite_cur.fetchall()]
+        indices = tuple(dict(row) for row in self._sqlite_cur.fetchall())
 
         for index in indices:
             if index["origin"] == "pk":
                 continue
 
             self._sqlite_cur.execute('PRAGMA index_info("{}")'.format(index["name"]))
-            index_info = dict(self._sqlite_cur.fetchone())
+            index_infos = tuple(dict(row) for row in self._sqlite_cur.fetchall())
 
             index_type = "UNIQUE" if int(index["unique"]) == 1 else "INDEX"
-            index_length = ""
 
-            if index_info["name"].upper() == "BLOB":
+            if any(
+                table_columns[index_info["name"]].upper()  # pylint: disable=C0330
+                == "BLOB"  # pylint: disable=C0330
+                for index_info in index_infos  # pylint: disable=C0330
+            ):
                 # Do not add indices to BLOB fields
                 continue
-            elif index_info["name"].upper() == "TEXT":
+            elif any(
+                table_columns[index_info["name"]].upper()  # pylint: disable=C0330
+                == "TEXT"  # pylint: disable=C0330
+                for index_info in index_infos  # noqa: ignore=E501 pylint: disable=C0330
+            ):
                 # Limit the max TEXT field index length to 255
                 index_type = "FULLTEXT"
+                index_columns = ",".join(
+                    "`{}`".format(index_info["name"]) for index_info in index_infos
+                )
             else:
-                suffix = self.COLUMN_LENGTH_PATTERN.search(columns[index_info["name"]])
-                if suffix:
-                    index_length = suffix.group(0)
+                column_list = []
+                for index_info in index_infos:
+                    suffix = self.COLUMN_LENGTH_PATTERN.search(
+                        table_columns[index_info["name"]]
+                    )
+                    if suffix:
+                        column_list.append(
+                            "`{column}`{length}".format(
+                                column=index_info["name"], length=suffix.group(0)
+                            )
+                        )
+                index_columns = ", ".join(column_list)
 
             sql = """
                 ALTER TABLE `{table}`
-                ADD {index_type} `{name}`(`{column}`{length})
+                ADD {index_type} `{name}`({columns})
             """.format(
                 table=table_name,
                 index_type=index_type,
                 name=index["name"],
-                column=index_info["name"],
-                length=index_length,
+                columns=index_columns,
             )
 
             try:
                 self._logger.info(
                     """Adding %s to column "%s" in table %s""",
                     "unique index" if int(index["unique"]) == 1 else "index",
-                    index_info["name"],
+                    ", ".join(index_info["name"] for index_info in index_infos),
                     table_name,
                 )
                 self._mysql_cur.execute(sql)
@@ -359,7 +377,7 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
     def transfer(self):
         """The primary and only method with which we transfer all the data."""
         self._sqlite_cur.execute(
-            "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"  # noqa: ignore=E501  # pylint: disable=C0301
+            "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"  # noqa: ignore=E501 pylint: disable=C0301
         )
         try:
             self._mysql_cur.execute("SET FOREIGN_KEY_CHECKS=0")
@@ -382,7 +400,7 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
                     self._logger.info("Transferring table %s", table["name"])
                     self._sqlite_cur.execute('SELECT * FROM "{}"'.format(table["name"]))
                     columns = [column[0] for column in self._sqlite_cur.description]
-                    sql = "INSERT IGNORE INTO `{table}` ({fields}) VALUES ({placeholders})".format(  # noqa: ignore=E501  # pylint: disable=C0301
+                    sql = "INSERT IGNORE INTO `{table}` ({fields}) VALUES ({placeholders})".format(  # noqa: ignore=E501 pylint: disable=C0301
                         table=table["name"],
                         fields=("`{}`, " * len(columns)).rstrip(" ,").format(*columns),
                         placeholders=("%s, " * len(columns)).rstrip(" ,"),

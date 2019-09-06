@@ -1,22 +1,14 @@
 import logging
 import re
 from collections import namedtuple
+from itertools import chain
 
 import mysql.connector
 import pytest
 import simplejson as json
 import six
 from mysql.connector import errorcode, MySQLConnection
-from sqlalchemy import (
-    create_engine,
-    inspect,
-    MetaData,
-    Table,
-    select,
-    text,
-    bindparam,
-    String,
-)
+from sqlalchemy import create_engine, inspect, MetaData, Table, select, text
 
 from sqlite3_to_mysql import SQLite3toMySQL
 
@@ -250,6 +242,19 @@ class TestSQLite3toMySQL:
             assert [
                 column["name"] for column in sqlite_inspect.get_columns(table_name)
             ] == [column["name"] for column in mysql_inspect.get_columns(table_name)]
+
+        """ Test if all the tables have the same indices """
+        mysql_indices = list(
+            chain.from_iterable(
+                mysql_inspect.get_indexes(table_name) for table_name in mysql_tables
+            )
+        )
+        for table_name in sqlite_tables:
+            for sqlite_index in sqlite_inspect.get_indexes(table_name):
+                sqlite_index["unique"] = bool(sqlite_index["unique"])
+                if sqlite_index["unique"]:
+                    sqlite_index["type"] = "UNIQUE"
+                assert sqlite_index in mysql_indices
 
         """ Test if all the tables have the same foreign keys """
         for table_name in sqlite_tables:

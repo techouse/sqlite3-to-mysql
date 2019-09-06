@@ -136,8 +136,7 @@ class TestSQLite3toMySQL:
         class FakeCursor:
             def execute(self, statement):
                 raise mysql.connector.Error(
-                    msg=faker.sentence(nb_words=12, variable_nb_words=True),
-                    errno=errorcode.ER_SERVER_TEST_MESSAGE,
+                    msg="Unknown MySQL error", errno=errorcode.CR_UNKNOWN_ERROR
                 )
 
         mocker.patch.object(proc, "_mysql_cur", FakeCursor())
@@ -145,10 +144,9 @@ class TestSQLite3toMySQL:
         with pytest.raises(mysql.connector.Error) as excinfo:
             caplog.set_level(logging.DEBUG)
             proc._create_database()
-        assert str(errorcode.ER_SERVER_TEST_MESSAGE) in str(excinfo.value)
+        assert str(errorcode.CR_UNKNOWN_ERROR) in str(excinfo.value)
         assert any(
-            str(errorcode.ER_SERVER_TEST_MESSAGE) in message
-            for message in caplog.messages
+            str(errorcode.CR_UNKNOWN_ERROR) in message for message in caplog.messages
         )
 
     def test_create_table_cursor_error(
@@ -166,8 +164,7 @@ class TestSQLite3toMySQL:
         class FakeCursor:
             def execute(self, statement):
                 raise mysql.connector.Error(
-                    msg=faker.sentence(nb_words=12, variable_nb_words=True),
-                    errno=errorcode.ER_SERVER_TEST_MESSAGE,
+                    msg="Unknown MySQL error", errno=errorcode.CR_UNKNOWN_ERROR
                 )
 
         mocker.patch.object(proc, "_mysql_cur", FakeCursor())
@@ -181,10 +178,9 @@ class TestSQLite3toMySQL:
         with pytest.raises(mysql.connector.Error) as excinfo:
             caplog.set_level(logging.DEBUG)
             proc._create_table(choice(sqlite_tables))
-        assert str(errorcode.ER_SERVER_TEST_MESSAGE) in str(excinfo.value)
+        assert str(errorcode.CR_UNKNOWN_ERROR) in str(excinfo.value)
         assert any(
-            str(errorcode.ER_SERVER_TEST_MESSAGE) in message
-            for message in caplog.messages
+            str(errorcode.CR_UNKNOWN_ERROR) in message for message in caplog.messages
         )
 
     def test_process_cursor_error(
@@ -201,8 +197,7 @@ class TestSQLite3toMySQL:
 
         def fake_transfer_table_data(sql, total_records=0):
             raise mysql.connector.Error(
-                msg=faker.sentence(nb_words=12, variable_nb_words=True),
-                errno=errorcode.ER_SERVER_TEST_MESSAGE,
+                msg="Unknown MySQL error", errno=errorcode.CR_UNKNOWN_ERROR
             )
 
         mocker.patch.object(proc, "_transfer_table_data", fake_transfer_table_data)
@@ -210,8 +205,97 @@ class TestSQLite3toMySQL:
         with pytest.raises(mysql.connector.Error) as excinfo:
             caplog.set_level(logging.DEBUG)
             proc.transfer()
-        assert str(errorcode.ER_SERVER_TEST_MESSAGE) in str(excinfo.value)
+        assert str(errorcode.CR_UNKNOWN_ERROR) in str(excinfo.value)
         assert any(
-            str(errorcode.ER_SERVER_TEST_MESSAGE) in message
-            for message in caplog.messages
+            str(errorcode.CR_UNKNOWN_ERROR) in message for message in caplog.messages
+        )
+
+    def test_add_indices_error(
+        self, sqlite_database, mysql_database, mysql_credentials, mocker, faker, caplog
+    ):
+        proc = SQLite3toMySQL(
+            sqlite_file=sqlite_database,
+            mysql_user=mysql_credentials.user,
+            mysql_password=mysql_credentials.password,
+            mysql_host=mysql_credentials.host,
+            mysql_port=mysql_credentials.port,
+            mysql_database=mysql_credentials.database,
+        )
+
+        sqlite_engine = create_engine(
+            "sqlite:///{database}".format(database=sqlite_database)
+        )
+        sqlite_inspect = inspect(sqlite_engine)
+        sqlite_tables = sqlite_inspect.get_table_names()
+
+        tables_with_indices = []
+        for table in sqlite_tables:
+            if sqlite_inspect.get_indexes(table):
+                tables_with_indices.append(table)
+
+        table_name = choice(tables_with_indices)
+        proc._create_table(table_name)
+
+        class FakeCursor:
+            def execute(self, statement):
+                raise mysql.connector.Error(
+                    msg="Unknown MySQL error", errno=errorcode.CR_UNKNOWN_ERROR
+                )
+
+        mocker.patch.object(proc, "_mysql_cur", FakeCursor())
+
+        with pytest.raises(mysql.connector.Error) as excinfo:
+            caplog.set_level(logging.DEBUG)
+            proc._add_indices(table_name)
+        assert str(errorcode.CR_UNKNOWN_ERROR) in str(excinfo.value)
+        assert any(
+            str(errorcode.CR_UNKNOWN_ERROR) in message for message in caplog.messages
+        )
+
+    def test_add_foreign_keys_error(
+        self, sqlite_database, mysql_database, mysql_credentials, mocker, faker, caplog
+    ):
+        proc = SQLite3toMySQL(
+            sqlite_file=sqlite_database,
+            mysql_user=mysql_credentials.user,
+            mysql_password=mysql_credentials.password,
+            mysql_host=mysql_credentials.host,
+            mysql_port=mysql_credentials.port,
+            mysql_database=mysql_credentials.database,
+        )
+
+        sqlite_engine = create_engine(
+            "sqlite:///{database}".format(database=sqlite_database)
+        )
+        sqlite_inspect = inspect(sqlite_engine)
+        sqlite_tables = sqlite_inspect.get_table_names()
+
+        tables_with_foreign_keys = []
+
+        for table in sqlite_tables:
+            sqlite_fk_stmt = 'PRAGMA foreign_key_list("{table}")'.format(table=table)
+            sqlite_fk_result = sqlite_engine.execute(sqlite_fk_stmt)
+            if sqlite_fk_result.returns_rows:
+                for _ in sqlite_fk_result:
+                    tables_with_foreign_keys.append(table)
+                    break
+
+        table_name = choice(tables_with_foreign_keys)
+
+        proc._create_table(table_name)
+
+        class FakeCursor:
+            def execute(self, statement):
+                raise mysql.connector.Error(
+                    msg="Unknown MySQL error", errno=errorcode.CR_UNKNOWN_ERROR
+                )
+
+        mocker.patch.object(proc, "_mysql_cur", FakeCursor())
+
+        with pytest.raises(mysql.connector.Error) as excinfo:
+            caplog.set_level(logging.DEBUG)
+            proc._add_foreign_keys(table_name)
+        assert str(errorcode.CR_UNKNOWN_ERROR) in str(excinfo.value)
+        assert any(
+            str(errorcode.CR_UNKNOWN_ERROR) in message for message in caplog.messages
         )

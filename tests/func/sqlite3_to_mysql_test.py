@@ -257,8 +257,6 @@ class TestSQLite3toMySQL:
         for table_name in sqlite_tables:
             for sqlite_index in sqlite_inspect.get_indexes(table_name):
                 sqlite_index["unique"] = bool(sqlite_index["unique"])
-                if sqlite_index["unique"]:
-                    sqlite_index["type"] = "UNIQUE"
                 assert sqlite_index in mysql_indices
 
         """ Test if all the tables have the same foreign keys """

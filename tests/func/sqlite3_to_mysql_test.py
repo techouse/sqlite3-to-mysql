@@ -244,11 +244,16 @@ class TestSQLite3toMySQL:
             ] == [column["name"] for column in mysql_inspect.get_columns(table_name)]
 
         """ Test if all the tables have the same indices """
-        mysql_indices = list(
-            chain.from_iterable(
-                mysql_inspect.get_indexes(table_name) for table_name in mysql_tables
+        index_keys = ("name", "column_names", "unique")
+        mysql_indices = tuple(
+            {key: index[key] for key in index_keys}
+            for index in (
+                chain.from_iterable(
+                    mysql_inspect.get_indexes(table_name) for table_name in mysql_tables
+                )
             )
         )
+
         for table_name in sqlite_tables:
             for sqlite_index in sqlite_inspect.get_indexes(table_name):
                 sqlite_index["unique"] = bool(sqlite_index["unique"])

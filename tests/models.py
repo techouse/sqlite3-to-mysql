@@ -99,7 +99,7 @@ class Misc(Base):
     __tablename__ = "misc"
     id = Column(Integer, primary_key=True)
     big_integer_field = Column(BigInteger, default=0)
-    blob_field = Column(BLOB, nullable=True)
+    blob_field = Column(BLOB, nullable=True, index=True)
     boolean_field = Column(Boolean, default=False)
     char_field = Column(CHAR(255), nullable=True)
     date_field = Column(Date, nullable=True)
@@ -132,7 +132,7 @@ class Article(Base):
     hash = Column(String(32), unique=True)
     slug = Column(String(255), index=True)
     title = Column(String(255), index=True)
-    content = Column(Text, nullable=True)
+    content = Column(Text, nullable=True, index=True)
     status = Column(CHAR(1), index=True)
     published = Column(DateTime, nullable=True)
     # relationships

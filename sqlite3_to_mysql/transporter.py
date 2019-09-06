@@ -257,13 +257,6 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
 
             if any(
                 table_columns[index_info["name"]].upper()  # pylint: disable=C0330
-                == "BLOB"  # pylint: disable=C0330
-                for index_info in index_infos  # pylint: disable=C0330
-            ):
-                # Do not add indices to BLOB fields
-                continue
-            elif any(
-                table_columns[index_info["name"]].upper()  # pylint: disable=C0330
                 == "TEXT"  # pylint: disable=C0330
                 for index_info in index_infos  # noqa: ignore=E501 pylint: disable=C0330
             ):
@@ -275,15 +268,20 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
             else:
                 column_list = []
                 for index_info in index_infos:
-                    suffix = self.COLUMN_LENGTH_PATTERN.search(
-                        table_columns[index_info["name"]]
-                    )
-                    if suffix:
-                        column_list.append(
-                            "`{column}`{length}".format(
-                                column=index_info["name"], length=suffix.group(0)
-                            )
+                    index_length = ""
+                    if table_columns[index_info["name"]].upper() == "BLOB":
+                        index_length = "({})".format(255)
+                    else:
+                        suffix = self.COLUMN_LENGTH_PATTERN.search(
+                            table_columns[index_info["name"]]
                         )
+                        if suffix:
+                            index_length = suffix.group(0)
+                    column_list.append(
+                        "`{column}`{length}".format(
+                            column=index_info["name"], length=index_length
+                        )
+                    )
                 index_columns = ", ".join(column_list)
 
             sql = """

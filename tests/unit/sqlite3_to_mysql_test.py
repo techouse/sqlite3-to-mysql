@@ -57,7 +57,7 @@ class TestSQLite3toMySQL:
             mysql_string_type=mysql_string_type,
         )
 
-        for column in sqlite_column_types:
+        for column in sqlite_column_types + ("INT64",):
             if column == "dialect":
                 continue
             elif column == "VARCHAR":

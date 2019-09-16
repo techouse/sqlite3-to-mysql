@@ -70,7 +70,7 @@ class TestSQLite3toMySQL:
                     proc._translate_type_from_sqlite_to_mysql(column)
                     == proc._mysql_integer_type
                 )
-            elif column == "NUMERIC":
+            elif column in {"INT64", "NUMERIC"}:
                 assert proc._translate_type_from_sqlite_to_mysql(column) == "BIGINT(19)"
             else:
                 assert proc._translate_type_from_sqlite_to_mysql(column) == column

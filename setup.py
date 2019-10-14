@@ -9,7 +9,7 @@ packages = ["sqlite3_to_mysql"]
 
 requires = [
     "Click>=7.0",
-    "mysql-connector-python>=8.0.17",
+    "mysql-connector-python>=8.0.18",
     "pytimeparse>=1.1.8",
     "six>=1.12.0",
     "simplejson>=3.16.0",
@@ -34,7 +34,7 @@ setup(
     url=about["__url__"],
     packages=packages,
     include_package_data=True,
-    python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.8.*",
+    python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*",
     install_requires=requires,
     license=about["__license__"],
     zip_safe=False,
@@ -53,6 +53,7 @@ setup(
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: Implementation :: CPython",
         "Topic :: Database",
     ],

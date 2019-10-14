@@ -76,13 +76,3 @@ tox
 ### Note
 After a __LONG__ time I finally found the time to write the complimentary script to transfer
 [MySQL to SQLite3](https://github.com/techouse/mysql-to-sqlite3). Check it out :)
-
-
-#### Additional note
-Python **3.8** is currently **not** supported because at the moment of writing the most recent 
-version of [MySQL Connector/Python](https://pypi.org/project/mysql-connector-python/) **v8.0.17** 
-still contains a reference to a [feature deprecated in Python 3.5 and removed in Python 3.8](https://bugs.python.org/issue1322):
-```
-mysql/connector/connection.py:126: DeprecationWarning: dist() and linux_distribution() functions are deprecated in Python 3.5
-```
-[Check the failing build for yourself](https://travis-ci.org/techouse/sqlite3-to-mysql/jobs/579039451).

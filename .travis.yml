@@ -25,6 +25,10 @@ matrix:
         - DB=mariadb:10.2
       python: "3.7"
     - env:
+        - TOXENV=py38
+        - DB=mariadb:10.2
+      python: "3.8"
+    - env:
         - TOXENV=py38-dev
         - DB=mariadb:10.2
       python: "3.8-dev"
@@ -45,6 +49,10 @@ matrix:
         - DB=mariadb:10.3
       python: "3.7"
     - env:
+        - TOXENV=py38
+        - DB=mariadb:10.3
+      python: "3.8"
+    - env:
         - TOXENV=py38-dev
         - DB=mariadb:10.3
       python: "3.8-dev"
@@ -65,6 +73,10 @@ matrix:
         - DB=mysql:5.7
       python: "3.7"
     - env:
+        - TOXENV=py38
+        - DB=mysql:5.7
+      python: "3.8"
+    - env:
         - TOXENV=py38-dev
         - DB=mysql:5.7
       python: "3.8-dev"
@@ -84,6 +96,10 @@ matrix:
         - TOXENV=py37
         - DB=mysql:8.0
       python: "3.7"
+    - env:
+        - TOXENV=py38
+        - DB=mysql:8.0
+      python: "3.8"
     - env:
         - TOXENV=py38-dev
         - DB=mysql:8.0

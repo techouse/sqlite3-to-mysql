@@ -141,9 +141,7 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
             self._mysql_cur = self._mysql.cursor(prepared=True)
         except mysql.connector.Error as err:
             self._logger.error(
-                "_create_database failed creating databse %s: %s",
-                self._mysql_database,
-                err,
+                "MySQL failed creating databse %s: %s", self._mysql_database, err,
             )
             raise
 
@@ -231,9 +229,7 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
             self._mysql_cur.execute(sql)
             self._mysql.commit()
         except mysql.connector.Error as err:
-            self._logger.error(
-                "_create_table failed creating table %s: %s", table_name, err
-            )
+            self._logger.error("MySQL failed creating table %s: %s", table_name, err)
             raise
 
     def _add_indices(self, table_name):  # pylint: disable=R0914
@@ -305,9 +301,7 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
                 self._mysql.commit()
             except mysql.connector.Error as err:
                 self._logger.error(
-                    "_add_indices failed adding indices to table %s: %s",
-                    table_name,
-                    err,
+                    "MySQL failed adding indices to table %s: %s", table_name, err,
                 )
                 raise
 
@@ -350,9 +344,7 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
                 self._mysql.commit()
             except mysql.connector.Error as err:
                 self._logger.error(
-                    "_add_foreign_keys failed adding foreign keys to table %s: %s",
-                    table_name,
-                    err,
+                    "MySQL failed adding foreign keys to table %s: %s", table_name, err,
                 )
                 raise
 
@@ -407,7 +399,7 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
                         self._transfer_table_data(sql=sql, total_records=total_records)
                     except mysql.connector.Error as err:
                         self._logger.error(
-                            "transfer failed inserting data into table %s: %s",
+                            "MySQL transfer failed inserting data into table %s: %s",
                             table["name"],
                             err,
                         )

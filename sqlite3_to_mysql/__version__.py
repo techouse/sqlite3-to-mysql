@@ -2,7 +2,7 @@
 __title__ = "sqlite3-to-mysql"
 __description__ = "A simple Python tool to transfer data from SQLite 3 to MySQL"
 __url__ = "https://github.com/techouse/sqlite3-to-mysql"
-__version__ = "1.2.16"
+__version__ = "1.2.17"
 __author__ = "Klemen Tušar"
 __author_email__ = "techouse@gmail.com"
 __license__ = "MIT"

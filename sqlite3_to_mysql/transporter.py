@@ -312,7 +312,7 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
             foreign_key = dict(row)
             sql = """
                 ALTER TABLE `{table}`
-                ADD CONSTRAINT {table}_FK_{id}_{seq}
+                ADD CONSTRAINT `{table}_FK_{id}_{seq}`
                 FOREIGN KEY (`{column}`)
                 REFERENCES `{ref_table}`(`{ref_column}`)
                 ON DELETE {on_delete}

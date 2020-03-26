@@ -47,6 +47,18 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
 
         self._sqlite_file = realpath(kwargs.get("sqlite_file"))
 
+        self._sqlite_tables = (
+            tuple(kwargs.get("sqlite_tables"))
+            if kwargs.get("sqlite_tables") is not None
+            else tuple()
+        )
+
+        self._without_foreign_keys = (
+            True
+            if len(self._sqlite_tables) > 0
+            else (kwargs.get("without_foreign_keys") or False)
+        )
+
         self._mysql_user = str(kwargs.get("mysql_user"))
 
         self._mysql_password = (
@@ -366,9 +378,28 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
 
     def transfer(self):
         """The primary and only method with which we transfer all the data."""
-        self._sqlite_cur.execute(
-            "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"  # noqa: ignore=E501 pylint: disable=C0301
-        )
+        if len(self._sqlite_tables) > 0:
+            # transfer only specific tables
+            self._sqlite_cur.execute(
+                """
+                SELECT name FROM sqlite_master 
+                WHERE type='table'
+                AND name NOT LIKE 'sqlite_%'
+                AND name IN({placeholders})
+                """.format(
+                    placeholders=("%s, " * len(self._sqlite_tables)).rstrip(" ,")
+                ),
+                self._sqlite_tables,
+            )
+        else:
+            # transfer all tables
+            self._sqlite_cur.execute(
+                """
+                SELECT name FROM sqlite_master 
+                WHERE type='table' 
+                AND name NOT LIKE 'sqlite_%'
+                """
+            )
         try:
             self._mysql_cur.execute("SET FOREIGN_KEY_CHECKS=0")
 
@@ -409,7 +440,8 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
                 self._add_indices(table["name"])
 
                 # add foreign keys
-                self._add_foreign_keys(table["name"])
+                if not self._without_foreign_keys:
+                    self._add_foreign_keys(table["name"])
         except Exception:  # pylint: disable=W0706
             raise
         finally:

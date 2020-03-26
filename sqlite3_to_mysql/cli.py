@@ -4,6 +4,7 @@ import sys
 
 import click
 from sqlite3_to_mysql import SQLite3toMySQL
+from sqlite3_to_mysql.click_utils import OptionEatAll
 
 
 @click.command()
@@ -14,6 +15,16 @@ from sqlite3_to_mysql import SQLite3toMySQL
     default=None,
     help="SQLite3 database file",
     required=True,
+)
+@click.option(
+    "-t",
+    "--sqlite-tables",
+    cls=OptionEatAll,
+    help="Transfer only these specific tables (space separated table names). "
+    "Implies --without-foreign-keys which inhibits the transfer of foreign keys.",
+)
+@click.option(
+    "-X", "--without-foreign-keys", is_flag=True, help="Do not transfer foreign keys."
 )
 @click.option(
     "-d", "--mysql-database", default=None, help="MySQL database name", required=True
@@ -42,6 +53,8 @@ from sqlite3_to_mysql import SQLite3toMySQL
 @click.option("-l", "--log-file", type=click.Path(), help="Log file")
 def cli(  # noqa: ignore=C0330  # pylint: disable=C0330,R0913
     sqlite_file,
+    sqlite_tables,
+    without_foreign_keys,
     mysql_user,
     mysql_password,
     mysql_database,
@@ -56,6 +69,9 @@ def cli(  # noqa: ignore=C0330  # pylint: disable=C0330,R0913
     try:
         converter = SQLite3toMySQL(
             sqlite_file=sqlite_file,
+            sqlite_tables=sqlite_tables,
+            without_foreign_keys=without_foreign_keys
+            or (sqlite_tables is not None and len(sqlite_tables) > 0),
             mysql_user=mysql_user,
             mysql_password=mysql_password,
             mysql_database=mysql_database,

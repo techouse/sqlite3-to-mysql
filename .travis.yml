@@ -83,32 +83,26 @@ matrix:
     - env:
         - TOXENV=py27
         - DB=mysql:8.0
-        - TEST_AUTH=yes
       python: "2.7"
     - env:
         - TOXENV=py35
         - DB=mysql:8.0
-        - TEST_AUTH=yes
       python: "3.5"
     - env:
         - TOXENV=py36
         - DB=mysql:8.0
-        - TEST_AUTH=yes
       python: "3.6"
     - env:
         - TOXENV=py37
         - DB=mysql:8.0
-        - TEST_AUTH=yes
       python: "3.7"
     - env:
         - TOXENV=py38
         - DB=mysql:8.0
-        - TEST_AUTH=yes
       python: "3.8"
     - env:
         - TOXENV=py38-dev
         - DB=mysql:8.0
-        - TEST_AUTH=yes
       python: "3.8-dev"
 
 install:

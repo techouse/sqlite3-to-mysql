@@ -1,7 +1,9 @@
-from random import choice
+from random import choice, sample
 
 import pytest
+import simplejson as json
 import six
+from sqlalchemy import create_engine, inspect
 
 from sqlite3_to_mysql import SQLite3toMySQL
 from sqlite3_to_mysql.cli import cli as sqlite3mysql
@@ -13,7 +15,13 @@ class TestSQLite3toMySQL:
     def test_no_arguments(self, cli_runner, mysql_database):
         result = cli_runner.invoke(sqlite3mysql)
         assert result.exit_code > 0
-        assert 'Error: Missing option "-f" / "--sqlite-file"' in result.output
+        assert any(
+            message in result.output
+            for message in {
+                'Error: Missing option "-f" / "--sqlite-file"',
+                "Error: Missing option '-f' / '--sqlite-file'",
+            }
+        )
 
     def test_non_existing_sqlite_file(self, cli_runner, mysql_database, faker):
         result = cli_runner.invoke(
@@ -26,7 +34,13 @@ class TestSQLite3toMySQL:
     def test_no_database_name(self, cli_runner, sqlite_database, mysql_database):
         result = cli_runner.invoke(sqlite3mysql, ["-f", sqlite_database])
         assert result.exit_code > 0
-        assert 'Error: Missing option "-d" / "--mysql-database"' in result.output
+        assert any(
+            message in result.output
+            for message in {
+                'Error: Missing option "-d" / "--mysql-database"',
+                "Error: Missing option '-d' / '--mysql-database'",
+            }
+        )
 
     def test_no_database_user(
         self, cli_runner, sqlite_database, mysql_credentials, mysql_database
@@ -35,7 +49,13 @@ class TestSQLite3toMySQL:
             sqlite3mysql, ["-f", sqlite_database, "-d", mysql_credentials.database]
         )
         assert result.exit_code > 0
-        assert 'Error: Missing option "-u" / "--mysql-user"' in result.output
+        assert any(
+            message in result.output
+            for message in {
+                'Error: Missing option "-u" / "--mysql-user"',
+                "Error: Missing option '-u' / '--mysql-user'",
+            }
+        )
 
     def test_invalid_database_name(
         self, cli_runner, sqlite_database, mysql_credentials, mysql_database, faker
@@ -204,3 +224,40 @@ class TestSQLite3toMySQL:
         )
         assert result.exit_code > 0
         assert "Process interrupted" in result.output
+
+    def test_transfer_specific_tables_only(
+        self, cli_runner, sqlite_database, mysql_credentials
+    ):
+        sqlite_engine = create_engine(
+            "sqlite:///{database}".format(database=sqlite_database),
+            json_serializer=json.dumps,
+            json_deserializer=json.loads,
+        )
+        sqlite_inspect = inspect(sqlite_engine)
+        sqlite_tables = sqlite_inspect.get_table_names()
+
+        if six.PY2:
+            table_number = choice(xrange(1, len(sqlite_tables)))
+        else:
+            table_number = choice(range(1, len(sqlite_tables)))
+
+        result = cli_runner.invoke(
+            sqlite3mysql,
+            [
+                "-f",
+                sqlite_database,
+                "-t",
+                " ".join(sample(sqlite_tables, table_number)),
+                "-d",
+                mysql_credentials.database,
+                "-u",
+                mysql_credentials.user,
+                "-p",
+                mysql_credentials.password,
+                "-h",
+                mysql_credentials.host,
+                "-P",
+                mysql_credentials.port,
+            ],
+        )
+        assert result.exit_code == 0

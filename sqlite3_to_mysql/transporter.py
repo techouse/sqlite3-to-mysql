@@ -382,12 +382,12 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
             # transfer only specific tables
             self._sqlite_cur.execute(
                 """
-                SELECT name FROM sqlite_master 
+                SELECT name FROM sqlite_master
                 WHERE type='table'
                 AND name NOT LIKE 'sqlite_%'
                 AND name IN({placeholders})
                 """.format(
-                    placeholders=("%s, " * len(self._sqlite_tables)).rstrip(" ,")
+                    placeholders=("?, " * len(self._sqlite_tables)).rstrip(" ,")
                 ),
                 self._sqlite_tables,
             )
@@ -395,8 +395,8 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
             # transfer all tables
             self._sqlite_cur.execute(
                 """
-                SELECT name FROM sqlite_master 
-                WHERE type='table' 
+                SELECT name FROM sqlite_master
+                WHERE type='table'
                 AND name NOT LIKE 'sqlite_%'
                 """
             )

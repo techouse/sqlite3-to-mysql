@@ -2,6 +2,7 @@ import logging
 import re
 from collections import namedtuple
 from itertools import chain
+from random import choice, sample
 
 import mysql.connector
 import pytest
@@ -297,6 +298,118 @@ class TestSQLite3toMySQL:
 
         meta = MetaData(bind=None)
         for table_name in sqlite_tables:
+            sqlite_table = Table(
+                table_name, meta, autoload=True, autoload_with=sqlite_engine
+            )
+            sqlite_stmt = select([sqlite_table])
+            sqlite_result = sqlite_cnx.execute(sqlite_stmt).fetchall()
+            sqlite_result.sort()
+            sqlite_result = tuple(tuple(data for data in row) for row in sqlite_result)
+            sqlite_results.append(sqlite_result)
+
+        for table_name in mysql_tables:
+            mysql_table = Table(
+                table_name, meta, autoload=True, autoload_with=mysql_engine
+            )
+            mysql_stmt = select([mysql_table])
+            mysql_result = mysql_cnx.execute(mysql_stmt).fetchall()
+            mysql_result.sort()
+            mysql_result = tuple(tuple(data for data in row) for row in mysql_result)
+            mysql_results.append(mysql_result)
+
+        assert sqlite_results == mysql_results
+
+    @pytest.mark.transfer
+    @pytest.mark.parametrize("chunk", [None, 10])
+    def test_transfer_specific_tables_transfers_only_specified_tables_from_sqlite_file(
+        self,
+        sqlite_database,
+        mysql_database,
+        mysql_credentials,
+        helpers,
+        capsys,
+        caplog,
+        chunk,
+    ):
+        sqlite_engine = create_engine(
+            "sqlite:///{database}".format(database=sqlite_database),
+            json_serializer=json.dumps,
+            json_deserializer=json.loads,
+        )
+        sqlite_cnx = sqlite_engine.connect()
+        sqlite_inspect = inspect(sqlite_engine)
+        sqlite_tables = sqlite_inspect.get_table_names()
+
+        if six.PY2:
+            table_number = choice(xrange(1, len(sqlite_tables)))
+        else:
+            table_number = choice(range(1, len(sqlite_tables)))
+
+        random_sqlite_tables = sample(sqlite_tables, table_number)
+        random_sqlite_tables.sort()
+
+        proc = SQLite3toMySQL(
+            sqlite_file=sqlite_database,
+            sqlite_tables=random_sqlite_tables,
+            mysql_user=mysql_credentials.user,
+            mysql_password=mysql_credentials.password,
+            mysql_host=mysql_credentials.host,
+            mysql_port=mysql_credentials.port,
+            mysql_database=mysql_credentials.database,
+            chunk=chunk,
+        )
+        caplog.set_level(logging.DEBUG)
+        proc.transfer()
+        assert all(record.levelname == "INFO" for record in caplog.records)
+        assert not any(record.levelname == "ERROR" for record in caplog.records)
+        out, err = capsys.readouterr()
+
+        mysql_engine = create_engine(
+            "mysql+mysqldb://{user}:{password}@{host}:{port}/{database}".format(
+                user=mysql_credentials.user,
+                password=mysql_credentials.password,
+                host=mysql_credentials.host,
+                port=mysql_credentials.port,
+                database=mysql_credentials.database,
+            ),
+            json_serializer=json.dumps,
+            json_deserializer=json.loads,
+        )
+        mysql_cnx = mysql_engine.connect()
+        mysql_inspect = inspect(mysql_engine)
+        mysql_tables = mysql_inspect.get_table_names()
+
+        """ Test if both databases have the same table names """
+        assert random_sqlite_tables == mysql_tables
+
+        """ Test if all the tables have the same column names """
+        for table_name in random_sqlite_tables:
+            assert [
+                column["name"] for column in sqlite_inspect.get_columns(table_name)
+            ] == [column["name"] for column in mysql_inspect.get_columns(table_name)]
+
+        """ Test if all the tables have the same indices """
+        index_keys = ("name", "column_names", "unique")
+        mysql_indices = tuple(
+            {key: index[key] for key in index_keys}
+            for index in (
+                chain.from_iterable(
+                    mysql_inspect.get_indexes(table_name) for table_name in mysql_tables
+                )
+            )
+        )
+
+        for table_name in random_sqlite_tables:
+            for sqlite_index in sqlite_inspect.get_indexes(table_name):
+                sqlite_index["unique"] = bool(sqlite_index["unique"])
+                assert sqlite_index in mysql_indices
+
+        """ Check if all the data was transferred correctly """
+        sqlite_results = []
+        mysql_results = []
+
+        meta = MetaData(bind=None)
+        for table_name in random_sqlite_tables:
             sqlite_table = Table(
                 table_name, meta, autoload=True, autoload_with=sqlite_engine
             )

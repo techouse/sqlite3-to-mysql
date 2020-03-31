@@ -57,8 +57,8 @@ matrix:
         - DB=mariadb:10.3
       python: "3.8-dev"
     - env:
-      - TOXENV=py27
-      - DB=mariadb:10.4
+        - TOXENV=py27
+        - DB=mariadb:10.4
       python: "2.7"
     - env:
         - TOXENV=py35

@@ -2,7 +2,8 @@ Click>=7.0
 docker>=4.0.2
 factory-boy
 mysql-connector-python>=8.0.18
-mysqlclient>=1.4.4
+PyMySQL>=0.9.3
+PyMySQL[rsa]
 pytest>=4.6.5
 pytest-cov
 pytest-faker

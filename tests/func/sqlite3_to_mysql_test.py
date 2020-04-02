@@ -221,7 +221,7 @@ class TestSQLite3toMySQL:
         sqlite_inspect = inspect(sqlite_engine)
         sqlite_tables = sqlite_inspect.get_table_names()
         mysql_engine = create_engine(
-            "mysql+mysqldb://{user}:{password}@{host}:{port}/{database}".format(
+            "mysql+pymysql://{user}:{password}@{host}:{port}/{database}".format(
                 user=mysql_credentials.user,
                 password=mysql_credentials.password,
                 host=mysql_credentials.host,
@@ -365,7 +365,7 @@ class TestSQLite3toMySQL:
         out, err = capsys.readouterr()
 
         mysql_engine = create_engine(
-            "mysql+mysqldb://{user}:{password}@{host}:{port}/{database}".format(
+            "mysql+pymysql://{user}:{password}@{host}:{port}/{database}".format(
                 user=mysql_credentials.user,
                 password=mysql_credentials.password,
                 host=mysql_credentials.host,

@@ -332,7 +332,7 @@ def mysql_database(mysql_instance, mysql_credentials):
     yield
 
     engine = create_engine(
-        "mysql+mysqldb://{user}:{password}@{host}:{port}/{database}".format(
+        "mysql+pymysql://{user}:{password}@{host}:{port}/{database}".format(
             user=mysql_credentials.user,
             password=mysql_credentials.password,
             host=mysql_credentials.host,

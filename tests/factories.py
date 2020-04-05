@@ -1,3 +1,4 @@
+from os import environ
 import factory
 
 from . import models
@@ -38,7 +39,8 @@ class MiscFactory(factory.Factory):
     decimal_field = factory.Faker("pydecimal", left_digits=8, right_digits=2)
     float_field = factory.Faker("pyfloat", left_digits=8, right_digits=4)
     integer_field = factory.Faker("pyint", min_value=-(2 ** 31), max_value=2 ** 31 - 1)
-    json_field = factory.Faker("pydict")
+    if not environ.get("LEGACY_DB", False):
+        json_field = factory.Faker("pydict")
     numeric_field = factory.Faker("pyfloat", left_digits=8, right_digits=4)
     real_field = factory.Faker("pyfloat", left_digits=8, right_digits=4)
     small_integer_field = factory.Faker(

@@ -10,123 +10,303 @@ matrix:
   include:
     - env:
         - TOXENV=py27
+        - DB=mariadb:5.5
+        - LEGACY_DB=true
+      python: "2.7"
+    - env:
+        - TOXENV=py35
+        - DB=mariadb:5.5
+        - LEGACY_DB=true
+      python: "3.5"
+    - env:
+        - TOXENV=py36
+        - DB=mariadb:5.5
+        - LEGACY_DB=true
+      python: "3.6"
+    - env:
+        - TOXENV=py37
+        - DB=mariadb:5.5
+        - LEGACY_DB=true
+      python: "3.7"
+    - env:
+        - TOXENV=py38
+        - DB=mariadb:5.5
+        - LEGACY_DB=true
+      python: "3.8"
+    - env:
+        - TOXENV=py38-dev
+        - DB=mariadb:5.5
+        - LEGACY_DB=true
+      python: "3.8-dev"
+    - env:
+        - TOXENV=py27
+        - DB=mariadb:5.5
+        - LEGACY_DB=true
+      python: "2.7"
+    - env:
+        - TOXENV=py35
+        - DB=mariadb:10.0
+        - LEGACY_DB=true
+      python: "3.5"
+    - env:
+        - TOXENV=py36
+        - DB=mariadb:10.0
+        - LEGACY_DB=true
+      python: "3.6"
+    - env:
+        - TOXENV=py37
+        - DB=mariadb:10.0
+        - LEGACY_DB=true
+      python: "3.7"
+    - env:
+        - TOXENV=py38
+        - DB=mariadb:10.0
+        - LEGACY_DB=true
+      python: "3.8"
+    - env:
+        - TOXENV=py38-dev
+        - DB=mariadb:10.0
+        - LEGACY_DB=true
+      python: "3.8-dev"
+    - env:
+        - TOXENV=py27
+        - DB=mariadb:10.1
+        - LEGACY_DB=true
+      python: "2.7"
+    - env:
+        - TOXENV=py35
+        - DB=mariadb:10.1
+        - LEGACY_DB=true
+      python: "3.5"
+    - env:
+        - TOXENV=py36
+        - DB=mariadb:10.1
+        - LEGACY_DB=true
+      python: "3.6"
+    - env:
+        - TOXENV=py37
+        - DB=mariadb:10.1
+        - LEGACY_DB=true
+      python: "3.7"
+    - env:
+        - TOXENV=py38
+        - DB=mariadb:10.1
+        - LEGACY_DB=true
+      python: "3.8"
+    - env:
+        - TOXENV=py38-dev
+        - DB=mariadb:10.1
+        - LEGACY_DB=true
+      python: "3.8-dev"
+    - env:
+        - TOXENV=py27
         - DB=mariadb:10.2
+        - LEGACY_DB=false
       python: "2.7"
     - env:
         - TOXENV=py35
         - DB=mariadb:10.2
+        - LEGACY_DB=false
       python: "3.5"
     - env:
         - TOXENV=py36
         - DB=mariadb:10.2
+        - LEGACY_DB=false
       python: "3.6"
     - env:
         - TOXENV=py37
         - DB=mariadb:10.2
+        - LEGACY_DB=false
       python: "3.7"
     - env:
         - TOXENV=py38
         - DB=mariadb:10.2
+        - LEGACY_DB=false
       python: "3.8"
     - env:
         - TOXENV=py38-dev
         - DB=mariadb:10.2
+        - LEGACY_DB=false
       python: "3.8-dev"
     - env:
         - TOXENV=py27
         - DB=mariadb:10.3
+        - LEGACY_DB=false
       python: "2.7"
     - env:
         - TOXENV=py35
         - DB=mariadb:10.3
+        - LEGACY_DB=false
       python: "3.5"
     - env:
         - TOXENV=py36
         - DB=mariadb:10.3
+        - LEGACY_DB=false
       python: "3.6"
     - env:
         - TOXENV=py37
         - DB=mariadb:10.3
+        - LEGACY_DB=false
       python: "3.7"
     - env:
         - TOXENV=py38
         - DB=mariadb:10.3
+        - LEGACY_DB=false
       python: "3.8"
     - env:
         - TOXENV=py38-dev
         - DB=mariadb:10.3
+        - LEGACY_DB=false
       python: "3.8-dev"
     - env:
         - TOXENV=py27
         - DB=mariadb:10.4
+        - LEGACY_DB=false
       python: "2.7"
     - env:
         - TOXENV=py35
         - DB=mariadb:10.4
+        - LEGACY_DB=false
       python: "3.5"
     - env:
         - TOXENV=py36
         - DB=mariadb:10.4
+        - LEGACY_DB=false
       python: "3.6"
     - env:
         - TOXENV=py37
         - DB=mariadb:10.4
+        - LEGACY_DB=false
       python: "3.7"
     - env:
         - TOXENV=py38
         - DB=mariadb:10.4
+        - LEGACY_DB=false
       python: "3.8"
     - env:
         - TOXENV=py38-dev
         - DB=mariadb:10.4
+        - LEGACY_DB=false
+      python: "3.8-dev"
+    - env:
+        - TOXENV=py27
+        - DB=mysql:5.5
+        - LEGACY_DB=true
+      python: "2.7"
+    - env:
+        - TOXENV=py35
+        - DB=mysql:5.5
+        - LEGACY_DB=true
+      python: "3.5"
+    - env:
+        - TOXENV=py36
+        - DB=mysql:5.5
+        - LEGACY_DB=true
+      python: "3.6"
+    - env:
+        - TOXENV=py37
+        - DB=mysql:5.5
+        - LEGACY_DB=true
+      python: "3.7"
+    - env:
+        - TOXENV=py38
+        - DB=mysql:5.5
+        - LEGACY_DB=true
+      python: "3.8"
+    - env:
+        - TOXENV=py38-dev
+        - DB=mysql:5.6
+        - LEGACY_DB=true
+      python: "3.8-dev"
+    - env:
+        - TOXENV=py27
+        - DB=mysql:5.6
+        - LEGACY_DB=true
+      python: "2.7"
+    - env:
+        - TOXENV=py35
+        - DB=mysql:5.6
+        - LEGACY_DB=true
+      python: "3.5"
+    - env:
+        - TOXENV=py36
+        - DB=mysql:5.6
+        - LEGACY_DB=true
+      python: "3.6"
+    - env:
+        - TOXENV=py37
+        - DB=mysql:5.6
+        - LEGACY_DB=true
+      python: "3.7"
+    - env:
+        - TOXENV=py38
+        - DB=mysql:5.6
+        - LEGACY_DB=true
+      python: "3.8"
+    - env:
+        - TOXENV=py38-dev
+        - DB=mysql:5.6
+        - LEGACY_DB=true
       python: "3.8-dev"
     - env:
         - TOXENV=py27
         - DB=mysql:5.7
+        - LEGACY_DB=false
       python: "2.7"
     - env:
         - TOXENV=py35
         - DB=mysql:5.7
+        - LEGACY_DB=false
       python: "3.5"
     - env:
         - TOXENV=py36
         - DB=mysql:5.7
+        - LEGACY_DB=false
       python: "3.6"
     - env:
         - TOXENV=py37
         - DB=mysql:5.7
+        - LEGACY_DB=false
       python: "3.7"
     - env:
         - TOXENV=py38
         - DB=mysql:5.7
+        - LEGACY_DB=false
       python: "3.8"
     - env:
         - TOXENV=py38-dev
         - DB=mysql:5.7
+        - LEGACY_DB=false
       python: "3.8-dev"
     - env:
         - TOXENV=py27
         - DB=mysql:8.0
+        - LEGACY_DB=false
       python: "2.7"
     - env:
         - TOXENV=py35
         - DB=mysql:8.0
+        - LEGACY_DB=false
       python: "3.5"
     - env:
         - TOXENV=py36
         - DB=mysql:8.0
+        - LEGACY_DB=false
       python: "3.6"
     - env:
         - TOXENV=py37
         - DB=mysql:8.0
+        - LEGACY_DB=false
       python: "3.7"
     - env:
         - TOXENV=py38
         - DB=mysql:8.0
+        - LEGACY_DB=false
       python: "3.8"
     - env:
         - TOXENV=py38-dev
         - DB=mysql:8.0
+        - LEGACY_DB=false
       python: "3.8-dev"
 
 install:

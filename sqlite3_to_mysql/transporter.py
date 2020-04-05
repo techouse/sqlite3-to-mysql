@@ -122,8 +122,12 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
                     raise
 
             self._mysql_version = self._get_mysql_version()
-            self._mysql_json_support = self._check_mysql_json_support(self._mysql_version)
-            self._mysql_fulltext_innodb_support = self._check_mysql_fulltext_innodb_support(self._mysql_version)
+            self._mysql_json_support = self._check_mysql_json_support(
+                self._mysql_version
+            )
+            self._mysql_fulltext_support = self._check_mysql_fulltext_support(
+                self._mysql_version
+            )
         except mysql.connector.Error as err:
             self._logger.error(err)
             raise
@@ -150,7 +154,6 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
         try:
             self._mysql_cur.execute("SHOW VARIABLES LIKE 'version'")
             return self._mysql_cur.fetchone()[1]
-            return version.parse(re.sub("-.*$", "", self._mysql_cur.fetchone()[1]))
         except (IndexError, mysql.connector.Error) as err:
             self._logger.error(
                 "MySQL failed checking for InnoDB version: %s", err,
@@ -162,7 +165,7 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
         mysql_version = version.parse(re.sub("-.*$", "", version_string))
 
         if version_string.lower().endswith("-mariadb"):
-            if (
+            if (  # pylint: disable=C0330
                 mysql_version.major >= 10
                 and mysql_version.minor >= 2
                 and mysql_version.micro >= 7
@@ -176,11 +179,11 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
         return False
 
     @staticmethod
-    def _check_mysql_fulltext_innodb_support(version_string):
+    def _check_mysql_fulltext_support(version_string):
         mysql_version = version.parse(re.sub("-.*$", "", version_string))
 
         if version_string.lower().endswith("-mariadb"):
-            if (
+            if (  # pylint: disable=C0330
                 mysql_version.major >= 10
                 and mysql_version.minor >= 0
                 and mysql_version.micro >= 5
@@ -297,7 +300,7 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
             self._logger.error("MySQL failed creating table %s: %s", table_name, err)
             raise
 
-    def _add_indices(self, table_name):  # pylint: disable=R0914
+    def _add_indices(self, table_name):  # noqa: ignore=C901 pylint: disable=R0914
         self._sqlite_cur.execute('PRAGMA table_info("{}")'.format(table_name))
         table_columns = {}
         for row in self._sqlite_cur.fetchall():
@@ -322,7 +325,7 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
                 for index_info in index_infos  # noqa: ignore=E501 pylint: disable=C0330
             ):
                 # Limit the max TEXT field index length to 255
-                if self._mysql_fulltext_innodb_support:
+                if self._mysql_fulltext_support:
                     index_type = "FULLTEXT"
                 index_columns = ",".join(
                     "`{}`".format(index_info["name"]) for index_info in index_infos

@@ -14,6 +14,7 @@ from sys import stdout
 import mysql.connector
 import six
 from mysql.connector import errorcode  # pylint: disable=C0412
+from packaging import version
 from tqdm import trange
 
 from sqlite3_to_mysql.sqlite_utils import (  # noqa: ignore=I100
@@ -110,6 +111,7 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
                 raise ConnectionError("Unable to connect to MySQL")
 
             self._mysql_cur = self._mysql.cursor(prepared=True)
+
             try:
                 self._mysql.database = self._mysql_database
             except mysql.connector.Error as err:
@@ -118,6 +120,10 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
                 else:
                     self._logger.error(err)
                     raise
+
+            self._mysql_version = self._get_mysql_version()
+            self._mysql_json_support = self._check_mysql_json_support(self._mysql_version)
+            self._mysql_fulltext_innodb_support = self._check_mysql_fulltext_innodb_support(self._mysql_version)
         except mysql.connector.Error as err:
             self._logger.error(err)
             raise
@@ -139,6 +145,53 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
             logger.addHandler(file_handler)
 
         return logger
+
+    def _get_mysql_version(self):
+        try:
+            self._mysql_cur.execute("SHOW VARIABLES LIKE 'version'")
+            return self._mysql_cur.fetchone()[1]
+            return version.parse(re.sub("-.*$", "", self._mysql_cur.fetchone()[1]))
+        except (IndexError, mysql.connector.Error) as err:
+            self._logger.error(
+                "MySQL failed checking for InnoDB version: %s", err,
+            )
+            raise
+
+    @staticmethod
+    def _check_mysql_json_support(version_string):
+        mysql_version = version.parse(re.sub("-.*$", "", version_string))
+
+        if version_string.lower().endswith("-mariadb"):
+            if (
+                mysql_version.major >= 10
+                and mysql_version.minor >= 2
+                and mysql_version.micro >= 7
+            ):
+                return True
+        else:
+            if mysql_version.major >= 8:
+                return True
+            if mysql_version.minor >= 7 and mysql_version.micro >= 8:
+                return True
+        return False
+
+    @staticmethod
+    def _check_mysql_fulltext_innodb_support(version_string):
+        mysql_version = version.parse(re.sub("-.*$", "", version_string))
+
+        if version_string.lower().endswith("-mariadb"):
+            if (
+                mysql_version.major >= 10
+                and mysql_version.minor >= 0
+                and mysql_version.micro >= 5
+            ):
+                return True
+        else:
+            if mysql_version.major >= 8:
+                return True
+            if mysql_version.minor >= 6:
+                return True
+        return False
 
     def _create_database(self):
         try:
@@ -269,7 +322,8 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
                 for index_info in index_infos  # noqa: ignore=E501 pylint: disable=C0330
             ):
                 # Limit the max TEXT field index length to 255
-                index_type = "FULLTEXT"
+                if self._mysql_fulltext_innodb_support:
+                    index_type = "FULLTEXT"
                 index_columns = ",".join(
                     "`{}`".format(index_info["name"]) for index_info in index_infos
                 )

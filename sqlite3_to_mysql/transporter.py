@@ -319,16 +319,26 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
 
             index_type = "UNIQUE" if int(index["unique"]) == 1 else "INDEX"
 
-            if self._mysql_fulltext_support and any(
+            if any(
                 table_columns[index_info["name"]].upper()  # pylint: disable=C0330
                 == "TEXT"  # pylint: disable=C0330
                 for index_info in index_infos  # noqa: ignore=E501 pylint: disable=C0330
             ):
-                # Limit the max TEXT field index length to 255
-                index_type = "FULLTEXT"
-                index_columns = ",".join(
-                    "`{}`".format(index_info["name"]) for index_info in index_infos
-                )
+
+                if self._mysql_fulltext_support:
+                    # Use fulltext if available
+                    index_type = "FULLTEXT"
+                    index_columns = ",".join(
+                        "`{}`".format(index_info["name"]) for index_info in index_infos
+                    )
+                else:
+                    # Limit the max TEXT field index length to 255
+                    index_columns = ", ".join(
+                        "`{column}`{length}".format(
+                            column=index_info["name"], length="({})".format(255)
+                        )
+                        for index_info in index_infos
+                    )
             else:
                 column_list = []
                 for index_info in index_infos:

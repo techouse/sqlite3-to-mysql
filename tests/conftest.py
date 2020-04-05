@@ -2,6 +2,7 @@ import socket
 from codecs import open
 from collections import namedtuple
 from contextlib import contextmanager, closing
+from os import environ
 from os.path import join, isfile, realpath, dirname, abspath
 from time import sleep
 
@@ -76,6 +77,14 @@ def pytest_addoption(parser):
     )
 
     parser.addoption(
+        "--legacy-db",
+        dest="legacy_db",
+        type=bool,
+        default=False,
+        help="Test against MySQL < 5.7 or MariaDB < 10.2.",
+    )
+
+    parser.addoption(
         "--no-docker",
         dest="use_docker",
         default=True,
@@ -143,6 +152,14 @@ class Helpers:
 @pytest.fixture
 def helpers():
     return Helpers
+
+
+@pytest.fixture(scope="session", autouse=True)
+def check_legacy_db(pytestconfig):
+    if pytestconfig.getoption("legacy_db") == "1":
+        environ["LEGACY_DB"] = "1"
+    else:
+        environ["LEGACY_DB"] = "0"
 
 
 @pytest.fixture(scope="session")

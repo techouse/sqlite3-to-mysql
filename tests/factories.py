@@ -40,7 +40,7 @@ class MiscFactory(factory.Factory):
     decimal_field = factory.Faker("pydecimal", left_digits=8, right_digits=2)
     float_field = factory.Faker("pyfloat", left_digits=8, right_digits=4)
     integer_field = factory.Faker("pyint", min_value=-(2 ** 31), max_value=2 ** 31 - 1)
-    if not environ.get("LEGACY_DB", False):
+    if environ.get("LEGACY_DB", "0") == "0":
         json_field = factory.Faker("pydict")
     numeric_field = factory.Faker("pyfloat", left_digits=8, right_digits=4)
     real_field = factory.Faker("pyfloat", left_digits=8, right_digits=4)

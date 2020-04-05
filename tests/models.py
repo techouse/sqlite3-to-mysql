@@ -109,7 +109,7 @@ class Misc(Base):
     decimal_field = Column(SQLiteNumeric(10, 2), nullable=True)
     float_field = Column(SQLiteNumeric(12, 4), default=0)
     integer_field = Column(Integer, default=0)
-    if not environ.get("LEGACY_DB", False):
+    if environ.get("LEGACY_DB", "0") == "0":
         json_field = Column(JSON, nullable=True)
     numeric_field = Column(SQLiteNumeric(12, 4), default=0)
     real_field = Column(REAL(12, 4), default=0)

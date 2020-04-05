@@ -1,4 +1,6 @@
 from decimal import Decimal
+from os import environ
+
 import sqlalchemy.types as types
 from sqlalchemy import (
     Table,
@@ -107,7 +109,8 @@ class Misc(Base):
     decimal_field = Column(SQLiteNumeric(10, 2), nullable=True)
     float_field = Column(SQLiteNumeric(12, 4), default=0)
     integer_field = Column(Integer, default=0)
-    json_field = Column(JSON, nullable=True)
+    if not environ.get("LEGACY_DB", False):
+        json_field = Column(JSON, nullable=True)
     numeric_field = Column(SQLiteNumeric(12, 4), default=0)
     real_field = Column(REAL(12, 4), default=0)
     small_integer_field = Column(SmallInteger, default=0)

@@ -267,7 +267,7 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
         return ""
 
     def _create_table(self, table_name):
-        primary_key = ""
+        primary_keys = []
 
         sql = "CREATE TABLE IF NOT EXISTS `{}` ( ".format(table_name)
 
@@ -286,11 +286,13 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
                 else "",
             )
             if column["pk"]:
-                primary_key = column["name"]
+                primary_keys.append(column["name"])
 
         sql = sql.rstrip(", ")
-        if primary_key:
-            sql += ", PRIMARY KEY (`{}`)".format(primary_key)
+        if len(primary_keys) > 0:
+            sql += ", PRIMARY KEY ({})".format(
+                ", ".join(map(lambda x: "`" + x + "`", primary_keys))
+            )
         sql += " ) ENGINE = InnoDB CHARACTER SET utf8mb4"
 
         try:

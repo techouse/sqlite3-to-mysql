@@ -278,7 +278,7 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
             sql += " `{name}` {type} {notnull} {auto_increment}, ".format(
                 name=column["name"],
                 type=self._translate_type_from_sqlite_to_mysql(column["type"]),
-                notnull="NOT NULL" if column["notnull"] else "NULL",
+                notnull="NOT NULL" if column["notnull"] or column["pk"] else "NULL",
                 auto_increment="AUTO_INCREMENT"
                 if column["pk"]
                 and self._translate_type_from_sqlite_to_mysql(column["type"])

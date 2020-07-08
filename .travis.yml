@@ -1,5 +1,5 @@
 # Adapted from https://github.com/PyMySQL/PyMySQL/blob/master/.travis.yml
-dist: xenial
+dist: bionic
 language: python
 cache: pip
 
@@ -40,7 +40,7 @@ matrix:
       python: "3.8-dev"
     - env:
         - TOXENV=py27
-        - DB=mariadb:5.5
+        - DB=mariadb:10.0
         - LEGACY_DB=1
       python: "2.7"
     - env:

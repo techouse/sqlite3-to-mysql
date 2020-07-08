@@ -227,7 +227,7 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
             raise ValueError("Invalid column_type!")
 
         data_type = match.group(0).upper()
-        if data_type in {"TEXT", "CLOB"}:
+        if data_type in {"TEXT", "CLOB", "STRING"}:
             return "TEXT"
         if data_type in {"CHARACTER", "NCHAR", "NATIVE CHARACTER"}:
             return "CHAR" + self._column_type_length(column_type)

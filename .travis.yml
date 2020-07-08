@@ -7,6 +7,57 @@ services:
   - docker
 
 matrix:
+  allow_failures:
+    - env:
+        - TOXENV=py27
+        - DB=mariadb:5.5
+        - LEGACY_DB=1
+      python: "2.7"
+    - env:
+        - TOXENV=py27
+        - DB=mariadb:10.0
+        - LEGACY_DB=1
+      python: "2.7"
+    - env:
+        - TOXENV=py27
+        - DB=mariadb:10.1
+        - LEGACY_DB=1
+      python: "2.7"
+    - env:
+        - TOXENV=py27
+        - DB=mariadb:10.2
+        - LEGACY_DB=0
+      python: "2.7"
+    - env:
+        - TOXENV=py27
+        - DB=mariadb:10.3
+        - LEGACY_DB=0
+      python: "2.7"
+    - env:
+        - TOXENV=py27
+        - DB=mariadb:10.4
+        - LEGACY_DB=0
+      python: "2.7"
+    - env:
+        - TOXENV=py27
+        - DB=mysql:5.5
+        - LEGACY_DB=1
+      python: "2.7"
+    - env:
+        - TOXENV=py27
+        - DB=mysql:5.6
+        - LEGACY_DB=1
+      python: "2.7"
+    - env:
+        - TOXENV=py27
+        - DB=mysql:5.7
+        - LEGACY_DB=0
+      python: "2.7"
+    - env:
+        - TOXENV=py27
+        - DB=mysql:8.0
+        - LEGACY_DB=0
+      python: "2.7"
   include:
     - env:
         - TOXENV=py27

@@ -235,6 +235,15 @@ class TestSQLite3toMySQL:
         mysql_inspect = inspect(mysql_engine)
         mysql_tables = mysql_inspect.get_table_names()
 
+        mysql_connector_connection = mysql.connector.connect(
+            user=mysql_credentials.user,
+            password=mysql_credentials.password,
+            host=mysql_credentials.host,
+            port=mysql_credentials.port,
+            database=mysql_credentials.database,
+        )
+        server_version = mysql_connector_connection.get_server_version()
+
         """ Test if both databases have the same table names """
         assert sqlite_tables == mysql_tables
 
@@ -266,11 +275,16 @@ class TestSQLite3toMySQL:
                 """
                 SELECT k.REFERENCED_TABLE_NAME AS `table`, k.COLUMN_NAME AS `from`, k.REFERENCED_COLUMN_NAME AS `to`
                 FROM information_schema.TABLE_CONSTRAINTS AS i 
-                LEFT JOIN information_schema.KEY_COLUMN_USAGE AS k ON i.CONSTRAINT_NAME = k.CONSTRAINT_NAME 
+                {JOIN} information_schema.KEY_COLUMN_USAGE AS k ON i.CONSTRAINT_NAME = k.CONSTRAINT_NAME 
                 WHERE i.TABLE_SCHEMA = :table_schema
                 AND i.TABLE_NAME = :table_name
                 AND i.CONSTRAINT_TYPE = :constraint_type
-            """
+            """.format(
+                    # MySQL 8.0.19 still works with "LEFT JOIN" everything above requires "JOIN"
+                    JOIN="JOIN"
+                    if (server_version[0] == 8 and server_version[2] > 19)
+                    else "LEFT JOIN"
+                )
             ).bindparams(
                 table_schema=mysql_credentials.database,
                 table_name=table_name,

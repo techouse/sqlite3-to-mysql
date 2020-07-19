@@ -213,7 +213,7 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
                 CREATE DATABASE IF NOT EXISTS `{}`
                 DEFAULT CHARACTER SET utf8mb4
                 DEFAULT COLLATE utf8mb4_general_ci
-            """.format(
+            """.format(  # pylint: disable=C0330
                     self._mysql_database
                 )
             )
@@ -308,7 +308,7 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
                 # In case we have a non-numeric primary key
                 column_type = self._translate_type_from_sqlite_to_mysql(column["type"])
                 if column_type in {"TEXT", "BLOB"} or column_type.startswith(
-                    ("CHAR", "VARCHAR")
+                    ("CHAR", "VARCHAR")  # pylint: disable=C0330
                 ):
                     primary_key_length = self._column_type_length(column_type, 255)
 
@@ -522,7 +522,7 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
                     self._sqlite_cur.execute(
                         """
                         SELECT {rowid} * FROM "{table_name}"
-                    """.format(
+                    """.format(  # pylint: disable=C0330
                             rowid='rowid as "rowid",' if transfer_rowid else "",
                             table_name=table["name"],
                         )

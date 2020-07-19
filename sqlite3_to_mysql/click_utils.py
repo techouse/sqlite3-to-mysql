@@ -40,7 +40,9 @@ class OptionEatAll(click.Option):
             # call the actual process
             self._previous_parser_process(value, state)
 
-        retval = super(OptionEatAll, self).add_to_parser(parser, ctx)
+        retval = super(OptionEatAll, self).add_to_parser(  # pylint: disable=E1111
+            parser, ctx
+        )
         for name in self.opts:
             # pylint: disable=W0212
             our_parser = parser._long_opt.get(name) or parser._short_opt.get(name)

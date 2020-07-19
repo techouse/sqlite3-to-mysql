@@ -2,7 +2,6 @@ import socket
 from codecs import open
 from collections import namedtuple
 from contextlib import contextmanager, closing
-from os import environ
 from os.path import join, isfile, realpath, dirname, abspath
 from time import sleep
 
@@ -26,6 +25,7 @@ from .factories import (
     ImageFactory,
     MiscFactory,
     TagFactory,
+    MediaFactory,
 )
 
 if six.PY2:
@@ -166,6 +166,7 @@ def sqlite_database(pytestconfig, faker, tmpdir_factory):
             article.authors.append(AuthorFactory())
             article.tags.append(TagFactory())
             article.misc.append(MiscFactory())
+            article.media.append(MediaFactory())
             for _ in range(faker.pyint(min_value=1, max_value=4)):
                 article.images.append(
                     ImageFactory(

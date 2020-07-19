@@ -129,6 +129,26 @@ article_misc = Table(
 )
 
 
+class Media(Base):
+    __tablename__ = "media"
+    id = Column(CHAR(64), primary_key=True)
+    title = Column(String(255), index=True)
+    description = Column(String(255), nullable=True)
+
+    def __repr__(self):
+        return "<Media(id='{id}', title='{title}')>".format(
+            id=self.id, title=self.title
+        )
+
+
+article_media = Table(
+    "article_media",
+    Base.metadata,
+    Column("article_id", Integer, ForeignKey("articles.id"), primary_key=True),
+    Column("media_id", CHAR(64), ForeignKey("media.id"), primary_key=True),
+)
+
+
 class Article(Base):
     __tablename__ = "articles"
     id = Column(Integer, primary_key=True)
@@ -155,6 +175,12 @@ class Article(Base):
         "Image",
         secondary=article_images,
         backref=backref("images", lazy="dynamic"),
+        lazy="dynamic",
+    )
+    media = relationship(
+        "Media",
+        secondary=article_media,
+        backref=backref("media", lazy="dynamic"),
         lazy="dynamic",
     )
     misc = relationship(

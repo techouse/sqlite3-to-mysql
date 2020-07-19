@@ -108,3 +108,12 @@ class ArticleFactory(factory.Factory):
             # A list of authors were passed in, use them
             for misc in extracted:
                 self.misc.add(misc)
+
+
+class MediaFactory(factory.Factory):
+    class Meta:
+        model = models.Media
+
+    id = factory.Faker("sha256", raw_output=False)
+    title = factory.Faker("sentence", nb_words=6)
+    description = factory.Faker("sentence", nb_words=12, variable_nb_words=True)

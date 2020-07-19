@@ -47,6 +47,7 @@ from sqlite3_to_mysql.click_utils import OptionEatAll
     default="VARCHAR(255)",
     help="MySQL default string field type. Defaults to VARCHAR(255).",
 )
+@click.option("--with-rowid", is_flag=True, help="Transfer rowid columns.")
 @click.option(
     "-c", "--chunk", type=int, default=None, help="Chunk reading/writing SQL records"
 )
@@ -62,6 +63,7 @@ def cli(  # noqa: ignore=C0330  # pylint: disable=C0330,R0913
     mysql_port,
     mysql_integer_type,
     mysql_string_type,
+    with_rowid,
     chunk,
     log_file,
 ):
@@ -79,6 +81,7 @@ def cli(  # noqa: ignore=C0330  # pylint: disable=C0330,R0913
             mysql_port=mysql_port,
             mysql_integer_type=mysql_integer_type,
             mysql_string_type=mysql_string_type,
+            with_rowid=with_rowid,
             chunk=chunk,
             log_file=log_file,
         )

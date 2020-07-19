@@ -40,6 +40,7 @@ Options:
                               separated table names). Implies --without-
                               foreign-keys which inhibits the transfer of
                               foreign keys.
+
   -X, --without-foreign-keys  Do not transfer foreign keys.
   -d, --mysql-database TEXT   MySQL database name  [required]
   -u, --mysql-user TEXT       MySQL user  [required]
@@ -48,8 +49,11 @@ Options:
   -P, --mysql-port INTEGER    MySQL port. Defaults to 3306.
   --mysql-integer-type TEXT   MySQL default integer field type. Defaults to
                               INT(11).
+
   --mysql-string-type TEXT    MySQL default string field type. Defaults to
                               VARCHAR(255).
+
+  --with-rowid                Transfer rowid columns.
   -c, --chunk INTEGER         Chunk reading/writing SQL records
   -l, --log-file PATH         Log file
   --help                      Show this message and exit.

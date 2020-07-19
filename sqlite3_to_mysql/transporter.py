@@ -84,6 +84,8 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
             kwargs.get("mysql_string_type") or "VARCHAR(255)"
         ).upper()
 
+        self._with_rowid = kwargs.get("with_rowid") or False
+
         sqlite3.register_adapter(Decimal, adapt_decimal)
         sqlite3.register_converter("DECIMAL", convert_decimal)
         sqlite3.register_adapter(timedelta, adapt_timedelta)
@@ -196,6 +198,14 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
                 return True
         return False
 
+    def _sqlite_table_has_rowid(self, table):
+        try:
+            self._sqlite_cur.execute("""SELECT rowid FROM "{}" LIMIT 1""".format(table))
+            self._sqlite_cur.fetchall()
+            return True
+        except sqlite3.OperationalError:
+            return False
+
     def _create_database(self):
         try:
             self._mysql_cur.execute(
@@ -266,10 +276,14 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
             return "({})".format(default)
         return ""
 
-    def _create_table(self, table_name):
+    def _create_table(self, table_name, transfer_rowid=False):
         primary_key = ""
+        primary_key_length = ""
 
         sql = "CREATE TABLE IF NOT EXISTS `{}` ( ".format(table_name)
+
+        if transfer_rowid:
+            sql += " `rowid` BIGINT NOT NULL, "
 
         self._sqlite_cur.execute('PRAGMA table_info("{}")'.format(table_name))
 
@@ -287,10 +301,20 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
             )
             if column["pk"]:
                 primary_key = column["name"]
+                # In case we have a non-numeric primary key
+                column_type = self._translate_type_from_sqlite_to_mysql(column["type"])
+                if column_type in {"TEXT", "BLOB"} or column_type.startswith(
+                    ("CHAR", "VARCHAR")
+                ):
+                    primary_key_length = self._column_type_length(column_type, 255)
 
         sql = sql.rstrip(", ")
         if primary_key:
-            sql += ", PRIMARY KEY (`{}`)".format(primary_key)
+            sql += ", PRIMARY KEY (`{column}`{length})".format(
+                column=primary_key, length=primary_key_length,
+            )
+        if transfer_rowid:
+            sql += ", CONSTRAINT `{}_rowid` UNIQUE (`rowid`)".format(table_name)
         sql += " ) ENGINE = InnoDB CHARACTER SET utf8mb4"
 
         try:
@@ -343,6 +367,7 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
                 column_list = []
                 for index_info in index_infos:
                     index_length = ""
+                    # Limit the max BLOB field index length to 255
                     if table_columns[index_info["name"]].upper() == "BLOB":
                         index_length = "({})".format(255)
                     else:
@@ -364,7 +389,7 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
             """.format(
                 table=table_name,
                 index_type=index_type,
-                name=index["name"],
+                name=index["name"][:64],  # Limit the index name to 64 chars.
                 columns=index_columns,
             )
 
@@ -472,8 +497,13 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
             for row in self._sqlite_cur.fetchall():
                 table = dict(row)
 
+                # check if we're transferring rowid
+                transfer_rowid = self._with_rowid and self._sqlite_table_has_rowid(
+                    table["name"]
+                )
+
                 # create the table
-                self._create_table(table["name"])
+                self._create_table(table["name"], transfer_rowid=transfer_rowid)
 
                 # get the size of the data
                 self._sqlite_cur.execute(
@@ -485,7 +515,14 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
                 if total_records > 0:
                     # populate it
                     self._logger.info("Transferring table %s", table["name"])
-                    self._sqlite_cur.execute('SELECT * FROM "{}"'.format(table["name"]))
+                    self._sqlite_cur.execute(
+                        """
+                        SELECT {rowid} * FROM "{table_name}" 
+                    """.format(
+                            rowid='rowid as "rowid",' if transfer_rowid else "",
+                            table_name=table["name"],
+                        )
+                    )
                     columns = [column[0] for column in self._sqlite_cur.description]
                     sql = "INSERT IGNORE INTO `{table}` ({fields}) VALUES ({placeholders})".format(  # noqa: ignore=E501 pylint: disable=C0301
                         table=table["name"],

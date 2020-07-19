@@ -111,3 +111,4 @@ venv.bak/
 
 # Potential leftovers
 tests/db_credentials.json
+test.db

@@ -278,24 +278,3 @@ class TestSQLite3toMySQL:
             ],
         )
         assert result.exit_code == 0
-
-    def test_transfer_with_rowid(self, cli_runner, sqlite_database, mysql_credentials):
-        result = cli_runner.invoke(
-            sqlite3mysql,
-            [
-                "-f",
-                sqlite_database,
-                "-d",
-                mysql_credentials.database,
-                "-u",
-                mysql_credentials.user,
-                "-p",
-                mysql_credentials.password,
-                "-h",
-                mysql_credentials.host,
-                "-P",
-                mysql_credentials.port,
-                "--with-rowid",
-            ],
-        )
-        assert result.exit_code == 0

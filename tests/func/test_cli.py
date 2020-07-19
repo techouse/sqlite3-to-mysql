@@ -146,24 +146,40 @@ class TestSQLite3toMySQL:
         )
 
     @pytest.mark.parametrize(
-        "mysql_integer_type, mysql_string_type, chunk",
+        "mysql_integer_type, mysql_string_type, chunk, with_rowid",
         [
-            # 000
-            (None, None, None),
-            # 111
-            ("BIGINT(19)", "TEXT", 10),
-            # 110
-            ("BIGINT(19)", "TEXT", None),
-            # 011
-            (None, "TEXT", 10),
-            # 010
-            (None, "TEXT", None),
-            # 100
-            ("BIGINT(19)", None, None),
-            # 001
-            (None, None, 10),
-            # 101
-            ("BIGINT(19)", None, 10),
+            # 0000
+            (None, None, None, False),
+            # 0001
+            (None, None, None, True),
+            # 1110
+            ("BIGINT(19)", "TEXT", 10, False),
+            # 1111
+            ("BIGINT(19)", "TEXT", 10, True),
+            # 1100
+            ("BIGINT(19)", "TEXT", None, False),
+            # 1101
+            ("BIGINT(19)", "TEXT", None, True),
+            # 0110
+            (None, "TEXT", 10, False),
+            # 0111
+            (None, "TEXT", 10, True),
+            # 0100
+            (None, "TEXT", None, False),
+            # 0101
+            (None, "TEXT", None, True),
+            # 1000
+            ("BIGINT(19)", None, None, False),
+            # 1001
+            ("BIGINT(19)", None, None, True),
+            # 0010
+            (None, None, 10, False),
+            # 0011
+            (None, None, 10, True),
+            # 1010
+            ("BIGINT(19)", None, 10, False),
+            # 1011
+            ("BIGINT(19)", None, 10, True),
         ],
     )
     def test_minimum_valid_parameters(
@@ -175,30 +191,31 @@ class TestSQLite3toMySQL:
         mysql_string_type,
         mysql_database,
         chunk,
+        with_rowid,
     ):
-        result = cli_runner.invoke(
-            sqlite3mysql,
-            [
-                "-f",
-                sqlite_database,
-                "-d",
-                mysql_credentials.database,
-                "-u",
-                mysql_credentials.user,
-                "-p",
-                mysql_credentials.password,
-                "-h",
-                mysql_credentials.host,
-                "-P",
-                mysql_credentials.port,
-                "--mysql-integer-type",
-                mysql_integer_type,
-                "--mysql-string-type",
-                mysql_string_type,
-                "-c",
-                chunk,
-            ],
-        )
+        arguments = [
+            "-f",
+            sqlite_database,
+            "-d",
+            mysql_credentials.database,
+            "-u",
+            mysql_credentials.user,
+            "-p",
+            mysql_credentials.password,
+            "-h",
+            mysql_credentials.host,
+            "-P",
+            mysql_credentials.port,
+            "--mysql-integer-type",
+            mysql_integer_type,
+            "--mysql-string-type",
+            mysql_string_type,
+            "-c",
+            chunk,
+        ]
+        if with_rowid:
+            arguments.append("--with-rowid")
+        result = cli_runner.invoke(sqlite3mysql, arguments,)
         assert result.exit_code == 0
 
     def test_keyboard_interrupt(
@@ -258,6 +275,27 @@ class TestSQLite3toMySQL:
                 mysql_credentials.host,
                 "-P",
                 mysql_credentials.port,
+            ],
+        )
+        assert result.exit_code == 0
+
+    def test_transfer_with_rowid(self, cli_runner, sqlite_database, mysql_credentials):
+        result = cli_runner.invoke(
+            sqlite3mysql,
+            [
+                "-f",
+                sqlite_database,
+                "-d",
+                mysql_credentials.database,
+                "-u",
+                mysql_credentials.user,
+                "-p",
+                mysql_credentials.password,
+                "-h",
+                mysql_credentials.host,
+                "-P",
+                mysql_credentials.port,
+                "--with-rowid",
             ],
         )
         assert result.exit_code == 0

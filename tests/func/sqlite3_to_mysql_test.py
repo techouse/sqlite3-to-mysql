@@ -186,7 +186,9 @@ class TestSQLite3toMySQL:
             )
 
     @pytest.mark.transfer
-    @pytest.mark.parametrize("chunk", [None, 10])
+    @pytest.mark.parametrize(
+        "chunk, with_rowid", [(None, False), (None, True), (10, False), (10, True)]
+    )
     def test_transfer_transfers_all_tables_in_sqlite_file(
         self,
         sqlite_database,
@@ -196,6 +198,7 @@ class TestSQLite3toMySQL:
         capsys,
         caplog,
         chunk,
+        with_rowid,
     ):
         proc = SQLite3toMySQL(
             sqlite_file=sqlite_database,
@@ -205,6 +208,7 @@ class TestSQLite3toMySQL:
             mysql_port=mysql_credentials.port,
             mysql_database=mysql_credentials.database,
             chunk=chunk,
+            with_rowid=with_rowid,
         )
         caplog.set_level(logging.DEBUG)
         proc.transfer()
@@ -249,9 +253,14 @@ class TestSQLite3toMySQL:
 
         """ Test if all the tables have the same column names """
         for table_name in sqlite_tables:
-            assert [
+            column_names = [
                 column["name"] for column in sqlite_inspect.get_columns(table_name)
-            ] == [column["name"] for column in mysql_inspect.get_columns(table_name)]
+            ]
+            if with_rowid:
+                column_names.insert(0, "rowid")
+            assert column_names == [
+                column["name"] for column in mysql_inspect.get_columns(table_name)
+            ]
 
         """ Test if all the tables have the same indices """
         index_keys = ("name", "column_names", "unique")
@@ -265,7 +274,17 @@ class TestSQLite3toMySQL:
         )
 
         for table_name in sqlite_tables:
-            for sqlite_index in sqlite_inspect.get_indexes(table_name):
+            sqlite_indices = sqlite_inspect.get_indexes(table_name)
+            if with_rowid:
+                sqlite_indices.insert(
+                    0,
+                    {
+                        "name": "{}_rowid".format(table_name),
+                        "column_names": ["rowid"],
+                        "unique": 1,
+                    },
+                )
+            for sqlite_index in sqlite_indices:
                 sqlite_index["unique"] = bool(sqlite_index["unique"])
                 assert sqlite_index in mysql_indices
 
@@ -334,7 +353,9 @@ class TestSQLite3toMySQL:
         assert sqlite_results == mysql_results
 
     @pytest.mark.transfer
-    @pytest.mark.parametrize("chunk", [None, 10])
+    @pytest.mark.parametrize(
+        "chunk, with_rowid", [(None, False), (None, True), (10, False), (10, True)]
+    )
     def test_transfer_specific_tables_transfers_only_specified_tables_from_sqlite_file(
         self,
         sqlite_database,
@@ -344,6 +365,7 @@ class TestSQLite3toMySQL:
         capsys,
         caplog,
         chunk,
+        with_rowid,
     ):
         sqlite_engine = create_engine(
             "sqlite:///{database}".format(database=sqlite_database),
@@ -371,6 +393,7 @@ class TestSQLite3toMySQL:
             mysql_port=mysql_credentials.port,
             mysql_database=mysql_credentials.database,
             chunk=chunk,
+            with_rowid=with_rowid,
         )
         caplog.set_level(logging.DEBUG)
         proc.transfer()
@@ -398,9 +421,14 @@ class TestSQLite3toMySQL:
 
         """ Test if all the tables have the same column names """
         for table_name in random_sqlite_tables:
-            assert [
+            column_names = [
                 column["name"] for column in sqlite_inspect.get_columns(table_name)
-            ] == [column["name"] for column in mysql_inspect.get_columns(table_name)]
+            ]
+            if with_rowid:
+                column_names.insert(0, "rowid")
+            assert column_names == [
+                column["name"] for column in mysql_inspect.get_columns(table_name)
+            ]
 
         """ Test if all the tables have the same indices """
         index_keys = ("name", "column_names", "unique")
@@ -414,7 +442,17 @@ class TestSQLite3toMySQL:
         )
 
         for table_name in random_sqlite_tables:
-            for sqlite_index in sqlite_inspect.get_indexes(table_name):
+            sqlite_indices = sqlite_inspect.get_indexes(table_name)
+            if with_rowid:
+                sqlite_indices.insert(
+                    0,
+                    {
+                        "name": "{}_rowid".format(table_name),
+                        "column_names": ["rowid"],
+                        "unique": 1,
+                    },
+                )
+            for sqlite_index in sqlite_indices:
                 sqlite_index["unique"] = bool(sqlite_index["unique"])
                 assert sqlite_index in mysql_indices
 

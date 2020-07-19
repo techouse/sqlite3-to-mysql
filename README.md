@@ -59,33 +59,6 @@ Options:
   --help                      Show this message and exit.
 ```
 
-### Testing
-In order to run the test suite run these commands using a Docker MySQL image.
-
-**Requires a running Docker instance!**
-
-- using Python 2.7
-```bash
-git clone https://github.com/techouse/sqlite3-to-mysql
-cd sqlite3-to-mysql
-virtualenv -p $(which python2) env
-source env/bin/activate
-pip install -e .
-pip install -r requirements_dev.txt
-tox
-```
-
-- using Python 3.5+
-```bash
-git clone https://github.com/techouse/sqlite3-to-mysql
-cd sqlite3-to-mysql                   
-python3 -m venv env
-source env/bin/activate
-pip install -e .
-pip install -r requirements_dev.txt
-tox
-```
-
 ### Note
 After a __LONG__ time I finally found the time to write the complimentary script to transfer
 [MySQL to SQLite3](https://github.com/techouse/mysql-to-sqlite3). Check it out :)

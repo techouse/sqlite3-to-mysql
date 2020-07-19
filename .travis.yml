@@ -403,8 +403,6 @@ install:
 before_script:
   - bash ./.travis/initdb.sh
   - python -VV
-  - mysql -V
-  - sqlite3 -version
   - rm -f ~/.my.cnf
 
 script:

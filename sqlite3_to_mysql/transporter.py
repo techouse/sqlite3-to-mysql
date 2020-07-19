@@ -209,7 +209,11 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
     def _create_database(self):
         try:
             self._mysql_cur.execute(
-                "CREATE DATABASE IF NOT EXISTS `{}` DEFAULT CHARACTER SET 'utf8mb4'".format(  # noqa: ignore=E501 pylint: disable=C0301
+                """
+                CREATE DATABASE IF NOT EXISTS `{}`
+                DEFAULT CHARACTER SET utf8mb4
+                DEFAULT COLLATE utf8mb4_general_ci
+            """.format(
                     self._mysql_database
                 )
             )
@@ -315,7 +319,7 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
             )
         if transfer_rowid:
             sql += ", CONSTRAINT `{}_rowid` UNIQUE (`rowid`)".format(table_name)
-        sql += " ) ENGINE = InnoDB CHARACTER SET utf8mb4"
+        sql += " ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci"
 
         try:
             self._mysql_cur.execute(sql)
@@ -517,7 +521,7 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
                     self._logger.info("Transferring table %s", table["name"])
                     self._sqlite_cur.execute(
                         """
-                        SELECT {rowid} * FROM "{table_name}" 
+                        SELECT {rowid} * FROM "{table_name}"
                     """.format(
                             rowid='rowid as "rowid",' if transfer_rowid else "",
                             table_name=table["name"],

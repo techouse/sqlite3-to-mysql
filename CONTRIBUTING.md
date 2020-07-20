@@ -14,9 +14,13 @@ Backwards compatibility is a must.
 Currently the tool supports Python versions 2.7, 3.5, 3.6, 3.7, 3.8 and is aiming to
 support 3.9 once that becomes available to the general public.
 
-Even though Python 2.7 has reached the end of its life at
-the beginning of this year, a lot of people still rely on it. Therefore we should continue to support it as long as the
-underlying tools do not completely drop support for it.
+Even though Python 2.7 has reached the end of its life at the beginning of 2020, a lot of people still rely on it. 
+Therefore we should continue to support it as long as the underlying tools do not completely drop support for it.
+
+## MySQL version support
+
+This tool supports and should continue to support MySQL versions 5.5, 5.6, 5.7 and 8.0. This includes any includes major
+forks of MySQL, e.g. MariaDB.
 
 ## Testing
 

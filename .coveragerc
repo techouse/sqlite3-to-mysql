@@ -1,4 +1,2 @@
 [run]
-omit =
-    sqlite3_to_mysql/__version__.py
-    sqlite3_to_mysql/debug_info.py
+omit = sqlite3_to_mysql/__version__.py

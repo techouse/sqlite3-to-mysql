@@ -63,6 +63,116 @@ matrix:
         - DB=mysql:8.0
         - LEGACY_DB=0
       python: "3.9-dev"
+    - env:
+      - TOXENV=py39-dev
+      - DB=mariadb:5.5
+      - LEGACY_DB=1
+      python: "pypy"
+    - env:
+        - TOXENV=py39-dev
+        - DB=mariadb:10.0
+        - LEGACY_DB=1
+      python: "pypy"
+    - env:
+        - TOXENV=py39-dev
+        - DB=mariadb:10.1
+        - LEGACY_DB=1
+      python: "pypy"
+    - env:
+        - TOXENV=py39-dev
+        - DB=mariadb:10.2
+        - LEGACY_DB=0
+      python: "pypy"
+    - env:
+        - TOXENV=py39-dev
+        - DB=mariadb:10.3
+        - LEGACY_DB=0
+      python: "pypy"
+    - env:
+        - TOXENV=py39-dev
+        - DB=mariadb:10.4
+        - LEGACY_DB=0
+      python: "pypy"
+    - env:
+        - TOXENV=py39-dev
+        - DB=mariadb:10.5
+        - LEGACY_DB=0
+      python: "pypy"
+    - env:
+        - TOXENV=py39-dev
+        - DB=mysql:5.6
+        - LEGACY_DB=1
+      python: "pypy"
+    - env:
+        - TOXENV=py39-dev
+        - DB=mysql:5.6
+        - LEGACY_DB=1
+      python: "pypy"
+    - env:
+        - TOXENV=py39-dev
+        - DB=mysql:5.7
+        - LEGACY_DB=0
+      python: "pypy"
+    - env:
+        - TOXENV=py39-dev
+        - DB=mysql:8.0
+        - LEGACY_DB=0
+      python: "pypy"
+    - env:
+      - TOXENV=py39-dev
+      - DB=mariadb:5.5
+      - LEGACY_DB=1
+      python: "pypy3"
+    - env:
+        - TOXENV=py39-dev
+        - DB=mariadb:10.0
+        - LEGACY_DB=1
+      python: "pypy3"
+    - env:
+        - TOXENV=py39-dev
+        - DB=mariadb:10.1
+        - LEGACY_DB=1
+      python: "pypy3"
+    - env:
+        - TOXENV=py39-dev
+        - DB=mariadb:10.2
+        - LEGACY_DB=0
+      python: "pypy3"
+    - env:
+        - TOXENV=py39-dev
+        - DB=mariadb:10.3
+        - LEGACY_DB=0
+      python: "pypy3"
+    - env:
+        - TOXENV=py39-dev
+        - DB=mariadb:10.4
+        - LEGACY_DB=0
+      python: "pypy3"
+    - env:
+        - TOXENV=py39-dev
+        - DB=mariadb:10.5
+        - LEGACY_DB=0
+      python: "pypy3"
+    - env:
+        - TOXENV=py39-dev
+        - DB=mysql:5.6
+        - LEGACY_DB=1
+      python: "pypy3"
+    - env:
+        - TOXENV=py39-dev
+        - DB=mysql:5.6
+        - LEGACY_DB=1
+      python: "pypy3"
+    - env:
+        - TOXENV=py39-dev
+        - DB=mysql:5.7
+        - LEGACY_DB=0
+      python: "pypy3"
+    - env:
+        - TOXENV=py39-dev
+        - DB=mysql:8.0
+        - LEGACY_DB=0
+      python: "pypy3"
   include:
     - env:
         - TOXENV=py27
@@ -95,6 +205,16 @@ matrix:
         - LEGACY_DB=1
       python: "3.9-dev"
     - env:
+        - TOXENV=py39-dev
+        - DB=mariadb:5.5
+        - LEGACY_DB=1
+      python: "pypy"
+    - env:
+        - TOXENV=py39-dev
+        - DB=mariadb:5.5
+        - LEGACY_DB=1
+      python: "pypy3"
+    - env:
         - TOXENV=py27
         - DB=mariadb:10.0
         - LEGACY_DB=1
@@ -124,6 +244,16 @@ matrix:
         - DB=mariadb:10.0
         - LEGACY_DB=1
       python: "3.9-dev"
+    - env:
+        - TOXENV=py39-dev
+        - DB=mariadb:10.0
+        - LEGACY_DB=1
+      python: "pypy"
+    - env:
+        - TOXENV=py39-dev
+        - DB=mariadb:10.0
+        - LEGACY_DB=1
+      python: "pypy3"
     - env:
         - TOXENV=py27
         - DB=mariadb:10.1
@@ -155,6 +285,16 @@ matrix:
         - LEGACY_DB=1
       python: "3.9-dev"
     - env:
+        - TOXENV=py39-dev
+        - DB=mariadb:10.1
+        - LEGACY_DB=1
+      python: "pypy"
+    - env:
+        - TOXENV=py39-dev
+        - DB=mariadb:10.1
+        - LEGACY_DB=1
+      python: "pypy3"
+    - env:
         - TOXENV=py27
         - DB=mariadb:10.2
         - LEGACY_DB=0
@@ -185,6 +325,16 @@ matrix:
         - LEGACY_DB=0
       python: "3.9-dev"
     - env:
+        - TOXENV=py39-dev
+        - DB=mariadb:10.2
+        - LEGACY_DB=0
+      python: "pypy"
+    - env:
+        - TOXENV=py39-dev
+        - DB=mariadb:10.2
+        - LEGACY_DB=0
+      python: "pypy3"
+    - env:
         - TOXENV=py27
         - DB=mariadb:10.3
         - LEGACY_DB=0
@@ -215,6 +365,16 @@ matrix:
         - LEGACY_DB=0
       python: "3.9-dev"
     - env:
+        - TOXENV=py39-dev
+        - DB=mariadb:10.3
+        - LEGACY_DB=0
+      python: "pypy"
+    - env:
+        - TOXENV=py39-dev
+        - DB=mariadb:10.3
+        - LEGACY_DB=0
+      python: "pypy3"
+    - env:
         - TOXENV=py27
         - DB=mariadb:10.4
         - LEGACY_DB=0
@@ -245,6 +405,16 @@ matrix:
         - LEGACY_DB=0
       python: "3.9-dev"
     - env:
+        - TOXENV=py39-dev
+        - DB=mariadb:10.4
+        - LEGACY_DB=0
+      python: "pypy"
+    - env:
+        - TOXENV=py39-dev
+        - DB=mariadb:10.4
+        - LEGACY_DB=0
+      python: "pypy3"
+    - env:
         - TOXENV=py27
         - DB=mariadb:10.5
         - LEGACY_DB=0
@@ -274,6 +444,16 @@ matrix:
         - DB=mariadb:10.5
         - LEGACY_DB=0
       python: "3.9-dev"
+    - env:
+        - TOXENV=py39-dev
+        - DB=mariadb:10.5
+        - LEGACY_DB=0
+      python: "pypy"
+    - env:
+        - TOXENV=py39-dev
+        - DB=mariadb:10.5
+        - LEGACY_DB=0
+      python: "pypy3"
     - env:
         - TOXENV=py27
         - DB=mysql:5.5
@@ -305,6 +485,16 @@ matrix:
         - LEGACY_DB=1
       python: "3.9-dev"
     - env:
+        - TOXENV=py39-dev
+        - DB=mysql:5.6
+        - LEGACY_DB=1
+      python: "pypy"
+    - env:
+        - TOXENV=py39-dev
+        - DB=mysql:5.6
+        - LEGACY_DB=1
+      python: "pypy3"
+    - env:
         - TOXENV=py27
         - DB=mysql:5.6
         - LEGACY_DB=1
@@ -335,6 +525,16 @@ matrix:
         - LEGACY_DB=1
       python: "3.9-dev"
     - env:
+        - TOXENV=py39-dev
+        - DB=mysql:5.6
+        - LEGACY_DB=1
+      python: "pypy"
+    - env:
+        - TOXENV=py39-dev
+        - DB=mysql:5.6
+        - LEGACY_DB=1
+      python: "pypy3"
+    - env:
         - TOXENV=py27
         - DB=mysql:5.7
         - LEGACY_DB=0
@@ -365,6 +565,16 @@ matrix:
         - LEGACY_DB=0
       python: "3.9-dev"
     - env:
+        - TOXENV=py39-dev
+        - DB=mysql:5.7
+        - LEGACY_DB=0
+      python: "pypy"
+    - env:
+        - TOXENV=py39-dev
+        - DB=mysql:5.7
+        - LEGACY_DB=0
+      python: "pypy3"
+    - env:
         - TOXENV=py27
         - DB=mysql:8.0
         - LEGACY_DB=0
@@ -394,6 +604,16 @@ matrix:
         - DB=mysql:8.0
         - LEGACY_DB=0
       python: "3.9-dev"
+    - env:
+        - TOXENV=py39-dev
+        - DB=mysql:8.0
+        - LEGACY_DB=0
+      python: "pypy"
+    - env:
+        - TOXENV=py39-dev
+        - DB=mysql:8.0
+        - LEGACY_DB=0
+      python: "pypy3"
 
 install:
   - pip install -U codecov

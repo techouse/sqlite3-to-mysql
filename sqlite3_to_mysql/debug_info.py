@@ -37,14 +37,15 @@ def _implementation():
         implementation_version = platform.python_version()
     elif implementation == "PyPy":
         implementation_version = "%s.%s.%s" % (
-            sys.pypy_version_info.major,
-            sys.pypy_version_info.minor,
-            sys.pypy_version_info.micro,
+            sys.pypy_version_info.major,  # noqa: ignore=E1101 pylint: disable=E1101
+            sys.pypy_version_info.minor,  # noqa: ignore=E1101 pylint: disable=E1101
+            sys.pypy_version_info.micro,  # noqa: ignore=E1101 pylint: disable=E1101
         )
-        if sys.pypy_version_info.releaselevel != "final":
-            implementation_version = "".join(
-                [implementation_version, sys.pypy_version_info.releaselevel]
-            )
+        rel = (
+            sys.pypy_version_info.releaselevel  # noqa: ignore=E1101 pylint: disable=E1101
+        )
+        if rel != "final":
+            implementation_version = "".join([implementation_version, rel])
     elif implementation == "Jython":
         implementation_version = platform.python_version()  # Complete Guess
     elif implementation == "IronPython":

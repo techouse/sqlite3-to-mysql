@@ -15,6 +15,7 @@ requires = [
     "simplejson>=3.16.0",
     "tqdm>=4.35.0",
     "packaging>=20.3",
+    "tabulate",
 ]
 
 about = {}

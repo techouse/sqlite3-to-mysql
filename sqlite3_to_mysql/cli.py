@@ -3,8 +3,11 @@
 import sys
 
 import click
-from sqlite3_to_mysql import SQLite3toMySQL
-from sqlite3_to_mysql.click_utils import OptionEatAll
+from tabulate import tabulate
+
+from . import SQLite3toMySQL
+from .click_utils import OptionEatAll
+from .debug_info import info
 
 
 @click.command()
@@ -52,6 +55,9 @@ from sqlite3_to_mysql.click_utils import OptionEatAll
     "-c", "--chunk", type=int, default=None, help="Chunk reading/writing SQL records"
 )
 @click.option("-l", "--log-file", type=click.Path(), help="Log file")
+@click.version_option(
+    message=tabulate(info(), headers=["software", "version"], tablefmt="github")
+)
 def cli(  # noqa: ignore=C0330  # pylint: disable=C0330,R0913
     sqlite_file,
     sqlite_tables,

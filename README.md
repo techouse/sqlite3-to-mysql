@@ -56,6 +56,7 @@ Options:
   --with-rowid                Transfer rowid columns.
   -c, --chunk INTEGER         Chunk reading/writing SQL records
   -l, --log-file PATH         Log file
+  --version                   Show the version and exit.
   --help                      Show this message and exit.
 ```
 

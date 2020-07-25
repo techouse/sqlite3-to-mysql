@@ -19,10 +19,10 @@ What happened instead.
 **System Information**
 
 ```bash
-$ python -m sqlite3_to_mysql.debug_info
+$ sqlite3mysql --version
 ```
 
-```json
+```
 <paste here>
 ```
 

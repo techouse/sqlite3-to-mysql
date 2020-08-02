@@ -281,8 +281,7 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
         return ""
 
     def _create_table(self, table_name, transfer_rowid=False):
-        primary_key = ""
-        primary_key_length = ""
+        primary_keys = []
 
         sql = "CREATE TABLE IF NOT EXISTS `{}` ( ".format(table_name)
 
@@ -303,19 +302,23 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
                 in {"INT", "BIGINT"}
                 else "",
             )
-            if column["pk"]:
-                primary_key = column["name"]
+            if column["pk"] > 0:
+                primary_key = {"column": column["name"], "length": ""}
                 # In case we have a non-numeric primary key
                 column_type = self._translate_type_from_sqlite_to_mysql(column["type"])
                 if column_type in {"TEXT", "BLOB"} or column_type.startswith(
                     ("CHAR", "VARCHAR")  # pylint: disable=C0330
                 ):
-                    primary_key_length = self._column_type_length(column_type, 255)
+                    primary_key["length"] = self._column_type_length(column_type, 255)
+                primary_keys.append(primary_key)
 
         sql = sql.rstrip(", ")
-        if primary_key:
-            sql += ", PRIMARY KEY (`{column}`{length})".format(
-                column=primary_key, length=primary_key_length,
+        if len(primary_keys) > 0:
+            sql += ", PRIMARY KEY ({columns})".format(
+                columns=", ".join(
+                    "`{column}`{length}".format(**primary_key)
+                    for primary_key in primary_keys
+                )
             )
         if transfer_rowid:
             sql += ", CONSTRAINT `{}_rowid` UNIQUE (`rowid`)".format(table_name)

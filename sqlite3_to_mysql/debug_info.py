@@ -8,6 +8,7 @@ from __future__ import print_function
 import platform
 import sqlite3
 import sys
+from distutils.spawn import find_executable
 from subprocess import check_output
 
 import click
@@ -60,14 +61,16 @@ def _implementation():
 
 
 def _mysql_version():
-    try:
-        mysql_version = check_output(["mysql", "-V"])
+    if find_executable("mysql"):
         try:
-            return mysql_version.decode().strip()
-        except (UnicodeDecodeError, AttributeError):
-            return mysql_version
-    except FileNotFoundError:
-        return "MySQL not found on the system"
+            mysql_version = check_output(["mysql", "-V"])
+            try:
+                return mysql_version.decode().strip()
+            except (UnicodeDecodeError, AttributeError):
+                return mysql_version
+        except Exception:  # nosec pylint: disable=W0703
+            pass
+    return "MySQL client not found on the system"
 
 
 def info():

@@ -13,8 +13,9 @@ from sqlite3_to_mysql import SQLite3toMySQL
 
 @pytest.mark.usefixtures("sqlite_database", "mysql_instance")
 class TestSQLite3toMySQL:
+    @pytest.mark.parametrize("quiet", [False, True])
     def test_translate_type_from_sqlite_to_mysql_invalid_column_type(
-        self, sqlite_database, mysql_database, mysql_credentials, mocker
+        self, sqlite_database, mysql_database, mysql_credentials, mocker, quiet
     ):
         proc = SQLite3toMySQL(
             sqlite_file=sqlite_database,
@@ -23,6 +24,7 @@ class TestSQLite3toMySQL:
             mysql_host=mysql_credentials.host,
             mysql_port=mysql_credentials.port,
             mysql_database=mysql_credentials.database,
+            quiet=quiet,
         )
         with pytest.raises(ValueError) as excinfo:
             mocker.patch.object(proc, "_valid_column_type", return_value=False)
@@ -121,8 +123,16 @@ class TestSQLite3toMySQL:
             "INT({})".format(length)
         ) == re.sub(r"\d+", str(length), proc._mysql_integer_type)
 
+    @pytest.mark.parametrize("quiet", [False, True])
     def test_create_database_connection_error(
-        self, sqlite_database, mysql_database, mysql_credentials, mocker, faker, caplog
+        self,
+        sqlite_database,
+        mysql_database,
+        mysql_credentials,
+        mocker,
+        faker,
+        caplog,
+        quiet,
     ):
         proc = SQLite3toMySQL(
             sqlite_file=sqlite_database,
@@ -131,6 +141,7 @@ class TestSQLite3toMySQL:
             mysql_host=mysql_credentials.host,
             mysql_port=mysql_credentials.port,
             mysql_database=mysql_credentials.database,
+            quiet=quiet,
         )
 
         class FakeCursor:
@@ -149,8 +160,16 @@ class TestSQLite3toMySQL:
             str(errorcode.CR_UNKNOWN_ERROR) in message for message in caplog.messages
         )
 
+    @pytest.mark.parametrize("quiet", [False, True])
     def test_create_table_cursor_error(
-        self, sqlite_database, mysql_database, mysql_credentials, mocker, faker, caplog
+        self,
+        sqlite_database,
+        mysql_database,
+        mysql_credentials,
+        mocker,
+        faker,
+        caplog,
+        quiet,
     ):
         proc = SQLite3toMySQL(
             sqlite_file=sqlite_database,
@@ -159,6 +178,7 @@ class TestSQLite3toMySQL:
             mysql_host=mysql_credentials.host,
             mysql_port=mysql_credentials.port,
             mysql_database=mysql_credentials.database,
+            quiet=quiet,
         )
 
         class FakeCursor:
@@ -183,8 +203,16 @@ class TestSQLite3toMySQL:
             str(errorcode.CR_UNKNOWN_ERROR) in message for message in caplog.messages
         )
 
+    @pytest.mark.parametrize("quiet", [False, True])
     def test_process_cursor_error(
-        self, sqlite_database, mysql_database, mysql_credentials, mocker, faker, caplog
+        self,
+        sqlite_database,
+        mysql_database,
+        mysql_credentials,
+        mocker,
+        faker,
+        caplog,
+        quiet,
     ):
         proc = SQLite3toMySQL(
             sqlite_file=sqlite_database,
@@ -193,6 +221,7 @@ class TestSQLite3toMySQL:
             mysql_host=mysql_credentials.host,
             mysql_port=mysql_credentials.port,
             mysql_database=mysql_credentials.database,
+            quiet=quiet,
         )
 
         def fake_transfer_table_data(sql, total_records=0):
@@ -210,8 +239,16 @@ class TestSQLite3toMySQL:
             str(errorcode.CR_UNKNOWN_ERROR) in message for message in caplog.messages
         )
 
+    @pytest.mark.parametrize("quiet", [False, True])
     def test_add_indices_error(
-        self, sqlite_database, mysql_database, mysql_credentials, mocker, faker, caplog
+        self,
+        sqlite_database,
+        mysql_database,
+        mysql_credentials,
+        mocker,
+        faker,
+        caplog,
+        quiet,
     ):
         proc = SQLite3toMySQL(
             sqlite_file=sqlite_database,
@@ -220,6 +257,7 @@ class TestSQLite3toMySQL:
             mysql_host=mysql_credentials.host,
             mysql_port=mysql_credentials.port,
             mysql_database=mysql_credentials.database,
+            quiet=quiet,
         )
 
         sqlite_engine = create_engine(
@@ -252,8 +290,16 @@ class TestSQLite3toMySQL:
             str(errorcode.CR_UNKNOWN_ERROR) in message for message in caplog.messages
         )
 
+    @pytest.mark.parametrize("quiet", [False, True])
     def test_add_foreign_keys_error(
-        self, sqlite_database, mysql_database, mysql_credentials, mocker, faker, caplog
+        self,
+        sqlite_database,
+        mysql_database,
+        mysql_credentials,
+        mocker,
+        faker,
+        caplog,
+        quiet,
     ):
         proc = SQLite3toMySQL(
             sqlite_file=sqlite_database,
@@ -262,6 +308,7 @@ class TestSQLite3toMySQL:
             mysql_host=mysql_credentials.host,
             mysql_port=mysql_credentials.port,
             mysql_database=mysql_credentials.database,
+            quiet=quiet,
         )
 
         sqlite_engine = create_engine(

@@ -55,10 +55,11 @@ from .debug_info import info
     "-c", "--chunk", type=int, default=None, help="Chunk reading/writing SQL records"
 )
 @click.option("-l", "--log-file", type=click.Path(), help="Log file")
+@click.option("-q", "--quiet", is_flag=True, help="Quiet. Display only errors.")
 @click.version_option(
     message=tabulate(info(), headers=["software", "version"], tablefmt="github")
 )
-def cli(  # noqa: ignore=C0330  # pylint: disable=C0330,R0913
+def cli(
     sqlite_file,
     sqlite_tables,
     without_foreign_keys,
@@ -72,6 +73,7 @@ def cli(  # noqa: ignore=C0330  # pylint: disable=C0330,R0913
     with_rowid,
     chunk,
     log_file,
+    quiet,
 ):
     """Transfer SQLite to MySQL using the provided CLI options."""
     try:
@@ -90,6 +92,7 @@ def cli(  # noqa: ignore=C0330  # pylint: disable=C0330,R0913
             with_rowid=with_rowid,
             chunk=chunk,
             log_file=log_file,
+            quiet=quiet,
         )
         converter.transfer()
     except KeyboardInterrupt:

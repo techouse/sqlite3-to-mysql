@@ -77,7 +77,8 @@ def info():
     """Generate information for a bug report."""
     try:
         platform_info = "{system} {release}".format(
-            system=platform.system(), release=platform.release(),
+            system=platform.system(),
+            release=platform.release(),
         )
     except IOError:
         platform_info = "Unknown"

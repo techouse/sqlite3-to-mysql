@@ -13,29 +13,29 @@ from sys import stdout
 
 import mysql.connector
 import six
-from mysql.connector import errorcode  # pylint: disable=C0412
+from mysql.connector import errorcode
 from packaging import version
 from tqdm import trange
 
-from sqlite3_to_mysql.sqlite_utils import (  # noqa: ignore=I100
+from sqlite3_to_mysql.sqlite_utils import (
     adapt_decimal,
     adapt_timedelta,
+    convert_blob,
     convert_decimal,
     convert_timedelta,
-    convert_blob,
 )
 
 if six.PY2:
     from .sixeptions import *  # pylint: disable=W0622,W0401,W0614
 
 
-class SQLite3toMySQL:  # pylint: disable=R0902,R0903
+class SQLite3toMySQL:
     """Use this class to transfer an SQLite 3 database to MySQL."""
 
     COLUMN_PATTERN = re.compile(r"^[^(]+")
     COLUMN_LENGTH_PATTERN = re.compile(r"\(\d+\)$")
 
-    def __init__(self, **kwargs):  # noqa: ignore=C901 pylint: disable=R0912
+    def __init__(self, **kwargs):
         """Constructor."""
         if not kwargs.get("sqlite_file"):
             raise ValueError("Please provide an SQLite file")
@@ -72,7 +72,11 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
 
         self._chunk_size = int(kwargs.get("chunk")) if kwargs.get("chunk") else None
 
-        self._logger = self._setup_logger(log_file=kwargs.get("log_file") or None)
+        self._quiet = kwargs.get("quiet") or False
+
+        self._logger = self._setup_logger(
+            log_file=kwargs.get("log_file") or None, quiet=self._quiet
+        )
 
         self._mysql_database = str(kwargs.get("mysql_database") or "transfer")
 
@@ -135,15 +139,17 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
             raise
 
     @classmethod
-    def _setup_logger(cls, log_file=None):
+    def _setup_logger(cls, log_file=None, quiet=False):
         formatter = logging.Formatter(
             fmt="%(asctime)s %(levelname)-8s %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
         )
-        screen_handler = logging.StreamHandler(stream=stdout)
-        screen_handler.setFormatter(formatter)
         logger = logging.getLogger(cls.__name__)
         logger.setLevel(logging.DEBUG)
-        logger.addHandler(screen_handler)
+
+        if not quiet:
+            screen_handler = logging.StreamHandler(stream=stdout)
+            screen_handler.setFormatter(formatter)
+            logger.addHandler(screen_handler)
 
         if log_file:
             file_handler = logging.FileHandler(realpath(log_file), mode="w")
@@ -158,7 +164,8 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
             return self._mysql_cur.fetchone()[1]
         except (IndexError, mysql.connector.Error) as err:
             self._logger.error(
-                "MySQL failed checking for InnoDB version: %s", err,
+                "MySQL failed checking for InnoDB version: %s",
+                err,
             )
             raise
 
@@ -167,7 +174,7 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
         mysql_version = version.parse(re.sub("-.*$", "", version_string))
 
         if version_string.lower().endswith("-mariadb"):
-            if (  # pylint: disable=C0330
+            if (
                 mysql_version.major >= 10
                 and mysql_version.minor >= 2
                 and mysql_version.micro >= 7
@@ -185,7 +192,7 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
         mysql_version = version.parse(re.sub("-.*$", "", version_string))
 
         if version_string.lower().endswith("-mariadb"):
-            if (  # pylint: disable=C0330
+            if (
                 mysql_version.major >= 10
                 and mysql_version.minor >= 0
                 and mysql_version.micro >= 5
@@ -213,7 +220,7 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
                 CREATE DATABASE IF NOT EXISTS `{}`
                 DEFAULT CHARACTER SET utf8mb4
                 DEFAULT COLLATE utf8mb4_general_ci
-            """.format(  # pylint: disable=C0330
+            """.format(
                     self._mysql_database
                 )
             )
@@ -223,7 +230,9 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
             self._mysql_cur = self._mysql.cursor(prepared=True)
         except mysql.connector.Error as err:
             self._logger.error(
-                "MySQL failed creating databse %s: %s", self._mysql_database, err,
+                "MySQL failed creating databse %s: %s",
+                self._mysql_database,
+                err,
             )
             raise
 
@@ -231,9 +240,7 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
     def _valid_column_type(cls, column_type):
         return cls.COLUMN_PATTERN.match(column_type.strip())
 
-    def _translate_type_from_sqlite_to_mysql(  # noqa: ignore=C901 pylint: disable=C0330
-        self, column_type
-    ):  # pylint: disable=R0911,R0912
+    def _translate_type_from_sqlite_to_mysql(self, column_type):
         """This could be optimized even further, however is seems adequate."""
         full_column_type = column_type.upper()
         match = self._valid_column_type(column_type)
@@ -307,7 +314,7 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
                 # In case we have a non-numeric primary key
                 column_type = self._translate_type_from_sqlite_to_mysql(column["type"])
                 if column_type in {"TEXT", "BLOB"} or column_type.startswith(
-                    ("CHAR", "VARCHAR")  # pylint: disable=C0330
+                    ("CHAR", "VARCHAR")
                 ):
                     primary_key["length"] = self._column_type_length(column_type, 255)
                 primary_keys.append(primary_key)
@@ -331,7 +338,7 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
             self._logger.error("MySQL failed creating table %s: %s", table_name, err)
             raise
 
-    def _add_indices(self, table_name):  # noqa: ignore=C901 pylint: disable=R0914
+    def _add_indices(self, table_name):
         self._sqlite_cur.execute('PRAGMA table_info("{}")'.format(table_name))
         table_columns = {}
         for row in self._sqlite_cur.fetchall():
@@ -351,9 +358,8 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
             index_type = "UNIQUE" if int(index["unique"]) == 1 else "INDEX"
 
             if any(
-                table_columns[index_info["name"]].upper()  # pylint: disable=C0330
-                == "TEXT"  # pylint: disable=C0330
-                for index_info in index_infos  # noqa: ignore=E501 pylint: disable=C0330
+                table_columns[index_info["name"]].upper() == "TEXT"
+                for index_info in index_infos
             ):
 
                 if self._mysql_fulltext_support:
@@ -411,7 +417,9 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
                 self._mysql.commit()
             except mysql.connector.Error as err:
                 self._logger.error(
-                    "MySQL failed adding indices to table %s: %s", table_name, err,
+                    "MySQL failed adding indices to table %s: %s",
+                    table_name,
+                    err,
                 )
                 raise
 
@@ -454,13 +462,17 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
                 self._mysql.commit()
             except mysql.connector.Error as err:
                 self._logger.error(
-                    "MySQL failed adding foreign keys to table %s: %s", table_name, err,
+                    "MySQL failed adding foreign keys to table %s: %s",
+                    table_name,
+                    err,
                 )
                 raise
 
     def _transfer_table_data(self, sql, total_records=0):
         if self._chunk_size is not None and self._chunk_size > 0:
-            for _ in trange(0, int(ceil(total_records / self._chunk_size))):
+            for _ in trange(
+                0, int(ceil(total_records / self._chunk_size)), disable=self._quiet
+            ):
                 self._mysql_cur.executemany(
                     sql,
                     (
@@ -525,13 +537,17 @@ class SQLite3toMySQL:  # pylint: disable=R0902,R0903
                     self._sqlite_cur.execute(
                         """
                         SELECT {rowid} * FROM "{table_name}"
-                    """.format(  # pylint: disable=C0330
+                    """.format(
                             rowid='rowid as "rowid",' if transfer_rowid else "",
                             table_name=table["name"],
                         )
                     )
                     columns = [column[0] for column in self._sqlite_cur.description]
-                    sql = "INSERT IGNORE INTO `{table}` ({fields}) VALUES ({placeholders})".format(  # noqa: ignore=E501 pylint: disable=C0301
+                    sql = """
+                        INSERT IGNORE
+                        INTO `{table}` ({fields})
+                        VALUES ({placeholders})
+                    """.format(
                         table=table["name"],
                         fields=("`{}`, " * len(columns)).rstrip(" ,").format(*columns),
                         placeholders=("%s, " * len(columns)).rstrip(" ,"),

@@ -20,26 +20,32 @@ if six.PY2:
 @pytest.mark.usefixtures("sqlite_database", "mysql_instance")
 class TestSQLite3toMySQL:
     @pytest.mark.init
-    def test_no_sqlite_file_raises_exception(self):
+    @pytest.mark.parametrize("quiet", [False, True])
+    def test_no_sqlite_file_raises_exception(self, quiet):
         with pytest.raises(ValueError) as excinfo:
-            SQLite3toMySQL()
+            SQLite3toMySQL(quiet=quiet)
         assert "Please provide an SQLite file" in str(excinfo.value)
 
     @pytest.mark.init
-    def test_invalid_sqlite_file_raises_exception(self, faker):
+    @pytest.mark.parametrize("quiet", [False, True])
+    def test_invalid_sqlite_file_raises_exception(self, faker, quiet):
         with pytest.raises((FileNotFoundError, IOError)) as excinfo:
-            SQLite3toMySQL(sqlite_file=faker.file_path(depth=1, extension=".sqlite3"))
+            SQLite3toMySQL(
+                sqlite_file=faker.file_path(depth=1, extension=".sqlite3"), quiet=quiet
+            )
         assert "SQLite file does not exist" in str(excinfo.value)
 
     @pytest.mark.init
-    def test_missing_mysql_user_raises_exception(self, sqlite_database):
+    @pytest.mark.parametrize("quiet", [False, True])
+    def test_missing_mysql_user_raises_exception(self, sqlite_database, quiet):
         with pytest.raises(ValueError) as excinfo:
-            SQLite3toMySQL(sqlite_file=sqlite_database)
+            SQLite3toMySQL(sqlite_file=sqlite_database, quiet=quiet)
         assert "Please provide a MySQL user" in str(excinfo.value)
 
     @pytest.mark.init
+    @pytest.mark.parametrize("quiet", [False, True])
     def test_valid_sqlite_file_and_valid_mysql_credentials(
-        self, sqlite_database, mysql_database, mysql_credentials, helpers
+        self, sqlite_database, mysql_database, mysql_credentials, helpers, quiet
     ):
         with helpers.not_raises(FileNotFoundError):
             SQLite3toMySQL(
@@ -50,11 +56,13 @@ class TestSQLite3toMySQL:
                 mysql_port=mysql_credentials.port,
                 mysql_database=mysql_credentials.database,
                 chunk=10,
+                quiet=quiet,
             )
 
     @pytest.mark.init
+    @pytest.mark.parametrize("quiet", [False, True])
     def test_valid_sqlite_file_and_invalid_mysql_credentials_raises_access_denied_exception(
-        self, sqlite_database, mysql_database, mysql_credentials, faker
+        self, sqlite_database, mysql_database, mysql_credentials, faker, quiet
     ):
         with pytest.raises(mysql.connector.Error) as excinfo:
             SQLite3toMySQL(
@@ -64,12 +72,14 @@ class TestSQLite3toMySQL:
                 mysql_host=mysql_credentials.host,
                 mysql_port=mysql_credentials.port,
                 mysql_database=mysql_credentials.database,
+                quiet=quiet,
             )
         assert "Access denied for user" in str(excinfo.value)
 
     @pytest.mark.init
+    @pytest.mark.parametrize("quiet", [False, True])
     def test_unspecified_mysql_error(
-        self, sqlite_database, mysql_credentials, mocker, caplog
+        self, sqlite_database, mysql_credentials, mocker, caplog, quiet
     ):
         mocker.patch.object(
             mysql.connector,
@@ -89,14 +99,17 @@ class TestSQLite3toMySQL:
                 mysql_port=mysql_credentials.port,
                 mysql_database=mysql_credentials.database,
                 chunk=10,
+                quiet=quiet,
             )
         assert str(errorcode.CR_UNKNOWN_ERROR) in str(excinfo.value)
         assert any(
             str(errorcode.CR_UNKNOWN_ERROR) in message for message in caplog.messages
         )
 
+    @pytest.mark.init
+    @pytest.mark.parametrize("quiet", [False, True])
     def test_bad_database_error(
-        self, sqlite_database, mysql_credentials, mocker, caplog
+        self, sqlite_database, mysql_credentials, mocker, caplog, quiet
     ):
         class FakeMySQLConnection(MySQLConnection):
             @property
@@ -138,10 +151,14 @@ class TestSQLite3toMySQL:
                 mysql_port=mysql_credentials.port,
                 mysql_database=mysql_credentials.database,
                 chunk=10,
+                quiet=quiet,
             )
 
     @pytest.mark.init
-    def test_bad_mysql_connection(self, sqlite_database, mysql_credentials, mocker):
+    @pytest.mark.parametrize("quiet", [False, True])
+    def test_bad_mysql_connection(
+        self, sqlite_database, mysql_credentials, mocker, quiet
+    ):
         FakeConnector = namedtuple("FakeConnector", ["is_connected"])
         mocker.patch.object(
             mysql.connector,
@@ -157,12 +174,21 @@ class TestSQLite3toMySQL:
                 mysql_port=mysql_credentials.port,
                 mysql_database=mysql_credentials.database,
                 chunk=10,
+                quiet=quiet,
             )
         assert "Unable to connect to MySQL" in str(excinfo.value)
 
     @pytest.mark.init
+    @pytest.mark.parametrize("quiet", [False, True])
     def test_log_to_file(
-        self, sqlite_database, mysql_database, mysql_credentials, faker, caplog, tmpdir
+        self,
+        sqlite_database,
+        mysql_database,
+        mysql_credentials,
+        faker,
+        caplog,
+        tmpdir,
+        quiet,
     ):
         log_file = tmpdir.join("db.log")
         with pytest.raises(mysql.connector.Error):
@@ -175,6 +201,7 @@ class TestSQLite3toMySQL:
                 mysql_port=mysql_credentials.port,
                 mysql_database=mysql_credentials.database,
                 log_file=str(log_file),
+                quiet=quiet,
             )
         assert any("Access denied for user" in message for message in caplog.messages)
         with log_file.open("r") as log_fh:

@@ -300,8 +300,8 @@ def mysql_instance(mysql_credentials, pytestconfig):
         use_docker = pytestconfig.getoption("use_docker")
 
     if use_docker:
-        """ Connecting to a MySQL server within a Docker container is quite tricky :P
-            Read more on the issue here https://hub.docker.com/_/mysql#no-connections-until-mysql-init-completes
+        """Connecting to a MySQL server within a Docker container is quite tricky :P
+        Read more on the issue here https://hub.docker.com/_/mysql#no-connections-until-mysql-init-completes
         """
         try:
             client = docker.from_env()

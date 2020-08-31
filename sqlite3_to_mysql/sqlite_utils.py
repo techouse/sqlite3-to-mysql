@@ -32,5 +32,5 @@ def convert_timedelta(value):
 
 
 def convert_blob(value):
-    """In Python 2 MySQL binary protocol can not handle 'buffer' objects so we have to convert them."""  # noqa: ignore=E501  # pylint: disable=C0301
+    """In Python 2 MySQL binary protocol can not handle 'buffer' objects so we have to convert them."""
     return six.binary_type(value)

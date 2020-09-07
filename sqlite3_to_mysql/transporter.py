@@ -357,7 +357,7 @@ class SQLite3toMySQL:
 
             index_type = "UNIQUE" if int(index["unique"]) == 1 else "INDEX"
 
-            if any(
+            if all(
                 table_columns[index_info["name"]].upper() == "TEXT"
                 for index_info in index_infos
             ):
@@ -381,7 +381,7 @@ class SQLite3toMySQL:
                 for index_info in index_infos:
                     index_length = ""
                     # Limit the max BLOB field index length to 255
-                    if table_columns[index_info["name"]].upper() == "BLOB":
+                    if table_columns[index_info["name"]].upper() in {"TEXT", "BLOB"}:
                         index_length = "({})".format(255)
                     else:
                         suffix = self.COLUMN_LENGTH_PATTERN.search(

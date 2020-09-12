@@ -53,6 +53,10 @@ Options:
   --mysql-string-type TEXT    MySQL default string field type. Defaults to
                               VARCHAR(255).
 
+  -T, --use-fulltext          Use FULLTEXT indexes on TEXT columns. Will throw
+                              an error if your MySQL version does not support
+                              InnoDB FULLTEXT indexes!
+
   --with-rowid                Transfer rowid columns.
   -c, --chunk INTEGER         Chunk reading/writing SQL records
   -l, --log-file PATH         Log file

@@ -88,6 +88,8 @@ class SQLite3toMySQL:
             kwargs.get("mysql_string_type") or "VARCHAR(255)"
         ).upper()
 
+        self._use_fulltext = kwargs.get("use_fulltext") or False
+
         self._with_rowid = kwargs.get("with_rowid") or False
 
         sqlite3.register_adapter(Decimal, adapt_decimal)
@@ -134,6 +136,11 @@ class SQLite3toMySQL:
             self._mysql_fulltext_support = self._check_mysql_fulltext_support(
                 self._mysql_version
             )
+
+            if self._use_fulltext and not self._mysql_fulltext_support:
+                raise ValueError(
+                    "Your MySQL version does not support InnoDB FULLTEXT indexes!"
+                )
         except mysql.connector.Error as err:
             self._logger.error(err)
             raise
@@ -357,13 +364,13 @@ class SQLite3toMySQL:
 
             index_type = "UNIQUE" if int(index["unique"]) == 1 else "INDEX"
 
-            if all(
+            if any(
                 table_columns[index_info["name"]].upper() == "TEXT"
                 for index_info in index_infos
             ):
 
-                if self._mysql_fulltext_support:
-                    # Use fulltext if available
+                if self._use_fulltext and self._mysql_fulltext_support:
+                    # Use fulltext if requested and available
                     index_type = "FULLTEXT"
                     index_columns = ",".join(
                         "`{}`".format(index_info["name"]) for index_info in index_infos
@@ -381,7 +388,7 @@ class SQLite3toMySQL:
                 for index_info in index_infos:
                     index_length = ""
                     # Limit the max BLOB field index length to 255
-                    if table_columns[index_info["name"]].upper() in {"TEXT", "BLOB"}:
+                    if table_columns[index_info["name"]].upper() == "BLOB":
                         index_length = "({})".format(255)
                     else:
                         suffix = self.COLUMN_LENGTH_PATTERN.search(

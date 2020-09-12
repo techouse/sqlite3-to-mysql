@@ -50,6 +50,13 @@ from .debug_info import info
     default="VARCHAR(255)",
     help="MySQL default string field type. Defaults to VARCHAR(255).",
 )
+@click.option(
+    "-T",
+    "--use-fulltext",
+    is_flag=True,
+    help="Use FULLTEXT indexes on TEXT columns. "
+    "Will throw an error if your MySQL version does not support InnoDB FULLTEXT indexes!",
+)
 @click.option("--with-rowid", is_flag=True, help="Transfer rowid columns.")
 @click.option(
     "-c", "--chunk", type=int, default=None, help="Chunk reading/writing SQL records"
@@ -70,6 +77,7 @@ def cli(
     mysql_port,
     mysql_integer_type,
     mysql_string_type,
+    use_fulltext,
     with_rowid,
     chunk,
     log_file,
@@ -89,6 +97,7 @@ def cli(
             mysql_port=mysql_port,
             mysql_integer_type=mysql_integer_type,
             mysql_string_type=mysql_string_type,
+            use_fulltext=use_fulltext,
             with_rowid=with_rowid,
             chunk=chunk,
             log_file=log_file,

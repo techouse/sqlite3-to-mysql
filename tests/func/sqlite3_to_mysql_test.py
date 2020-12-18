@@ -206,7 +206,10 @@ class TestSQLite3toMySQL:
         assert any("Access denied for user" in message for message in caplog.messages)
         with log_file.open("r") as log_fh:
             log = log_fh.read()
-            assert caplog.messages[0] in log
+            if len(caplog.messages) > 1:
+                assert caplog.messages[1] in log
+            else:
+                assert caplog.messages[0] in log
             assert (
                 re.match(r"^\d{4,}-\d{2,}-\d{2,}\s+\d{2,}:\d{2,}:\d{2,}\s+\w+\s+", log)
                 is not None

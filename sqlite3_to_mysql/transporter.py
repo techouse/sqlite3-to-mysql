@@ -403,26 +403,58 @@ class SQLite3toMySQL:
                     )
                 index_columns = ", ".join(column_list)
 
-            sql = """
-                ALTER TABLE `{table}`
-                ADD {index_type} `{name}`({columns})
-            """.format(
-                table=table_name,
+            self._add_index(
+                table_name=table_name,
                 index_type=index_type,
-                name=index["name"][:64],  # Limit the index name to 64 chars.
-                columns=index_columns,
+                index=index,
+                index_columns=index_columns,
+                index_infos=index_infos,
             )
 
-            try:
-                self._logger.info(
-                    """Adding %s to column "%s" in table %s""",
-                    "unique index" if int(index["unique"]) == 1 else "index",
-                    ", ".join(index_info["name"] for index_info in index_infos),
-                    table_name,
+    def _add_index(
+        self,
+        table_name,
+        index_type,
+        index,
+        index_columns,
+        index_infos,
+        index_iteration=0,
+    ):
+        sql = """
+            ALTER TABLE `{table}`
+            ADD {index_type} `{name}`({columns})
+        """.format(
+            table=table_name,
+            index_type=index_type,
+            name=index["name"][:64]
+            if index_iteration == 0
+            else "{name}_{index_iteration}".format(
+                name=index["name"][:60], index_iteration=index_iteration
+            ),
+            columns=index_columns,
+        )
+
+        try:
+            self._logger.info(
+                """Adding %s to column "%s" in table %s""",
+                "unique index" if int(index["unique"]) == 1 else "index",
+                ", ".join(index_info["name"] for index_info in index_infos),
+                table_name,
+            )
+            self._mysql_cur.execute(sql)
+            self._mysql.commit()
+        except mysql.connector.Error as err:
+            if err.errno == errorcode.ER_DUP_KEYNAME:
+                # handle a duplicate key name
+                self._add_index(
+                    table_name=table_name,
+                    index_type=index_type,
+                    index=index,
+                    index_columns=index_columns,
+                    index_infos=index_infos,
+                    index_iteration=index_iteration + 1,
                 )
-                self._mysql_cur.execute(sql)
-                self._mysql.commit()
-            except mysql.connector.Error as err:
+            else:
                 self._logger.error(
                     "MySQL failed adding indices to table %s: %s",
                     table_name,

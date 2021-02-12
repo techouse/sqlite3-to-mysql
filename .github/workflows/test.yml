@@ -383,11 +383,11 @@ jobs:
           python-version: ${{ matrix.py }}
 
       - uses: actions/cache@v2
-          with:
-            path: ~/.cache/pip
-            key: ${{ runner.os }}-pip-1
-            restore-keys: |
-              ${{ runner.os }}-pip-
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-1
+          restore-keys: |
+            ${{ runner.os }}-pip-
 
       - name: Install dependencies
         run: |

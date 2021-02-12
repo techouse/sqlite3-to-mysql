@@ -134,109 +134,91 @@ jobs:
 
           - toxenv: "py27"
             db: "mariadb:10.3"
-            mariadb_auth: true
             legacy_db: 0
             py: "2.7"
 
           - toxenv: "py35"
             db: "mariadb:10.3"
-            mariadb_auth: true
             legacy_db: 0
             py: "3.5"
 
           - toxenv: "py36"
             db: "mariadb:10.3"
-            mariadb_auth: true
             legacy_db: 0
             py: "3.6"
 
           - toxenv: "py37"
             db: "mariadb:10.3"
-            mariadb_auth: true
             legacy_db: 0
             py: "3.7"
 
           - toxenv: "py38"
             db: "mariadb:10.3"
-            mariadb_auth: true
             legacy_db: 0
             py: "3.8"
 
           - toxenv: "py39"
             db: "mariadb:10.3"
-            mariadb_auth: true
             legacy_db: 0
             py: "3.9"
 
           - toxenv: "py27"
             db: "mariadb:10.4"
-            mariadb_auth: true
             legacy_db: 0
             py: "2.7"
 
           - toxenv: "py35"
             db: "mariadb:10.4"
-            mariadb_auth: true
             legacy_db: 0
             py: "3.5"
 
           - toxenv: "py36"
             db: "mariadb:10.4"
-            mariadb_auth: true
             legacy_db: 0
             py: "3.6"
 
           - toxenv: "py37"
             db: "mariadb:10.4"
-            mariadb_auth: true
             legacy_db: 0
             py: "3.7"
 
           - toxenv: "py38"
             db: "mariadb:10.4"
-            mariadb_auth: true
             legacy_db: 0
             py: "3.8"
 
           - toxenv: "py39"
             db: "mariadb:10.4"
-            mariadb_auth: true
             legacy_db: 0
             py: "3.9"
 
           - toxenv: "py27"
             db: "mariadb:10.5"
-            mariadb_auth: true
             legacy_db: 0
             py: "2.7"
 
           - toxenv: "py35"
             db: "mariadb:10.5"
-            mariadb_auth: true
             legacy_db: 0
             py: "3.5"
 
           - toxenv: "py36"
             db: "mariadb:10.5"
-            mariadb_auth: true
             legacy_db: 0
             py: "3.6"
 
           - toxenv: "py37"
             db: "mariadb:10.5"
-            mariadb_auth: true
             legacy_db: 0
             py: "3.7"
 
           - toxenv: "py38"
             db: "mariadb:10.5"
-            mariadb_auth: true
             legacy_db: 0
             py: "3.8"
 
           - toxenv: "py39"
             db: "mariadb:10.5"
-            mariadb_auth: true
             legacy_db: 0
             py: "3.9"
 
@@ -332,37 +314,31 @@ jobs:
 
           - toxenv: "py27"
             db: "mysql:8.0"
-            mysql_auth: true
             legacy_db: 0
             py: "2.7"
 
           - toxenv: "py35"
             db: "mysql:8.0"
-            mysql_auth: true
             legacy_db: 0
             py: "3.5"
 
           - toxenv: "py36"
             db: "mysql:8.0"
-            mysql_auth: true
             legacy_db: 0
             py: "3.6"
 
           - toxenv: "py37"
             db: "mysql:8.0"
-            mysql_auth: true
             legacy_db: 0
             py: "3.7"
 
           - toxenv: "py38"
             db: "mysql:8.0"
-            mysql_auth: true
             legacy_db: 0
             py: "3.8"
 
           - toxenv: "py39"
             db: "mysql:8.0"
-            mysql_auth: true
             legacy_db: 0
             py: "3.9"
 
@@ -377,7 +353,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Python ${{ matrix.py }}
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.py }}

@@ -1,0 +1,439 @@
+name: Test
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-18.04
+    strategy:
+      matrix:
+        include:
+          - toxenv: "py27"
+            db: "mariadb:5.5"
+            legacy_db: true
+            py: "2.7"
+
+          - toxenv: "py35"
+            db: "mariadb:5.5"
+            legacy_db: true
+            py: "3.5"
+
+          - toxenv: "py36"
+            db: "mariadb:5.5"
+            legacy_db: true
+            py: "3.6"
+
+          - toxenv: "py37"
+            db: "mariadb:5.5"
+            legacy_db: true
+            py: "3.7"
+
+          - toxenv: "py38"
+            db: "mariadb:5.5"
+            legacy_db: true
+            py: "3.8"
+
+          - toxenv: "py39"
+            db: "mariadb:5.5"
+            legacy_db: true
+            py: "3.9"
+
+          - toxenv: "py27"
+            db: "mariadb:10.0"
+            legacy_db: true
+            py: "2.7"
+
+          - toxenv: "py35"
+            db: "mariadb:10.0"
+            legacy_db: true
+            py: "3.5"
+
+          - toxenv: "py36"
+            db: "mariadb:10.0"
+            legacy_db: true
+            py: "3.6"
+
+          - toxenv: "py37"
+            db: "mariadb:10.0"
+            legacy_db: true
+            py: "3.7"
+
+          - toxenv: "py38"
+            db: "mariadb:10.0"
+            legacy_db: true
+            py: "3.8"
+
+          - toxenv: "py39"
+            db: "mariadb:10.0"
+            legacy_db: true
+            py: "3.9"
+
+          - toxenv: "py27"
+            db: "mariadb:10.1"
+            legacy_db: true
+            py: "2.7"
+
+          - toxenv: "py35"
+            db: "mariadb:10.1"
+            legacy_db: true
+            py: "3.5"
+
+          - toxenv: "py36"
+            db: "mariadb:10.1"
+            legacy_db: true
+            py: "3.6"
+          - toxenv: "py37"
+            db: "mariadb:10.1"
+            legacy_db: true
+            py: "3.7"
+
+          - toxenv: "py38"
+            db: "mariadb:10.1"
+            legacy_db: true
+            py: "3.8"
+
+          - toxenv: "py39"
+            db: "mariadb:10.1"
+            legacy_db: true
+            py: "3.9"
+
+          - toxenv: "py27"
+            db: "mariadb:10.2"
+            legacy_db: false
+            py: "2.7"
+
+          - toxenv: "py35"
+            db: "mariadb:10.2"
+            legacy_db: false
+            py: "3.5"
+
+          - toxenv: "py36"
+            db: "mariadb:10.2"
+            legacy_db: false
+            py: "3.6"
+
+          - toxenv: "py37"
+            db: "mariadb:10.2"
+            legacy_db: false
+            py: "3.7"
+
+          - toxenv: "py38"
+            db: "mariadb:10.2"
+            legacy_db: false
+            py: "3.8"
+
+          - toxenv: "py39"
+            db: "mariadb:10.2"
+            legacy_db: false
+            py: "3.9"
+
+          - toxenv: "py27"
+            db: "mariadb:10.3"
+            mariadb_auth: true
+            legacy_db: false
+            py: "2.7"
+
+          - toxenv: "py35"
+            db: "mariadb:10.3"
+            mariadb_auth: true
+            legacy_db: false
+            py: "3.5"
+
+          - toxenv: "py36"
+            db: "mariadb:10.3"
+            mariadb_auth: true
+            legacy_db: false
+            py: "3.6"
+
+          - toxenv: "py37"
+            db: "mariadb:10.3"
+            mariadb_auth: true
+            legacy_db: false
+            py: "3.7"
+
+          - toxenv: "py38"
+            db: "mariadb:10.3"
+            mariadb_auth: true
+            legacy_db: false
+            py: "3.8"
+
+          - toxenv: "py39"
+            db: "mariadb:10.3"
+            mariadb_auth: true
+            legacy_db: false
+            py: "3.9"
+
+          - toxenv: "py27"
+            db: "mariadb:10.4"
+            mariadb_auth: true
+            legacy_db: false
+            py: "2.7"
+
+          - toxenv: "py35"
+            db: "mariadb:10.4"
+            mariadb_auth: true
+            legacy_db: false
+            py: "3.5"
+
+          - toxenv: "py36"
+            db: "mariadb:10.4"
+            mariadb_auth: true
+            legacy_db: false
+            py: "3.6"
+
+          - toxenv: "py37"
+            db: "mariadb:10.4"
+            mariadb_auth: true
+            legacy_db: false
+            py: "3.7"
+
+          - toxenv: "py38"
+            db: "mariadb:10.4"
+            mariadb_auth: true
+            legacy_db: false
+            py: "3.8"
+
+          - toxenv: "py39"
+            db: "mariadb:10.4"
+            mariadb_auth: true
+            legacy_db: false
+            py: "3.9"
+
+          - toxenv: "py27"
+            db: "mariadb:10.5"
+            mariadb_auth: true
+            legacy_db: false
+            py: "2.7"
+
+          - toxenv: "py35"
+            db: "mariadb:10.5"
+            mariadb_auth: true
+            legacy_db: false
+            py: "3.5"
+
+          - toxenv: "py36"
+            db: "mariadb:10.5"
+            mariadb_auth: true
+            legacy_db: false
+            py: "3.6"
+
+          - toxenv: "py37"
+            db: "mariadb:10.5"
+            mariadb_auth: true
+            legacy_db: false
+            py: "3.7"
+
+          - toxenv: "py38"
+            db: "mariadb:10.5"
+            mariadb_auth: true
+            legacy_db: false
+            py: "3.8"
+
+          - toxenv: "py39"
+            db: "mariadb:10.5"
+            mariadb_auth: true
+            legacy_db: false
+            py: "3.9"
+
+          - toxenv: "py27"
+            db: "mysql:5.5"
+            legacy_db: true
+            py: "2.7"
+
+          - toxenv: "py35"
+            db: "mysql:5.5"
+            legacy_db: true
+            py: "3.5"
+
+          - toxenv: "py36"
+            db: "mysql:5.5"
+            legacy_db: true
+            py: "3.6"
+
+          - toxenv: "py37"
+            db: "mysql:5.5"
+            legacy_db: true
+            py: "3.7"
+
+          - toxenv: "py38"
+            db: "mysql:5.5"
+            legacy_db: true
+            py: "3.8"
+
+          - toxenv: "py39"
+            db: "mysql:5.6"
+            legacy_db: true
+            py: "3.9"
+
+          - toxenv: "py27"
+            db: "mysql:5.6"
+            legacy_db: true
+            py: "2.7"
+
+          - toxenv: "py35"
+            db: "mysql:5.6"
+            legacy_db: true
+            py: "3.5"
+
+          - toxenv: "py36"
+            db: "mysql:5.6"
+            legacy_db: true
+            py: "3.6"
+
+          - toxenv: "py37"
+            db: "mysql:5.6"
+            legacy_db: true
+            py: "3.7"
+
+          - toxenv: "py38"
+            db: "mysql:5.6"
+            legacy_db: true
+            py: "3.8"
+
+          - toxenv: "py39"
+            db: "mysql:5.6"
+            legacy_db: true
+            py: "3.9"
+
+          - toxenv: "py27"
+            db: "mysql:5.7"
+            legacy_db: false
+            py: "2.7"
+
+          - toxenv: "py35"
+            db: "mysql:5.7"
+            legacy_db: false
+            py: "3.5"
+
+          - toxenv: "py36"
+            db: "mysql:5.7"
+            legacy_db: false
+            py: "3.6"
+
+          - toxenv: "py37"
+            db: "mysql:5.7"
+            legacy_db: false
+            py: "3.7"
+
+          - toxenv: "py38"
+            db: "mysql:5.7"
+            legacy_db: false
+            py: "3.8"
+
+          - toxenv: "py39"
+            db: "mysql:5.7"
+            legacy_db: false
+            py: "3.9"
+
+          - toxenv: "py27"
+            db: "mysql:8.0"
+            mysql_auth: true
+            legacy_db: false
+            py: "2.7"
+
+          - toxenv: "py35"
+            db: "mysql:8.0"
+            mysql_auth: true
+            legacy_db: false
+            py: "3.5"
+
+          - toxenv: "py36"
+            db: "mysql:8.0"
+            mysql_auth: true
+            legacy_db: false
+            py: "3.6"
+
+          - toxenv: "py37"
+            db: "mysql:8.0"
+            mysql_auth: true
+            legacy_db: false
+            py: "3.7"
+
+          - toxenv: "py38"
+            db: "mysql:8.0"
+            mysql_auth: true
+            legacy_db: false
+            py: "3.8"
+
+          - toxenv: "py39"
+            db: "mysql:8.0"
+            mysql_auth: true
+            legacy_db: false
+            py: "3.9"
+
+    services:
+      mysql:
+        image: "${{ matrix.db }}"
+        ports:
+          - 3306:3306
+        env:
+          MYSQL_ALLOW_EMPTY_PASSWORD: yes
+        options: "--name=mysqld"
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.py }}
+
+      - uses: actions/cache@v2
+          with:
+            path: ~/.cache/pip
+            key: ${{ runner.os }}-pip-1
+            restore-keys: |
+              ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -U codecov tox-gh-actions
+          pip install -r requirements_dev.txt
+
+      - name: Set up MySQL
+          env:
+            DB: ${{ matrix.db }}
+          run: |
+            while :
+            do
+                sleep 1
+                mysql -h127.0.0.1 -uroot -e 'select version()' && break
+            done
+            if [ $DB == 'mysql:8.0' ]; then
+                WITH_PLUGIN='with mysql_native_password'
+                mysql -h127.0.0.1 -uroot -e "SET GLOBAL local_infile=on"
+                docker cp mysqld:/var/lib/mysql/public_key.pem "${HOME}"
+                docker cp mysqld:/var/lib/mysql/ca.pem "${HOME}"
+                docker cp mysqld:/var/lib/mysql/server-cert.pem "${HOME}"
+                docker cp mysqld:/var/lib/mysql/client-key.pem "${HOME}"
+                docker cp mysqld:/var/lib/mysql/client-cert.pem "${HOME}"
+                mysql -uroot -h127.0.0.1 -e '
+                    CREATE USER
+                        user_sha256   IDENTIFIED WITH "sha256_password" BY "pass_sha256",
+                        nopass_sha256 IDENTIFIED WITH "sha256_password",
+                        user_caching_sha2   IDENTIFIED WITH "caching_sha2_password" BY "pass_caching_sha2",
+                        nopass_caching_sha2 IDENTIFIED WITH "caching_sha2_password"
+                        PASSWORD EXPIRE NEVER;'
+                mysql -uroot -h127.0.0.1 -e 'GRANT RELOAD ON *.* TO user_caching_sha2;'
+            else
+                WITH_PLUGIN=''
+            fi
+            mysql -h127.0.0.1 -uroot -e 'create database test_db DEFAULT CHARACTER SET utf8mb4'
+            mysql -h127.0.0.1 -uroot -e "create user tester           identified ${WITH_PLUGIN} by 'testpass'; grant all on test_db.* to tester;"
+            mysql -h127.0.0.1 -uroot -e "create user tester@localhost identified ${WITH_PLUGIN} by 'testpass'; grant all on test_db.* to tester@localhost;"
+            cp ci/db_credentials.json tests/db_credentials.json
+
+      - name: Test with tox
+        run: tox
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v1
+        with:
+          files: ./coverage.xml
+          env_vars: OS,PYTHON
+          verbose: true

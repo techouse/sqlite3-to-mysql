@@ -323,8 +323,8 @@ class TestSQLite3toMySQL:
             mysql_fk_stmt = text(
                 """
                 SELECT k.REFERENCED_TABLE_NAME AS `table`, k.COLUMN_NAME AS `from`, k.REFERENCED_COLUMN_NAME AS `to`
-                FROM information_schema.TABLE_CONSTRAINTS AS i 
-                {JOIN} information_schema.KEY_COLUMN_USAGE AS k ON i.CONSTRAINT_NAME = k.CONSTRAINT_NAME 
+                FROM information_schema.TABLE_CONSTRAINTS AS i
+                {JOIN} information_schema.KEY_COLUMN_USAGE AS k ON i.CONSTRAINT_NAME = k.CONSTRAINT_NAME
                 WHERE i.TABLE_SCHEMA = :table_schema
                 AND i.TABLE_NAME = :table_name
                 AND i.CONSTRAINT_TYPE = :constraint_type

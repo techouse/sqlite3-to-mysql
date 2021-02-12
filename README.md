@@ -65,6 +65,6 @@ Options:
   --help                      Show this message and exit.
 ```
 
-### Note
-After a __LONG__ time I finally found the time to write the complimentary script to transfer
-[MySQL to SQLite3](https://github.com/techouse/mysql-to-sqlite3). Check it out :)
+### GUI wrapper
+
+[Aref Alikhani](https://github.com/ArefDev) has developed a [GUI wrapper called Berudele](https://github.com/ArefDev/Berudele) for this tool in case you're not comfortable with the CLI interface.

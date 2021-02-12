@@ -396,37 +396,37 @@ jobs:
           pip install -r requirements_dev.txt
 
       - name: Set up MySQL
-          env:
-            DB: ${{ matrix.db }}
-          run: |
-            while :
-            do
-                sleep 1
-                mysql -h127.0.0.1 -uroot -e 'select version()' && break
-            done
-            if [ $DB == 'mysql:8.0' ]; then
-                WITH_PLUGIN='with mysql_native_password'
-                mysql -h127.0.0.1 -uroot -e "SET GLOBAL local_infile=on"
-                docker cp mysqld:/var/lib/mysql/public_key.pem "${HOME}"
-                docker cp mysqld:/var/lib/mysql/ca.pem "${HOME}"
-                docker cp mysqld:/var/lib/mysql/server-cert.pem "${HOME}"
-                docker cp mysqld:/var/lib/mysql/client-key.pem "${HOME}"
-                docker cp mysqld:/var/lib/mysql/client-cert.pem "${HOME}"
-                mysql -uroot -h127.0.0.1 -e '
-                    CREATE USER
-                        user_sha256   IDENTIFIED WITH "sha256_password" BY "pass_sha256",
-                        nopass_sha256 IDENTIFIED WITH "sha256_password",
-                        user_caching_sha2   IDENTIFIED WITH "caching_sha2_password" BY "pass_caching_sha2",
-                        nopass_caching_sha2 IDENTIFIED WITH "caching_sha2_password"
-                        PASSWORD EXPIRE NEVER;'
-                mysql -uroot -h127.0.0.1 -e 'GRANT RELOAD ON *.* TO user_caching_sha2;'
-            else
-                WITH_PLUGIN=''
-            fi
-            mysql -h127.0.0.1 -uroot -e 'create database test_db DEFAULT CHARACTER SET utf8mb4'
-            mysql -h127.0.0.1 -uroot -e "create user tester           identified ${WITH_PLUGIN} by 'testpass'; grant all on test_db.* to tester;"
-            mysql -h127.0.0.1 -uroot -e "create user tester@localhost identified ${WITH_PLUGIN} by 'testpass'; grant all on test_db.* to tester@localhost;"
-            cp ci/db_credentials.json tests/db_credentials.json
+        env:
+          DB: ${{ matrix.db }}
+        run: |
+          while :
+          do
+              sleep 1
+              mysql -h127.0.0.1 -uroot -e 'select version()' && break
+          done
+          if [ $DB == 'mysql:8.0' ]; then
+              WITH_PLUGIN='with mysql_native_password'
+              mysql -h127.0.0.1 -uroot -e "SET GLOBAL local_infile=on"
+              docker cp mysqld:/var/lib/mysql/public_key.pem "${HOME}"
+              docker cp mysqld:/var/lib/mysql/ca.pem "${HOME}"
+              docker cp mysqld:/var/lib/mysql/server-cert.pem "${HOME}"
+              docker cp mysqld:/var/lib/mysql/client-key.pem "${HOME}"
+              docker cp mysqld:/var/lib/mysql/client-cert.pem "${HOME}"
+              mysql -uroot -h127.0.0.1 -e '
+                  CREATE USER
+                      user_sha256   IDENTIFIED WITH "sha256_password" BY "pass_sha256",
+                      nopass_sha256 IDENTIFIED WITH "sha256_password",
+                      user_caching_sha2   IDENTIFIED WITH "caching_sha2_password" BY "pass_caching_sha2",
+                      nopass_caching_sha2 IDENTIFIED WITH "caching_sha2_password"
+                      PASSWORD EXPIRE NEVER;'
+              mysql -uroot -h127.0.0.1 -e 'GRANT RELOAD ON *.* TO user_caching_sha2;'
+          else
+              WITH_PLUGIN=''
+          fi
+          mysql -h127.0.0.1 -uroot -e 'create database test_db DEFAULT CHARACTER SET utf8mb4'
+          mysql -h127.0.0.1 -uroot -e "create user tester           identified ${WITH_PLUGIN} by 'testpass'; grant all on test_db.* to tester;"
+          mysql -h127.0.0.1 -uroot -e "create user tester@localhost identified ${WITH_PLUGIN} by 'testpass'; grant all on test_db.* to tester@localhost;"
+          cp ci/db_credentials.json tests/db_credentials.json
 
       - name: Test with tox
         run: tox

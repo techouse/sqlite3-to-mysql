@@ -11,8 +11,7 @@ Please note we have a code of conduct, please follow it in all your interactions
 
 Backwards compatibility is a must.
 
-Currently the tool supports Python versions 2.7, 3.5, 3.6, 3.7, 3.8 and is aiming to
-support 3.9 once that becomes available to the general public.
+Currently the tool supports Python versions 2.7, 3.5, 3.6, 3.7, 3.8 and 3.9.
 
 Even though Python 2.7 has reached the end of its life at the beginning of 2020, a lot of people still rely on it. 
 Therefore we should continue to support it as long as the underlying tools do not completely drop support for it.
@@ -66,8 +65,8 @@ per commit).
 Always write a clear log message for your commits. One-line messages are fine for small changes, but bigger changes 
 should look like this:
 
-```
-$ git commit -m "A brief summary of the commit
+```bash
+git commit -m "A brief summary of the commit
 > 
 > A paragraph describing what changed and its impact."
 ```
@@ -77,8 +76,8 @@ $ git commit -m "A brief summary of the commit
 Your code should be readable and concise. Always use [Black](https://github.com/psf/black) to format your code.
 Additionally, once you feel you're done, run 
 
-```
-$ tox -e flake8,linters
+```bash
+tox -e flake8,linters
 ``` 
 
 in order to run all various linters and checkers against it.
@@ -87,4 +86,4 @@ in order to run all various linters and checkers against it.
 
 Thanks,
 
-Klemen Tušar
+Klemen Tusar

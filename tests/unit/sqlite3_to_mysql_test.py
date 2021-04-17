@@ -122,6 +122,11 @@ class TestSQLite3toMySQL:
         assert proc._translate_type_from_sqlite_to_mysql(
             "INT({})".format(length)
         ) == re.sub(r"\d+", str(length), proc._mysql_integer_type)
+        for column in {"META", "FOO", "BAR"}:
+            assert (
+                proc._translate_type_from_sqlite_to_mysql(column)
+                == proc._mysql_string_type
+            )
 
     @pytest.mark.parametrize("quiet", [False, True])
     def test_create_database_connection_error(

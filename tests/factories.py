@@ -52,6 +52,7 @@ class MiscFactory(factory.Factory):
     time_field = factory.Faker("time_object")
     varchar_field = factory.Faker("text", max_nb_chars=255)
     timestamp_field = factory.Faker("date_time_this_century")
+    my_type_field = factory.Faker("text", max_nb_chars=255)
 
 
 class ArticleFactory(factory.Factory):

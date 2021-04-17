@@ -40,6 +40,19 @@ class SQLiteNumeric(types.TypeDecorator):
         return Decimal(value)
 
 
+class MyCustomType(types.TypeDecorator):
+    impl = types.String
+
+    def load_dialect_impl(self, dialect):
+        return dialect.type_descriptor(types.VARCHAR(self.length))
+
+    def process_bind_param(self, value, dialect):
+        return str(value)
+
+    def process_result_value(self, value, dialect):
+        return str(value)
+
+
 Base = declarative_base()
 
 
@@ -119,6 +132,7 @@ class Misc(Base):
     time_field = Column(Time, nullable=True)
     varchar_field = Column(VARCHAR(255), nullable=True)
     timestamp_field = Column(TIMESTAMP, default=current_timestamp())
+    my_type_field = Column(MyCustomType(255), nullable=True)
 
 
 article_misc = Table(

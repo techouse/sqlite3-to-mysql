@@ -32,6 +32,46 @@ if six.PY2:
 class SQLite3toMySQL:
     """Use this class to transfer an SQLite 3 database to MySQL."""
 
+    # shamelessly copied from SQLAlchemy's dialects/mysql/__init__.py
+    MYSQL_COLUMN_TYPES = {
+        "BIGINT",
+        "BINARY",
+        "BIT",
+        "BLOB",
+        "BOOLEAN",
+        "CHAR",
+        "DATE",
+        "DATETIME",
+        "DECIMAL",
+        "DOUBLE",
+        "ENUM",
+        "DECIMAL",
+        "FLOAT",
+        "INTEGER",
+        "INTEGER",
+        "JSON",
+        "LONGBLOB",
+        "LONGTEXT",
+        "MEDIUMBLOB",
+        "MEDIUMINT",
+        "MEDIUMTEXT",
+        "NCHAR",
+        "NVARCHAR",
+        "NUMERIC",
+        "SET",
+        "SMALLINT",
+        "REAL",
+        "TEXT",
+        "TIME",
+        "TIMESTAMP",
+        "TINYBLOB",
+        "TINYINT",
+        "TINYTEXT",
+        "VARBINARY",
+        "VARCHAR",
+        "YEAR",
+    }
+
     COLUMN_PATTERN = re.compile(r"^[^(]+")
     COLUMN_LENGTH_PATTERN = re.compile(r"\(\d+\)$")
 
@@ -283,6 +323,8 @@ class SQLite3toMySQL:
             return match.group(0).upper() + length
         if data_type in {"INT64", "NUMERIC"}:
             return "BIGINT" + self._column_type_length(column_type, 19)
+        if data_type not in self.MYSQL_COLUMN_TYPES:
+            return self._mysql_string_type
         return full_column_type
 
     @classmethod

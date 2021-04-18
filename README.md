@@ -36,35 +36,36 @@ Usage: sqlite3mysql [OPTIONS]
   Transfer SQLite to MySQL using the provided CLI options.
 
 Options:
-  -f, --sqlite-file PATH      SQLite3 database file  [required]
-  -t, --sqlite-tables TEXT    Transfer only these specific tables (space
-                              separated table names). Implies --without-
-                              foreign-keys which inhibits the transfer of
-                              foreign keys.
+  -f, --sqlite-file PATH       SQLite3 database file  [required]
+  -t, --sqlite-tables TEXT     Transfer only these specific tables (space
+                               separated table names). Implies --without-
+                               foreign-keys which inhibits the transfer of
+                               foreign keys.
 
-  -X, --without-foreign-keys  Do not transfer foreign keys.
-  -d, --mysql-database TEXT   MySQL database name  [required]
-  -u, --mysql-user TEXT       MySQL user  [required]
-  -p, --mysql-password TEXT   MySQL password
-  -h, --mysql-host TEXT       MySQL host. Defaults to localhost.
-  -P, --mysql-port INTEGER    MySQL port. Defaults to 3306.
-  -S, --skip-ssl              Disable MySQL connection encryption.
-  --mysql-integer-type TEXT   MySQL default integer field type. Defaults to
-                              INT(11).
+  -X, --without-foreign-keys   Do not transfer foreign keys.
+  -d, --mysql-database TEXT    MySQL database name  [required]
+  -u, --mysql-user TEXT        MySQL user  [required]
+  -p, --prompt-mysql-password  Prompt for MySQL password
+  --mysql-password TEXT        MySQL password
+  -h, --mysql-host TEXT        MySQL host. Defaults to localhost.
+  -P, --mysql-port INTEGER     MySQL port. Defaults to 3306.
+  -S, --skip-ssl               Disable MySQL connection encryption.
+  --mysql-integer-type TEXT    MySQL default integer field type. Defaults to
+                               INT(11).
 
-  --mysql-string-type TEXT    MySQL default string field type. Defaults to
-                              VARCHAR(255).
+  --mysql-string-type TEXT     MySQL default string field type. Defaults to
+                               VARCHAR(255).
 
-  -T, --use-fulltext          Use FULLTEXT indexes on TEXT columns. Will throw
-                              an error if your MySQL version does not support
-                              InnoDB FULLTEXT indexes!
+  -T, --use-fulltext           Use FULLTEXT indexes on TEXT columns. Will
+                               throw an error if your MySQL version does not
+                               support InnoDB FULLTEXT indexes!
 
-  --with-rowid                Transfer rowid columns.
-  -c, --chunk INTEGER         Chunk reading/writing SQL records
-  -l, --log-file PATH         Log file
-  -q, --quiet                 Quiet. Display only errors.
-  --version                   Show the version and exit.
-  --help                      Show this message and exit.
+  --with-rowid                 Transfer rowid columns.
+  -c, --chunk INTEGER          Chunk reading/writing SQL records
+  -l, --log-file PATH          Log file
+  -q, --quiet                  Quiet. Display only errors.
+  --version                    Show the version and exit.
+  --help                       Show this message and exit.
 ```
 
 ### GUI wrapper

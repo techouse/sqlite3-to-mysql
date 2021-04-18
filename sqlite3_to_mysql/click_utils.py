@@ -52,3 +52,13 @@ class OptionEatAll(click.Option):
                 our_parser.process = parser_process
                 break
         return retval
+
+
+def prompt_password(ctx, param, use_password):  # pylint: disable=W0613
+    """Prompt for password."""
+    if use_password:
+        mysql_password = ctx.params.get("mysql_password")
+        if not mysql_password:
+            mysql_password = click.prompt("MySQL password", hide_input=True)
+
+        return mysql_password

@@ -15,7 +15,7 @@ import mysql.connector
 import six
 from mysql.connector import errorcode
 from packaging import version
-from tqdm import trange
+from tqdm import tqdm, trange
 
 from sqlite3_to_mysql.sqlite_utils import (
     adapt_decimal,
@@ -563,7 +563,15 @@ class SQLite3toMySQL:
                 )
         else:
             self._mysql_cur.executemany(
-                sql, (tuple(row) for row in self._sqlite_cur.fetchall())
+                sql,
+                (
+                    tuple(row)
+                    for row in tqdm(
+                        self._sqlite_cur.fetchall(),
+                        total=total_records,
+                        disable=self._quiet,
+                    )
+                ),
             )
         self._mysql.commit()
 

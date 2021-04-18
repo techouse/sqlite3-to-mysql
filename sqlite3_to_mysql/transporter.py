@@ -110,6 +110,8 @@ class SQLite3toMySQL:
 
         self._mysql_port = int(kwargs.get("mysql_port") or 3306)
 
+        self._mysql_ssl_disabled = kwargs.get("mysql_ssl_disabled") or False
+
         self._chunk_size = int(kwargs.get("chunk")) if kwargs.get("chunk") else None
 
         self._quiet = kwargs.get("quiet") or False
@@ -153,6 +155,7 @@ class SQLite3toMySQL:
                 password=self._mysql_password,
                 host=self._mysql_host,
                 port=self._mysql_port,
+                ssl_disabled=self._mysql_ssl_disabled,
                 use_pure=True,
             )
             if not self._mysql.is_connected():

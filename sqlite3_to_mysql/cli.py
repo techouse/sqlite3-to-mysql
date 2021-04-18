@@ -41,6 +41,9 @@ from .debug_info import info
     "-P", "--mysql-port", type=int, default=3306, help="MySQL port. Defaults to 3306."
 )
 @click.option(
+    "-S", "--skip-ssl", is_flag=True, help="Disable MySQL connection encryption."
+)
+@click.option(
     "--mysql-integer-type",
     default="INT(11)",
     help="MySQL default integer field type. Defaults to INT(11).",
@@ -75,6 +78,7 @@ def cli(
     mysql_database,
     mysql_host,
     mysql_port,
+    skip_ssl,
     mysql_integer_type,
     mysql_string_type,
     use_fulltext,
@@ -95,6 +99,7 @@ def cli(
             mysql_database=mysql_database,
             mysql_host=mysql_host,
             mysql_port=mysql_port,
+            mysql_ssl_disabled=skip_ssl,
             mysql_integer_type=mysql_integer_type,
             mysql_string_type=mysql_string_type,
             use_fulltext=use_fulltext,

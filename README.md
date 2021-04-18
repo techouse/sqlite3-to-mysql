@@ -48,6 +48,7 @@ Options:
   -p, --mysql-password TEXT   MySQL password
   -h, --mysql-host TEXT       MySQL host. Defaults to localhost.
   -P, --mysql-port INTEGER    MySQL port. Defaults to 3306.
+  -S, --skip-ssl              Disable MySQL connection encryption.
   --mysql-integer-type TEXT   MySQL default integer field type. Defaults to
                               INT(11).
 

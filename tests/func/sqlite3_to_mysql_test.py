@@ -121,7 +121,7 @@ class TestSQLite3toMySQL:
                 self._database = value
                 # raise a fake exception
                 raise mysql.connector.Error(
-                    msg="This is a test", errno=errorcode.ER_SERVER_TEST_MESSAGE
+                    msg="This is a test", errno=errorcode.ER_UNKNOWN_ERROR
                 )
 
             def is_connected(self):

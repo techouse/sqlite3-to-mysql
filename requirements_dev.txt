@@ -2,8 +2,8 @@ Click>=7.0
 docker>=4.0.2
 factory-boy
 Faker>=4.1.0 ; python_version>="3.0"
-mysql-connector-python>=8.0.18,<8.0.24 ; python_version<"3.0"
-mysql-connector-python>=8.0.18 ; python_version>="3.0"
+mysql-connector-python>=8.0.18,<8.0.24 ; python_version<"3.6"
+mysql-connector-python>=8.0.18 ; python_version>="3.6"
 PyMySQL>=0.9.3
 PyMySQL[rsa]
 pytest>=4.6.5

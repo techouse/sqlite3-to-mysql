@@ -67,7 +67,3 @@ Options:
   --version                    Show the version and exit.
   --help                       Show this message and exit.
 ```
-
-### GUI wrapper
-
-[Aref Alikhani](https://github.com/ArefDev) has developed a [GUI wrapper called Berudele](https://github.com/ArefDev/Berudele) for this tool in case you're not comfortable with the CLI interface.

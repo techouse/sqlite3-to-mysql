@@ -349,16 +349,22 @@ class SQLite3toMySQL:
 
         self._sqlite_cur.execute('PRAGMA table_info("{}")'.format(table_name))
 
-        for row in self._sqlite_cur.fetchall():
+        rows = self._sqlite_cur.fetchall()
+        compound_primary_key = (
+            len(tuple(True for row in rows if dict(row)["pk"] > 0)) > 1
+        )
+        for row in rows:
             column = dict(row)
             sql += " `{name}` {type} {notnull} {auto_increment}, ".format(
                 name=column["name"],
                 type=self._translate_type_from_sqlite_to_mysql(column["type"]),
                 notnull="NOT NULL" if column["notnull"] or column["pk"] else "NULL",
                 auto_increment="AUTO_INCREMENT"
-                if column["pk"]
-                and self._translate_type_from_sqlite_to_mysql(column["type"])
-                in {"INT", "BIGINT"}
+                if column["pk"] > 0
+                and self._translate_type_from_sqlite_to_mysql(
+                    column["type"]
+                ).startswith(("INT", "BIGINT"))
+                and not compound_primary_key
                 else "",
             )
             if column["pk"] > 0:

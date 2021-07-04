@@ -60,7 +60,7 @@ class TestSQLite3toMySQL:
         )
 
         for column in sqlite_column_types + ("INT64",):
-            if column == "dialect":
+            if column in {"Insert", "insert", "dialect"}:
                 continue
             elif column == "VARCHAR":
                 assert (
@@ -127,6 +127,11 @@ class TestSQLite3toMySQL:
                 proc._translate_type_from_sqlite_to_mysql(column)
                 == proc._mysql_string_type
             )
+        precision = faker.pyint(min_value=3, max_value=19)
+        scale = faker.pyint(min_value=0, max_value=precision - 1)
+        assert proc._translate_type_from_sqlite_to_mysql(
+            "DECIMAL({precision},{scale})".format(precision=precision, scale=scale)
+        ) == "DECIMAL({precision},{scale})".format(precision=precision, scale=scale)
 
     @pytest.mark.parametrize("quiet", [False, True])
     def test_create_database_connection_error(

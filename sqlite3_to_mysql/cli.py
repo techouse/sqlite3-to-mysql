@@ -22,6 +22,7 @@ from .debug_info import info
 @click.option(
     "-t",
     "--sqlite-tables",
+    type=tuple,
     cls=OptionEatAll,
     help="Transfer only these specific tables (space separated table names). "
     "Implies --without-foreign-keys which inhibits the transfer of foreign keys.",

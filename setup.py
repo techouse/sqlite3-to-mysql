@@ -8,7 +8,8 @@ here = abspath(dirname(__file__))
 packages = ["sqlite3_to_mysql"]
 
 requires = [
-    "Click>=7.0,<8.0.0",
+    "Click>=7.0,<8.0.0 ; python_version<'3.6'",
+    "Click>=7.0 ; python_version>='3.6'",
     "mysql-connector-python>=8.0.18,<8.0.24 ; python_version<'3.6'",
     "mysql-connector-python>=8.0.18 ; python_version>='3.6'",
     "pytimeparse>=1.1.8",

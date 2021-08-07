@@ -1,4 +1,5 @@
-Click>=7.0,<8.0.0
+Click>=7.0,<8.0.0 ; python_version<"3.6"
+Click>=7.0 ; python_version>="3.6"
 docker>=4.0.2
 factory-boy
 Faker>=4.1.0 ; python_version>="3.0"

@@ -474,7 +474,6 @@ class SQLite3toMySQL:
         index_columns,
         index_infos,
         index_iteration=0,
-        tried_wrong_sub_key=False,
     ):
         sql = """
             ALTER TABLE `{table}`

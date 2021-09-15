@@ -66,7 +66,7 @@ from .mysql_utils import mysql_supported_character_sets
 )
 @click.option(
     "--mysql-charset",
-    metavar="",
+    metavar="TEXT",
     type=click.Choice(list(CharacterSet.get_supported()), case_sensitive=False),
     default="utf8mb4",
     show_default=True,
@@ -74,7 +74,7 @@ from .mysql_utils import mysql_supported_character_sets
 )
 @click.option(
     "--mysql-collation",
-    metavar="",
+    metavar="TEXT",
     type=click.Choice(
         [charset.collation for charset in mysql_supported_character_sets()],
         case_sensitive=False,

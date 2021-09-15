@@ -421,7 +421,6 @@ class SQLite3toMySQL:
                 table_columns[index_info["name"]].upper() == "TEXT"
                 for index_info in index_infos
             ):
-
                 if self._use_fulltext and self._mysql_fulltext_support:
                     # Use fulltext if requested and available
                     index_type = "FULLTEXT"
@@ -432,7 +431,10 @@ class SQLite3toMySQL:
                     # Limit the max TEXT field index length to 255
                     index_columns = ", ".join(
                         "`{column}`{length}".format(
-                            column=index_info["name"], length="({})".format(255)
+                            column=index_info["name"],
+                            length="({})".format(255)
+                            if table_columns[index_info["name"]].upper() == "TEXT"
+                            else "",
                         )
                         for index_info in index_infos
                     )
@@ -472,6 +474,7 @@ class SQLite3toMySQL:
         index_columns,
         index_infos,
         index_iteration=0,
+        tried_wrong_sub_key=False,
     ):
         sql = """
             ALTER TABLE `{table}`

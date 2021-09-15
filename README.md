@@ -53,9 +53,9 @@ Options:
                                INT(11).
   --mysql-string-type TEXT     MySQL default string field type. Defaults to
                                VARCHAR(255).
-  --charset                    MySQL database and table character set
+  --mysql-charset              MySQL database and table character set
                                [default: utf8mb4]
-  --collation                  MySQL database and table collation
+  --mysql-collation            MySQL database and table collation
   -T, --use-fulltext           Use FULLTEXT indexes on TEXT columns. Will
                                throw an error if your MySQL version does not
                                support InnoDB FULLTEXT indexes!

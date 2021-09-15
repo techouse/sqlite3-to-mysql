@@ -3,11 +3,13 @@
 import sys
 
 import click
+from mysql.connector import CharacterSet
 from tabulate import tabulate
 
 from . import SQLite3toMySQL
 from .click_utils import OptionEatAll, prompt_password
 from .debug_info import info
+from .mysql_utils import mysql_supported_character_sets
 
 
 @click.command()
@@ -63,6 +65,24 @@ from .debug_info import info
     help="MySQL default string field type. Defaults to VARCHAR(255).",
 )
 @click.option(
+    "--charset",
+    metavar="",
+    type=click.Choice(list(CharacterSet.get_supported()), case_sensitive=False),
+    default="utf8mb4",
+    show_default=True,
+    help="MySQL database and table character set",
+)
+@click.option(
+    "--collation",
+    metavar="",
+    type=click.Choice(
+        [charset.collation for charset in mysql_supported_character_sets()],
+        case_sensitive=False,
+    ),
+    default=None,
+    help="MySQL database and table collation",
+)
+@click.option(
     "-T",
     "--use-fulltext",
     is_flag=True,
@@ -91,6 +111,8 @@ def cli(
     skip_ssl,
     mysql_integer_type,
     mysql_string_type,
+    charset,
+    collation,
     use_fulltext,
     with_rowid,
     chunk,
@@ -99,6 +121,20 @@ def cli(
 ):
     """Transfer SQLite to MySQL using the provided CLI options."""
     try:
+        if collation:
+            charset_collations = tuple(
+                cs.collation for cs in mysql_supported_character_sets(charset.lower())
+            )
+            if collation not in set(charset_collations):
+                raise click.ClickException(
+                    "Error: Invalid value for '--collation' of charset '{charset}': '{collation}' is not one of "
+                    "{collations}.".format(
+                        collation=collation,
+                        charset=charset,
+                        collations="'" + "', '".join(charset_collations) + "'",
+                    )
+                )
+
         converter = SQLite3toMySQL(
             sqlite_file=sqlite_file,
             sqlite_tables=sqlite_tables,
@@ -112,6 +148,8 @@ def cli(
             mysql_ssl_disabled=skip_ssl,
             mysql_integer_type=mysql_integer_type,
             mysql_string_type=mysql_string_type,
+            mysql_charset=charset.lower() if charset else "utf8mb4",
+            mysql_collation=collation.lower() if collation else None,
             use_fulltext=use_fulltext,
             with_rowid=with_rowid,
             chunk=chunk,

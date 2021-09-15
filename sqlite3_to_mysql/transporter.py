@@ -13,7 +13,7 @@ from sys import stdout
 
 import mysql.connector
 import six
-from mysql.connector import errorcode
+from mysql.connector import CharacterSet, errorcode
 from packaging import version
 from tqdm import tqdm, trange
 
@@ -92,6 +92,13 @@ class SQLite3toMySQL:
         self._mysql_string_type = str(
             kwargs.get("mysql_string_type") or "VARCHAR(255)"
         ).upper()
+
+        self._mysql_charset = kwargs.get("mysql_charset") or "utf8mb4"
+
+        self._mysql_collation = (
+            kwargs.get("mysql_collation")
+            or CharacterSet.get_default_collation(self._mysql_charset.lower())[0]
+        )
 
         self._use_fulltext = kwargs.get("use_fulltext") or False
 
@@ -231,11 +238,13 @@ class SQLite3toMySQL:
         try:
             self._mysql_cur.execute(
                 """
-                CREATE DATABASE IF NOT EXISTS `{}`
-                DEFAULT CHARACTER SET utf8mb4
-                DEFAULT COLLATE utf8mb4_general_ci
+                CREATE DATABASE IF NOT EXISTS `{database}`
+                DEFAULT CHARACTER SET {charset}
+                DEFAULT COLLATE {collation}
             """.format(
-                    self._mysql_database
+                    database=self._mysql_database,
+                    charset=self._mysql_charset,
+                    collation=self._mysql_collation,
                 )
             )
             self._mysql_cur.close()
@@ -351,7 +360,10 @@ class SQLite3toMySQL:
             )
         if transfer_rowid:
             sql += ", CONSTRAINT `{}_rowid` UNIQUE (`rowid`)".format(table_name)
-        sql += " ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci"
+        sql += " ) ENGINE=InnoDB DEFAULT CHARSET={charset} COLLATE={collation}".format(
+            charset=self._mysql_charset,
+            collation=self._mysql_collation,
+        )
 
         try:
             self._mysql_cur.execute(sql)

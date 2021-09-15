@@ -7,6 +7,7 @@ from decimal import Decimal
 
 import six
 from pytimeparse.timeparse import timeparse
+from unidecode import unidecode
 
 
 def adapt_decimal(value):
@@ -34,3 +35,10 @@ def convert_timedelta(value):
 def convert_blob(value):
     """In Python 2 MySQL binary protocol can not handle 'buffer' objects so we have to convert them."""
     return six.binary_type(value)
+
+
+def unicase_compare(string_1, string_2):
+    """Taken from https://github.com/patarapolw/ankisync2/issues/3#issuecomment-768687431."""
+    _string_1 = unidecode(string_1).lower()
+    _string_2 = unidecode(string_2).lower()
+    return 1 if _string_1 > _string_2 else -1 if _string_1 < _string_2 else 0

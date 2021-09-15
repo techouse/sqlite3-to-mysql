@@ -23,6 +23,7 @@ from sqlite3_to_mysql.sqlite_utils import (
     convert_blob,
     convert_decimal,
     convert_timedelta,
+    unicase_compare,
 )
 
 if six.PY2:
@@ -146,6 +147,7 @@ class SQLite3toMySQL:
             realpath(self._sqlite_file), detect_types=sqlite3.PARSE_DECLTYPES
         )
         self._sqlite.row_factory = sqlite3.Row
+        self._sqlite.create_collation("unicase", unicase_compare)
 
         self._sqlite_cur = self._sqlite.cursor()
 

@@ -19,6 +19,8 @@ requires = [
     "packaging>=20.3",
     "tabulate<0.8.6 ; python_version<'3.5'",
     "tabulate ; python_version>='3.5'",
+    "Unidecode<=1.2.0 ; python_version<'3.5'",
+    "Unidecode>=1.2.0 ; python_version>='3.5'",
 ]
 
 about = {}

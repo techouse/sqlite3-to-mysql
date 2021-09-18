@@ -29,6 +29,7 @@ from .mysql_utils import (
     MYSQL_COLUMN_TYPES,
     check_mysql_fulltext_support,
     check_mysql_json_support,
+    safe_identifier_length,
 )
 
 if six.PY2:
@@ -285,7 +286,9 @@ class SQLite3toMySQL:
     def _create_table(self, table_name, transfer_rowid=False):
         primary_keys = []
 
-        sql = "CREATE TABLE IF NOT EXISTS `{}` ( ".format(table_name)
+        sql = "CREATE TABLE IF NOT EXISTS `{}` ( ".format(
+            safe_identifier_length(table_name)
+        )
 
         if transfer_rowid:
             sql += " `rowid` BIGINT NOT NULL, "
@@ -299,7 +302,7 @@ class SQLite3toMySQL:
         for row in rows:
             column = dict(row)
             sql += " `{name}` {type} {notnull} {auto_increment}, ".format(
-                name=column["name"],
+                name=safe_identifier_length(column["name"]),
                 type=self._translate_type_from_sqlite_to_mysql(column["type"]),
                 notnull="NOT NULL" if column["notnull"] or column["pk"] else "NULL",
                 auto_increment="AUTO_INCREMENT"
@@ -311,7 +314,10 @@ class SQLite3toMySQL:
                 else "",
             )
             if column["pk"] > 0:
-                primary_key = {"column": column["name"], "length": ""}
+                primary_key = {
+                    "column": safe_identifier_length(column["name"]),
+                    "length": "",
+                }
                 # In case we have a non-numeric primary key
                 column_type = self._translate_type_from_sqlite_to_mysql(column["type"])
                 if column_type in {"TEXT", "BLOB"} or column_type.startswith(
@@ -329,7 +335,9 @@ class SQLite3toMySQL:
                 )
             )
         if transfer_rowid:
-            sql += ", CONSTRAINT `{}_rowid` UNIQUE (`rowid`)".format(table_name)
+            sql += ", CONSTRAINT `{}_rowid` UNIQUE (`rowid`)".format(
+                safe_identifier_length(table_name)
+            )
         sql += " ) ENGINE=InnoDB DEFAULT CHARSET={charset} COLLATE={collation}".format(
             charset=self._mysql_charset,
             collation=self._mysql_collation,
@@ -339,7 +347,11 @@ class SQLite3toMySQL:
             self._mysql_cur.execute(sql)
             self._mysql.commit()
         except mysql.connector.Error as err:
-            self._logger.error("MySQL failed creating table %s: %s", table_name, err)
+            self._logger.error(
+                "MySQL failed creating table %s: %s",
+                safe_identifier_length(table_name),
+                err,
+            )
             raise
 
     def _add_indices(self, table_name):
@@ -369,13 +381,14 @@ class SQLite3toMySQL:
                     # Use fulltext if requested and available
                     index_type = "FULLTEXT"
                     index_columns = ",".join(
-                        "`{}`".format(index_info["name"]) for index_info in index_infos
+                        "`{}`".format(safe_identifier_length(index_info["name"]))
+                        for index_info in index_infos
                     )
                 else:
                     # Limit the max TEXT field index length to 255
                     index_columns = ", ".join(
                         "`{column}`{length}".format(
-                            column=index_info["name"],
+                            column=safe_identifier_length(index_info["name"]),
                             length="({})".format(255)
                             if table_columns[index_info["name"]].upper() == "TEXT"
                             else "",
@@ -397,7 +410,8 @@ class SQLite3toMySQL:
                             index_length = suffix.group(0)
                     column_list.append(
                         "`{column}`{length}".format(
-                            column=index_info["name"], length=index_length
+                            column=safe_identifier_length(index_info["name"]),
+                            length=index_length,
                         )
                     )
                 index_columns = ", ".join(column_list)
@@ -419,7 +433,7 @@ class SQLite3toMySQL:
                         index=index,
                         index_columns=", ".join(
                             "`{column}`{length}".format(
-                                column=index_info["name"],
+                                column=safe_identifier_length(index_info["name"]),
                                 length="({})".format(255)
                                 if table_columns[index_info["name"]].upper() == "TEXT"
                                 else "",
@@ -444,12 +458,13 @@ class SQLite3toMySQL:
             ALTER TABLE `{table}`
             ADD {index_type} `{name}`({columns})
         """.format(
-            table=table_name,
+            table=safe_identifier_length(table_name),
             index_type=index_type,
-            name=index["name"][:64]
+            name=safe_identifier_length(index["name"])
             if index_iteration == 0
             else "{name}_{index_iteration}".format(
-                name=index["name"][:60], index_iteration=index_iteration
+                name=safe_identifier_length(index["name"], max_length=60),
+                index_iteration=index_iteration,
             ),
             columns=index_columns,
         )
@@ -458,8 +473,11 @@ class SQLite3toMySQL:
             self._logger.info(
                 """Adding %s to column "%s" in table %s""",
                 "unique index" if int(index["unique"]) == 1 else "index",
-                ", ".join(index_info["name"] for index_info in index_infos),
-                table_name,
+                ", ".join(
+                    safe_identifier_length(index_info["name"])
+                    for index_info in index_infos
+                ),
+                safe_identifier_length(table_name),
             )
             self._mysql_cur.execute(sql)
             self._mysql.commit()
@@ -478,15 +496,21 @@ class SQLite3toMySQL:
                 # handle bad FULLTEXT index
                 self._logger.warning(
                     """Failed adding FULLTEXT index to column "%s" in table %s. Retrying without FULLTEXT ...""",
-                    ", ".join(index_info["name"] for index_info in index_infos),
-                    table_name,
+                    ", ".join(
+                        safe_identifier_length(index_info["name"])
+                        for index_info in index_infos
+                    ),
+                    safe_identifier_length(table_name),
                 )
                 raise
             else:
                 self._logger.error(
                     """MySQL failed adding index to column "%s" in table %s: %s""",
-                    ", ".join(index_info["name"] for index_info in index_infos),
-                    table_name,
+                    ", ".join(
+                        safe_identifier_length(index_info["name"])
+                        for index_info in index_infos
+                    ),
+                    safe_identifier_length(table_name),
                     err,
                 )
                 raise
@@ -506,10 +530,10 @@ class SQLite3toMySQL:
             """.format(
                 id=foreign_key["id"],
                 seq=foreign_key["seq"],
-                table=table_name,
-                column=foreign_key["from"],
-                ref_table=foreign_key["table"],
-                ref_column=foreign_key["to"],
+                table=safe_identifier_length(table_name),
+                column=safe_identifier_length(foreign_key["from"]),
+                ref_table=safe_identifier_length(foreign_key["table"]),
+                ref_column=safe_identifier_length(foreign_key["to"]),
                 on_delete=foreign_key["on_delete"].upper()
                 if foreign_key["on_delete"].upper() != "SET DEFAULT"
                 else "NO ACTION",
@@ -521,20 +545,20 @@ class SQLite3toMySQL:
             try:
                 self._logger.info(
                     "Adding foreign key to %s.%s referencing %s.%s",
-                    table_name,
-                    foreign_key["from"],
-                    foreign_key["table"],
-                    foreign_key["to"],
+                    safe_identifier_length(table_name),
+                    safe_identifier_length(foreign_key["from"]),
+                    safe_identifier_length(foreign_key["table"]),
+                    safe_identifier_length(foreign_key["to"]),
                 )
                 self._mysql_cur.execute(sql)
                 self._mysql.commit()
             except mysql.connector.Error as err:
                 self._logger.error(
                     "MySQL failed adding foreign key to %s.%s referencing %s.%s: %s",
-                    table_name,
-                    foreign_key["from"],
-                    foreign_key["table"],
-                    foreign_key["to"],
+                    safe_identifier_length(table_name),
+                    safe_identifier_length(foreign_key["from"]),
+                    safe_identifier_length(foreign_key["table"]),
+                    safe_identifier_length(foreign_key["to"]),
                     err,
                 )
                 raise
@@ -621,13 +645,16 @@ class SQLite3toMySQL:
                             table_name=table["name"],
                         )
                     )
-                    columns = [column[0] for column in self._sqlite_cur.description]
+                    columns = [
+                        safe_identifier_length(column[0])
+                        for column in self._sqlite_cur.description
+                    ]
                     sql = """
                         INSERT IGNORE
                         INTO `{table}` ({fields})
                         VALUES ({placeholders})
                     """.format(
-                        table=table["name"],
+                        table=safe_identifier_length(table["name"]),
                         fields=("`{}`, " * len(columns)).rstrip(" ,").format(*columns),
                         placeholders=("%s, " * len(columns)).rstrip(" ,"),
                     )
@@ -636,7 +663,7 @@ class SQLite3toMySQL:
                     except mysql.connector.Error as err:
                         self._logger.error(
                             "MySQL transfer failed inserting data into table %s: %s",
-                            table["name"],
+                            safe_identifier_length(table["name"]),
                             err,
                         )
                         raise

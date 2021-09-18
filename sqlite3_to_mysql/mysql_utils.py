@@ -108,3 +108,8 @@ def check_mysql_fulltext_support(version_string):
         if mysql_version.minor >= 6:
             return True
     return False
+
+
+def safe_identifier_length(identifier_name, max_length=64):
+    """https://dev.mysql.com/doc/refman/8.0/en/identifier-length.html."""
+    return identifier_name[:max_length]

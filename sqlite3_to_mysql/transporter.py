@@ -402,13 +402,34 @@ class SQLite3toMySQL:
                     )
                 index_columns = ", ".join(column_list)
 
-            self._add_index(
-                table_name=table_name,
-                index_type=index_type,
-                index=index,
-                index_columns=index_columns,
-                index_infos=index_infos,
-            )
+            try:
+                self._add_index(
+                    table_name=table_name,
+                    index_type=index_type,
+                    index=index,
+                    index_columns=index_columns,
+                    index_infos=index_infos,
+                )
+            except mysql.connector.Error as err:
+                if err.errno == errorcode.ER_BAD_FT_COLUMN and index_type == "FULLTEXT":
+                    # handle bad FULLTEXT index
+                    self._add_index(
+                        table_name=table_name,
+                        index_type="UNIQUE" if int(index["unique"]) == 1 else "INDEX",
+                        index=index,
+                        index_columns=", ".join(
+                            "`{column}`{length}".format(
+                                column=index_info["name"],
+                                length="({})".format(255)
+                                if table_columns[index_info["name"]].upper() == "TEXT"
+                                else "",
+                            )
+                            for index_info in index_infos
+                        ),
+                        index_infos=index_infos,
+                    )
+                else:
+                    raise
 
     def _add_index(
         self,
@@ -453,9 +474,18 @@ class SQLite3toMySQL:
                     index_infos=index_infos,
                     index_iteration=index_iteration + 1,
                 )
+            elif err.errno == errorcode.ER_BAD_FT_COLUMN:
+                # handle bad FULLTEXT index
+                self._logger.warning(
+                    """Failed adding FULLTEXT index to column "%s" in table %s. Retrying without FULLTEXT ...""",
+                    ", ".join(index_info["name"] for index_info in index_infos),
+                    table_name,
+                )
+                raise
             else:
                 self._logger.error(
-                    "MySQL failed adding indices to table %s: %s",
+                    """MySQL failed adding index to column "%s" in table %s: %s""",
+                    ", ".join(index_info["name"] for index_info in index_infos),
                     table_name,
                     err,
                 )
@@ -500,8 +530,11 @@ class SQLite3toMySQL:
                 self._mysql.commit()
             except mysql.connector.Error as err:
                 self._logger.error(
-                    "MySQL failed adding foreign keys to table %s: %s",
+                    "MySQL failed adding foreign key to %s.%s referencing %s.%s: %s",
                     table_name,
+                    foreign_key["from"],
+                    foreign_key["table"],
+                    foreign_key["to"],
                     err,
                 )
                 raise

@@ -14,7 +14,6 @@ from sys import stdout
 import mysql.connector
 import six
 from mysql.connector import CharacterSet, errorcode
-from packaging import version
 from tqdm import tqdm, trange
 
 from sqlite3_to_mysql.sqlite_utils import (
@@ -26,7 +25,11 @@ from sqlite3_to_mysql.sqlite_utils import (
     unicase_compare,
 )
 
-from .mysql_utils import MYSQL_COLUMN_TYPES
+from .mysql_utils import (
+    MYSQL_COLUMN_TYPES,
+    check_mysql_fulltext_support,
+    check_mysql_json_support,
+)
 
 if six.PY2:
     from .sixeptions import *  # pylint: disable=W0622,W0401,W0614
@@ -149,10 +152,8 @@ class SQLite3toMySQL:
                     raise
 
             self._mysql_version = self._get_mysql_version()
-            self._mysql_json_support = self._check_mysql_json_support(
-                self._mysql_version
-            )
-            self._mysql_fulltext_support = self._check_mysql_fulltext_support(
+            self._mysql_json_support = check_mysql_json_support(self._mysql_version)
+            self._mysql_fulltext_support = check_mysql_fulltext_support(
                 self._mysql_version
             )
 
@@ -194,42 +195,6 @@ class SQLite3toMySQL:
                 err,
             )
             raise
-
-    @staticmethod
-    def _check_mysql_json_support(version_string):
-        mysql_version = version.parse(re.sub("-.*$", "", version_string))
-
-        if version_string.lower().endswith("-mariadb"):
-            if (
-                mysql_version.major >= 10
-                and mysql_version.minor >= 2
-                and mysql_version.micro >= 7
-            ):
-                return True
-        else:
-            if mysql_version.major >= 8:
-                return True
-            if mysql_version.minor >= 7 and mysql_version.micro >= 8:
-                return True
-        return False
-
-    @staticmethod
-    def _check_mysql_fulltext_support(version_string):
-        mysql_version = version.parse(re.sub("-.*$", "", version_string))
-
-        if version_string.lower().endswith("-mariadb"):
-            if (
-                mysql_version.major >= 10
-                and mysql_version.minor >= 0
-                and mysql_version.micro >= 5
-            ):
-                return True
-        else:
-            if mysql_version.major >= 8:
-                return True
-            if mysql_version.minor >= 6:
-                return True
-        return False
 
     def _sqlite_table_has_rowid(self, table):
         try:

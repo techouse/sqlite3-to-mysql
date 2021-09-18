@@ -1,6 +1,8 @@
 """MySQL helpers."""
+import re
 from collections import namedtuple
 
+from packaging import version
 from mysql.connector import CharacterSet
 from mysql.connector.charsets import MYSQL_CHARACTER_SETS
 
@@ -65,3 +67,44 @@ def mysql_supported_character_sets(charset=None):
                         yield CharSet(index, charset, info[1])
                     except KeyError:
                         continue
+
+
+def get_mysql_version(version_string):
+    """Get MySQL version."""
+    return version.parse(re.sub("-.*$", "", version_string))
+
+
+def check_mysql_json_support(version_string):
+    """Check for MySQL JSON support."""
+    mysql_version = get_mysql_version(version_string)
+    if version_string.lower().endswith("-mariadb"):
+        if (
+            mysql_version.major >= 10
+            and mysql_version.minor >= 2
+            and mysql_version.micro >= 7
+        ):
+            return True
+    else:
+        if mysql_version.major >= 8:
+            return True
+        if mysql_version.minor >= 7 and mysql_version.micro >= 8:
+            return True
+    return False
+
+
+def check_mysql_fulltext_support(version_string):
+    """Check for FULLTEXT indexing support."""
+    mysql_version = get_mysql_version(version_string)
+    if version_string.lower().endswith("-mariadb"):
+        if (
+            mysql_version.major >= 10
+            and mysql_version.minor >= 0
+            and mysql_version.micro >= 5
+        ):
+            return True
+    else:
+        if mysql_version.major >= 8:
+            return True
+        if mysql_version.minor >= 6:
+            return True
+    return False

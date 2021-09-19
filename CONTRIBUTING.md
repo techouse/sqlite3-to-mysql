@@ -11,10 +11,10 @@ Please note we have a code of conduct, please follow it in all your interactions
 
 Backwards compatibility is a must.
 
-Currently the tool supports Python versions 2.7, 3.5, 3.6, 3.7, 3.8 and 3.9.
+Currently, the tool supports Python versions 2.7, 3.5, 3.6, 3.7, 3.8 and 3.9.
 
 Even though Python 2.7 has reached the end of its life at the beginning of 2020, a lot of people still rely on it. 
-Therefore we should continue to support it as long as the underlying tools do not completely drop support for it.
+Therefore, we should continue to support it as long as the underlying tools do not completely drop support for it.
 
 ## MySQL version support
 

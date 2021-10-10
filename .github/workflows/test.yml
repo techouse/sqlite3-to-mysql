@@ -52,7 +52,7 @@ jobs:
             db: "mariadb:5.5"
             legacy_db: 1
             experimental: true
-            py: "3.10-dev"
+            py: "3.10"
 
           - toxenv: "py27"
             db: "mariadb:10.0"
@@ -94,7 +94,7 @@ jobs:
             db: "mariadb:10.0"
             legacy_db: 1
             experimental: true
-            py: "3.10-dev"
+            py: "3.10"
 
           - toxenv: "py27"
             db: "mariadb:10.1"
@@ -136,7 +136,7 @@ jobs:
             db: "mariadb:10.1"
             legacy_db: 1
             experimental: true
-            py: "3.10-dev"
+            py: "3.10"
 
           - toxenv: "py27"
             db: "mariadb:10.2"
@@ -178,7 +178,7 @@ jobs:
             db: "mariadb:10.2"
             legacy_db: 0
             experimental: true
-            py: "3.10-dev"
+            py: "3.10"
 
           - toxenv: "py27"
             db: "mariadb:10.3"
@@ -220,7 +220,7 @@ jobs:
             db: "mariadb:10.3"
             legacy_db: 0
             experimental: true
-            py: "3.10-dev"
+            py: "3.10"
 
           - toxenv: "py27"
             db: "mariadb:10.4"
@@ -262,7 +262,7 @@ jobs:
             db: "mariadb:10.4"
             legacy_db: 0
             experimental: true
-            py: "3.10-dev"
+            py: "3.10"
 
           - toxenv: "py27"
             db: "mariadb:10.5"
@@ -304,7 +304,7 @@ jobs:
             db: "mariadb:10.5"
             legacy_db: 0
             experimental: true
-            py: "3.10-dev"
+            py: "3.10"
 
           - toxenv: "py27"
             db: "mariadb:10.6"
@@ -346,7 +346,7 @@ jobs:
             db: "mariadb:10.6"
             legacy_db: 0
             experimental: true
-            py: "3.10-dev"
+            py: "3.10"
 
           - toxenv: "py27"
             db: "mysql:5.5"
@@ -388,7 +388,7 @@ jobs:
             db: "mysql:5.5"
             legacy_db: 1
             experimental: true
-            py: "3.10-dev"
+            py: "3.10"
 
           - toxenv: "py27"
             db: "mysql:5.6"
@@ -430,7 +430,7 @@ jobs:
             db: "mysql:5.6"
             legacy_db: 1
             experimental: true
-            py: "3.10-dev"
+            py: "3.10"
 
           - toxenv: "py27"
             db: "mysql:5.7"
@@ -472,7 +472,7 @@ jobs:
             db: "mysql:5.7"
             legacy_db: 0
             experimental: true
-            py: "3.10-dev"
+            py: "3.10"
 
           - toxenv: "py27"
             db: "mysql:8.0"
@@ -514,7 +514,7 @@ jobs:
             db: "mysql:8.0"
             legacy_db: 0
             experimental: true
-            py: "3.10-dev"
+            py: "3.10"
 
     continue-on-error: ${{ matrix.experimental }}
 

@@ -301,7 +301,7 @@ class SQLite3toMySQL:
         )
         for row in rows:
             column = dict(row)
-            sql += " `{name}` {type} {notnull} {auto_increment}, ".format(
+            sql += " `{name}` {type} {notnull} {dflt} {auto_increment}, ".format(
                 name=safe_identifier_length(column["name"]),
                 type=self._translate_type_from_sqlite_to_mysql(column["type"]),
                 notnull="NOT NULL" if column["notnull"] or column["pk"] else "NULL",
@@ -312,6 +312,7 @@ class SQLite3toMySQL:
                 ).startswith(("INT", "BIGINT"))
                 and not compound_primary_key
                 else "",
+                dflt = "DEFAULT " + column["dflt_value"] if column["dflt_value"] else "",
             )
             if column["pk"] > 0:
                 primary_key = {

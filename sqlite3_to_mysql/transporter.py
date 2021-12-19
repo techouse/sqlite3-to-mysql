@@ -312,7 +312,7 @@ class SQLite3toMySQL:
                 ).startswith(("INT", "BIGINT"))
                 and not compound_primary_key
                 else "",
-                dflt = "DEFAULT " + column["dflt_value"] if column["dflt_value"] else "",
+                dflt="DEFAULT " + column["dflt_value"] if column["dflt_value"] else "",
             )
             if column["pk"] > 0:
                 primary_key = {

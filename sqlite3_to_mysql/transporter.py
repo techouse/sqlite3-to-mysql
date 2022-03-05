@@ -275,6 +275,8 @@ class SQLite3toMySQL:
             return match.group(0).upper() + length
         if data_type in {"INT64", "NUMERIC"}:
             return "BIGINT" + self._column_type_length(column_type, 19)
+        if data_type == "BOOLEAN":
+            return "TINYINT(1)"
         if data_type not in MYSQL_COLUMN_TYPES:
             return self._mysql_string_type
         return full_column_type

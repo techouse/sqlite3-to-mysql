@@ -82,6 +82,8 @@ class TestSQLite3toMySQL:
                     proc._translate_type_from_sqlite_to_mysql(column)
                     == proc._mysql_text_type
                 )
+            elif column == "BOOLEAN":
+                assert proc._translate_type_from_sqlite_to_mysql(column) == "TINYINT(1)"
             else:
                 assert proc._translate_type_from_sqlite_to_mysql(column) == column
         assert (

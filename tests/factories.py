@@ -32,7 +32,7 @@ class MiscFactory(factory.Factory):
     class Meta:
         model = models.Misc
 
-    big_integer_field = factory.Faker("pyint", max_value=10 ** 9)
+    big_integer_field = factory.Faker("pyint", max_value=10**9)
     blob_field = factory.Faker("binary", length=1024 * 10)
     boolean_field = factory.Faker("boolean")
     char_field = factory.Faker("text", max_nb_chars=255)
@@ -40,7 +40,7 @@ class MiscFactory(factory.Factory):
     date_time_field = factory.Faker("date_time_this_century")
     decimal_field = factory.Faker("pydecimal", left_digits=8, right_digits=2)
     float_field = factory.Faker("pyfloat", left_digits=8, right_digits=4)
-    integer_field = factory.Faker("pyint", min_value=-(2 ** 31), max_value=2 ** 31 - 1)
+    integer_field = factory.Faker("pyint", min_value=-(2**31), max_value=2**31 - 1)
     if environ.get("LEGACY_DB", "0") == "0" and six.PY3:
         json_field = factory.Faker(
             "pydict",
@@ -51,7 +51,7 @@ class MiscFactory(factory.Factory):
     numeric_field = factory.Faker("pyfloat", left_digits=8, right_digits=4)
     real_field = factory.Faker("pyfloat", left_digits=8, right_digits=4)
     small_integer_field = factory.Faker(
-        "pyint", min_value=-(2 ** 15), max_value=2 ** 15 - 1
+        "pyint", min_value=-(2**15), max_value=2**15 - 1
     )
     string_field = factory.Faker("text", max_nb_chars=255)
     text_field = factory.Faker("text", max_nb_chars=1024)

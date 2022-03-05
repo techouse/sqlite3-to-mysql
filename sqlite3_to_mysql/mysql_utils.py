@@ -46,6 +46,13 @@ MYSQL_COLUMN_TYPES = {
     "YEAR",
 }
 
+MYSQL_TEXT_COLUMN_TYPES = {
+    "TINYTEXT",
+    "TEXT",
+    "MEDIUMTEXT",
+    "LONGTEXT",
+}
+
 CharSet = namedtuple("CharSet", ["id", "charset", "collation"])
 
 

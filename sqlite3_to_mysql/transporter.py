@@ -27,6 +27,7 @@ from sqlite3_to_mysql.sqlite_utils import (
 
 from .mysql_utils import (
     MYSQL_COLUMN_TYPES,
+    MYSQL_TEXT_COLUMN_TYPES,
     check_mysql_fulltext_support,
     check_mysql_json_support,
     safe_identifier_length,
@@ -96,6 +97,10 @@ class SQLite3toMySQL:
         self._mysql_string_type = str(
             kwargs.get("mysql_string_type") or "VARCHAR(255)"
         ).upper()
+
+        self._mysql_text_type = str(kwargs.get("mysql_text_type") or "TEXT").upper()
+        if self._mysql_text_type not in MYSQL_TEXT_COLUMN_TYPES:
+            self._mysql_text_type = "TEXT"
 
         self._mysql_charset = kwargs.get("mysql_charset") or "utf8mb4"
 
@@ -243,11 +248,11 @@ class SQLite3toMySQL:
 
         data_type = match.group(0).upper()
         if data_type in {"TEXT", "CLOB", "STRING"}:
-            return "TEXT"
+            return self._mysql_text_type
         if data_type in {"CHARACTER", "NCHAR", "NATIVE CHARACTER"}:
             return "CHAR" + self._column_type_length(column_type)
         if data_type in {"VARYING CHARACTER", "NVARCHAR", "VARCHAR"}:
-            if self._mysql_string_type == "TEXT":
+            if self._mysql_string_type in MYSQL_TEXT_COLUMN_TYPES:
                 return self._mysql_string_type
             length = self._column_type_length(column_type)
             if not length:

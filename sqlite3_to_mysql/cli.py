@@ -9,7 +9,7 @@ from tabulate import tabulate
 from . import SQLite3toMySQL
 from .click_utils import OptionEatAll, prompt_password
 from .debug_info import info
-from .mysql_utils import mysql_supported_character_sets
+from .mysql_utils import MYSQL_TEXT_COLUMN_TYPES, mysql_supported_character_sets
 
 
 @click.command()
@@ -65,6 +65,15 @@ from .mysql_utils import mysql_supported_character_sets
     help="MySQL default string field type. Defaults to VARCHAR(255).",
 )
 @click.option(
+    "--mysql-text-type",
+    type=click.Choice(
+        MYSQL_TEXT_COLUMN_TYPES,
+        case_sensitive=False,
+    ),
+    default="TEXT",
+    help="MySQL default text field type. Defaults to TEXT.",
+)
+@click.option(
     "--mysql-charset",
     metavar="TEXT",
     type=click.Choice(list(CharacterSet.get_supported()), case_sensitive=False),
@@ -111,6 +120,7 @@ def cli(
     skip_ssl,
     mysql_integer_type,
     mysql_string_type,
+    mysql_text_type,
     mysql_charset,
     mysql_collation,
     use_fulltext,
@@ -149,6 +159,7 @@ def cli(
             mysql_ssl_disabled=skip_ssl,
             mysql_integer_type=mysql_integer_type,
             mysql_string_type=mysql_string_type,
+            mysql_text_type=mysql_text_type,
             mysql_charset=mysql_charset.lower() if mysql_charset else "utf8mb4",
             mysql_collation=mysql_collation.lower() if mysql_collation else None,
             use_fulltext=use_fulltext,

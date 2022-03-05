@@ -160,9 +160,9 @@ class TestSQLite3toMySQL:
         self, cli_runner, sqlite_database, mysql_credentials, mysql_database, faker
     ):
         if six.PY2:
-            port = choice(xrange(2, 2 ** 16 - 1))
+            port = choice(xrange(2, 2**16 - 1))
         else:
-            port = choice(range(2, 2 ** 16 - 1))
+            port = choice(range(2, 2**16 - 1))
         if port == mysql_credentials.port:
             port -= 1
         result = cli_runner.invoke(
@@ -192,40 +192,72 @@ class TestSQLite3toMySQL:
         )
 
     @pytest.mark.parametrize(
-        "mysql_integer_type, mysql_string_type, chunk, with_rowid",
+        "mysql_integer_type, mysql_string_type, mysql_text_type, chunk, with_rowid",
         [
-            # 0000
-            (None, None, None, False),
-            # 0001
-            (None, None, None, True),
-            # 1110
-            ("BIGINT(19)", "TEXT", 10, False),
-            # 1111
-            ("BIGINT(19)", "TEXT", 10, True),
-            # 1100
-            ("BIGINT(19)", "TEXT", None, False),
-            # 1101
-            ("BIGINT(19)", "TEXT", None, True),
-            # 0110
-            (None, "TEXT", 10, False),
-            # 0111
-            (None, "TEXT", 10, True),
-            # 0100
-            (None, "TEXT", None, False),
-            # 0101
-            (None, "TEXT", None, True),
-            # 1000
-            ("BIGINT(19)", None, None, False),
-            # 1001
-            ("BIGINT(19)", None, None, True),
-            # 0010
-            (None, None, 10, False),
-            # 0011
-            (None, None, 10, True),
-            # 1010
-            ("BIGINT(19)", None, 10, False),
-            # 1011
-            ("BIGINT(19)", None, 10, True),
+            # 00000
+            (None, None, None, None, False),
+            # 10000
+            ("BIGINT(19)", None, None, None, False),
+            # 01000
+            (None, "VARCHAR(512)", None, None, False),
+            # 11000
+            ("BIGINT(19)", "VARCHAR(512)", None, None, False),
+            # 00100
+            (None, None, "MEDIUMTEXT", None, False),
+            # 10100
+            ("BIGINT(19)", None, "MEDIUMTEXT", None, False),
+            # 01100
+            (None, "VARCHAR(512)", "MEDIUMTEXT", None, False),
+            # 11100
+            ("BIGINT(19)", "VARCHAR(512)", "MEDIUMTEXT", None, False),
+            # 00010
+            (None, None, None, 10, False),
+            # 10010
+            ("BIGINT(19)", None, None, 10, False),
+            # 01010
+            (None, "VARCHAR(512)", None, 10, False),
+            # 11010
+            ("BIGINT(19)", "VARCHAR(512)", None, 10, False),
+            # 00110
+            (None, None, "MEDIUMTEXT", 10, False),
+            # 10110
+            ("BIGINT(19)", None, "MEDIUMTEXT", 10, False),
+            # 01110
+            (None, "VARCHAR(512)", "MEDIUMTEXT", 10, False),
+            # 11110
+            ("BIGINT(19)", "VARCHAR(512)", "MEDIUMTEXT", 10, False),
+            # 00001
+            (None, None, None, None, True),
+            # 10001
+            ("BIGINT(19)", None, None, None, True),
+            # 01001
+            (None, "VARCHAR(512)", None, None, True),
+            # 11001
+            ("BIGINT(19)", "VARCHAR(512)", None, None, True),
+            # 00101
+            (None, None, "MEDIUMTEXT", None, True),
+            # 10101
+            ("BIGINT(19)", None, "MEDIUMTEXT", None, True),
+            # 01101
+            (None, "VARCHAR(512)", "MEDIUMTEXT", None, True),
+            # 11101
+            ("BIGINT(19)", "VARCHAR(512)", "MEDIUMTEXT", None, True),
+            # 00011
+            (None, None, None, 10, True),
+            # 10011
+            ("BIGINT(19)", None, None, 10, True),
+            # 01011
+            (None, "VARCHAR(512)", None, 10, True),
+            # 11011
+            ("BIGINT(19)", "VARCHAR(512)", None, 10, True),
+            # 00111
+            (None, None, "MEDIUMTEXT", 10, True),
+            # 10111
+            ("BIGINT(19)", None, "MEDIUMTEXT", 10, True),
+            # 01111
+            (None, "VARCHAR(512)", "MEDIUMTEXT", 10, True),
+            # 11111
+            ("BIGINT(19)", "VARCHAR(512)", "MEDIUMTEXT", 10, True),
         ],
     )
     def test_minimum_valid_parameters(
@@ -235,6 +267,7 @@ class TestSQLite3toMySQL:
         mysql_credentials,
         mysql_integer_type,
         mysql_string_type,
+        mysql_text_type,
         mysql_database,
         chunk,
         with_rowid,
@@ -256,6 +289,8 @@ class TestSQLite3toMySQL:
             mysql_integer_type,
             "--mysql-string-type",
             mysql_string_type,
+            "--mysql-text-type",
+            mysql_text_type,
             "-c",
             chunk,
         ]
@@ -351,40 +386,72 @@ class TestSQLite3toMySQL:
         )
 
     @pytest.mark.parametrize(
-        "mysql_integer_type, mysql_string_type, chunk, with_rowid",
+        "mysql_integer_type, mysql_string_type, mysql_text_type, chunk, with_rowid",
         [
-            # 0000
-            (None, None, None, False),
-            # 0001
-            (None, None, None, True),
-            # 1110
-            ("BIGINT(19)", "TEXT", 10, False),
-            # 1111
-            ("BIGINT(19)", "TEXT", 10, True),
-            # 1100
-            ("BIGINT(19)", "TEXT", None, False),
-            # 1101
-            ("BIGINT(19)", "TEXT", None, True),
-            # 0110
-            (None, "TEXT", 10, False),
-            # 0111
-            (None, "TEXT", 10, True),
-            # 0100
-            (None, "TEXT", None, False),
-            # 0101
-            (None, "TEXT", None, True),
-            # 1000
-            ("BIGINT(19)", None, None, False),
-            # 1001
-            ("BIGINT(19)", None, None, True),
-            # 0010
-            (None, None, 10, False),
-            # 0011
-            (None, None, 10, True),
-            # 1010
-            ("BIGINT(19)", None, 10, False),
-            # 1011
-            ("BIGINT(19)", None, 10, True),
+            # 00000
+            (None, None, None, None, False),
+            # 10000
+            ("BIGINT(19)", None, None, None, False),
+            # 01000
+            (None, "VARCHAR(512)", None, None, False),
+            # 11000
+            ("BIGINT(19)", "VARCHAR(512)", None, None, False),
+            # 00100
+            (None, None, "MEDIUMTEXT", None, False),
+            # 10100
+            ("BIGINT(19)", None, "MEDIUMTEXT", None, False),
+            # 01100
+            (None, "VARCHAR(512)", "MEDIUMTEXT", None, False),
+            # 11100
+            ("BIGINT(19)", "VARCHAR(512)", "MEDIUMTEXT", None, False),
+            # 00010
+            (None, None, None, 10, False),
+            # 10010
+            ("BIGINT(19)", None, None, 10, False),
+            # 01010
+            (None, "VARCHAR(512)", None, 10, False),
+            # 11010
+            ("BIGINT(19)", "VARCHAR(512)", None, 10, False),
+            # 00110
+            (None, None, "MEDIUMTEXT", 10, False),
+            # 10110
+            ("BIGINT(19)", None, "MEDIUMTEXT", 10, False),
+            # 01110
+            (None, "VARCHAR(512)", "MEDIUMTEXT", 10, False),
+            # 11110
+            ("BIGINT(19)", "VARCHAR(512)", "MEDIUMTEXT", 10, False),
+            # 00001
+            (None, None, None, None, True),
+            # 10001
+            ("BIGINT(19)", None, None, None, True),
+            # 01001
+            (None, "VARCHAR(512)", None, None, True),
+            # 11001
+            ("BIGINT(19)", "VARCHAR(512)", None, None, True),
+            # 00101
+            (None, None, "MEDIUMTEXT", None, True),
+            # 10101
+            ("BIGINT(19)", None, "MEDIUMTEXT", None, True),
+            # 01101
+            (None, "VARCHAR(512)", "MEDIUMTEXT", None, True),
+            # 11101
+            ("BIGINT(19)", "VARCHAR(512)", "MEDIUMTEXT", None, True),
+            # 00011
+            (None, None, None, 10, True),
+            # 10011
+            ("BIGINT(19)", None, None, 10, True),
+            # 01011
+            (None, "VARCHAR(512)", None, 10, True),
+            # 11011
+            ("BIGINT(19)", "VARCHAR(512)", None, 10, True),
+            # 00111
+            (None, None, "MEDIUMTEXT", 10, True),
+            # 10111
+            ("BIGINT(19)", None, "MEDIUMTEXT", 10, True),
+            # 01111
+            (None, "VARCHAR(512)", "MEDIUMTEXT", 10, True),
+            # 11111
+            ("BIGINT(19)", "VARCHAR(512)", "MEDIUMTEXT", 10, True),
         ],
     )
     def test_quiet(
@@ -394,6 +461,7 @@ class TestSQLite3toMySQL:
         mysql_credentials,
         mysql_integer_type,
         mysql_string_type,
+        mysql_text_type,
         mysql_database,
         chunk,
         with_rowid,
@@ -415,6 +483,8 @@ class TestSQLite3toMySQL:
             mysql_integer_type,
             "--mysql-string-type",
             mysql_string_type,
+            "--mysql-text-type",
+            mysql_text_type,
             "-c",
             chunk,
             "-q",

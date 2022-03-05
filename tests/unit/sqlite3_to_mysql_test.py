@@ -32,11 +32,12 @@ class TestSQLite3toMySQL:
         assert "Invalid column_type!" in str(excinfo.value)
 
     @pytest.mark.parametrize(
-        "mysql_integer_type, mysql_string_type",
+        "mysql_integer_type, mysql_string_type, mysql_text_type",
         [
-            ("INT(11)", "VARCHAR(300)"),
-            ("BIGINT(19)", "TEXT"),
-            ("BIGINT(20) UNSIGNED", "CHAR(100)"),
+            ("INT(11)", "VARCHAR(300)", "TEXT"),
+            ("BIGINT(19)", "TEXT", "MEDIUMTEXT"),
+            ("BIGINT(19)", "MEDIUMTEXT", "TINYTEXT"),
+            ("BIGINT(20) UNSIGNED", "CHAR(100)", "LONGTEXT"),
         ],
     )
     def test_translate_type_from_sqlite_to_mysql_all_valid_columns(
@@ -47,6 +48,7 @@ class TestSQLite3toMySQL:
         faker,
         mysql_integer_type,
         mysql_string_type,
+        mysql_text_type,
     ):
         proc = SQLite3toMySQL(
             sqlite_file=sqlite_database,
@@ -57,6 +59,7 @@ class TestSQLite3toMySQL:
             mysql_database=mysql_credentials.database,
             mysql_integer_type=mysql_integer_type,
             mysql_string_type=mysql_string_type,
+            mysql_text_type=mysql_text_type,
         )
 
         for column in sqlite_column_types + ("INT64",):
@@ -74,10 +77,19 @@ class TestSQLite3toMySQL:
                 )
             elif column in {"INT64", "NUMERIC"}:
                 assert proc._translate_type_from_sqlite_to_mysql(column) == "BIGINT(19)"
+            elif column in {"TINYTEXT", "TEXT", "MEDIUMTEXT", "LONGTEXT"}:
+                assert (
+                    proc._translate_type_from_sqlite_to_mysql(column)
+                    == proc._mysql_text_type
+                )
             else:
                 assert proc._translate_type_from_sqlite_to_mysql(column) == column
-        assert proc._translate_type_from_sqlite_to_mysql("TEXT") == "TEXT"
-        assert proc._translate_type_from_sqlite_to_mysql("CLOB") == "TEXT"
+        assert (
+            proc._translate_type_from_sqlite_to_mysql("TEXT") == proc._mysql_text_type
+        )
+        assert (
+            proc._translate_type_from_sqlite_to_mysql("CLOB") == proc._mysql_text_type
+        )
         assert proc._translate_type_from_sqlite_to_mysql("CHARACTER") == "CHAR"
         length = faker.pyint(min_value=1, max_value=99)
         assert proc._translate_type_from_sqlite_to_mysql(

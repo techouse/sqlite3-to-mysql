@@ -2,9 +2,9 @@
 import re
 from collections import namedtuple
 
-from packaging import version
 from mysql.connector import CharacterSet
 from mysql.connector.charsets import MYSQL_CHARACTER_SETS
+from packaging import version
 
 # Shamelessly copied from SQLAlchemy's dialects/mysql/__init__.py
 MYSQL_COLUMN_TYPES = {
@@ -47,11 +47,25 @@ MYSQL_COLUMN_TYPES = {
 }
 
 MYSQL_TEXT_COLUMN_TYPES = {
-    "TINYTEXT",
-    "TEXT",
-    "MEDIUMTEXT",
     "LONGTEXT",
+    "MEDIUMTEXT",
+    "TEXT",
+    "TINYTEXT",
 }
+
+MYSQL_TEXT_COLUMN_TYPES_WITH_JSON = {"JSON"}.union(MYSQL_TEXT_COLUMN_TYPES)
+
+MYSQL_BLOB_COLUMN_TYPES = {
+    "LONGBLOB",
+    "MEDIUMBLOB",
+    "BLOB",
+    "TINYBLOB",
+}
+
+MYSQL_COLUMN_TYPES_WITHOUT_DEFAULT = {"GEOMETRY"}.union(
+    MYSQL_TEXT_COLUMN_TYPES_WITH_JSON,
+    MYSQL_BLOB_COLUMN_TYPES,
+)
 
 CharSet = namedtuple("CharSet", ["id", "charset", "collation"])
 

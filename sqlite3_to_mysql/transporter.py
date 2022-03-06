@@ -26,8 +26,11 @@ from sqlite3_to_mysql.sqlite_utils import (
 )
 
 from .mysql_utils import (
+    MYSQL_BLOB_COLUMN_TYPES,
     MYSQL_COLUMN_TYPES,
+    MYSQL_COLUMN_TYPES_WITHOUT_DEFAULT,
     MYSQL_TEXT_COLUMN_TYPES,
+    MYSQL_TEXT_COLUMN_TYPES_WITH_JSON,
     check_mysql_fulltext_support,
     check_mysql_json_support,
     safe_identifier_length,
@@ -306,35 +309,41 @@ class SQLite3toMySQL:
         compound_primary_key = (
             len(tuple(True for row in rows if dict(row)["pk"] > 0)) > 1
         )
+
         for row in rows:
             column = dict(row)
-            sql += " `{name}` {type} {notnull} {dflt} {auto_increment}, ".format(
-                name=safe_identifier_length(column["name"]),
-                type=self._translate_type_from_sqlite_to_mysql(column["type"]),
+            mysql_safe_name = safe_identifier_length(column["name"])
+            column_type = self._translate_type_from_sqlite_to_mysql(column["type"])
+
+            sql += " `{name}` {type} {notnull} {default} {auto_increment}, ".format(
+                name=mysql_safe_name,
+                type=column_type,
                 notnull="NOT NULL" if column["notnull"] or column["pk"] else "NULL",
                 auto_increment="AUTO_INCREMENT"
                 if column["pk"] > 0
-                and self._translate_type_from_sqlite_to_mysql(
-                    column["type"]
-                ).startswith(("INT", "BIGINT"))
+                and column_type.startswith(("INT", "BIGINT"))
                 and not compound_primary_key
                 else "",
-                dflt="DEFAULT " + column["dflt_value"] if column["dflt_value"] else "",
+                default="DEFAULT " + column["dflt_value"]
+                if column["dflt_value"]
+                and column_type not in MYSQL_COLUMN_TYPES_WITHOUT_DEFAULT
+                else "",
             )
+
             if column["pk"] > 0:
                 primary_key = {
-                    "column": safe_identifier_length(column["name"]),
+                    "column": mysql_safe_name,
                     "length": "",
                 }
                 # In case we have a non-numeric primary key
-                column_type = self._translate_type_from_sqlite_to_mysql(column["type"])
-                if column_type in {"TEXT", "BLOB"} or column_type.startswith(
-                    ("CHAR", "VARCHAR")
-                ):
+                if column_type in MYSQL_TEXT_COLUMN_TYPES_WITH_JSON.union(
+                    MYSQL_BLOB_COLUMN_TYPES
+                ) or column_type.startswith(("CHAR", "VARCHAR")):
                     primary_key["length"] = self._column_type_length(column_type, 255)
                 primary_keys.append(primary_key)
 
         sql = sql.rstrip(", ")
+
         if len(primary_keys) > 0:
             sql += ", PRIMARY KEY ({columns})".format(
                 columns=", ".join(
@@ -342,10 +351,12 @@ class SQLite3toMySQL:
                     for primary_key in primary_keys
                 )
             )
+
         if transfer_rowid:
             sql += ", CONSTRAINT `{}_rowid` UNIQUE (`rowid`)".format(
                 safe_identifier_length(table_name)
             )
+
         sql += " ) ENGINE=InnoDB DEFAULT CHARSET={charset} COLLATE={collation}".format(
             charset=self._mysql_charset,
             collation=self._mysql_collation,
@@ -382,7 +393,8 @@ class SQLite3toMySQL:
             index_type = "UNIQUE" if int(index["unique"]) == 1 else "INDEX"
 
             if any(
-                table_columns[index_info["name"]].upper() == "TEXT"
+                table_columns[index_info["name"]].upper()
+                in MYSQL_TEXT_COLUMN_TYPES_WITH_JSON
                 for index_info in index_infos
             ):
                 if self._use_fulltext and self._mysql_fulltext_support:
@@ -398,7 +410,8 @@ class SQLite3toMySQL:
                         "`{column}`{length}".format(
                             column=safe_identifier_length(index_info["name"]),
                             length="({})".format(255)
-                            if table_columns[index_info["name"]].upper() == "TEXT"
+                            if table_columns[index_info["name"]].upper()
+                            in MYSQL_TEXT_COLUMN_TYPES_WITH_JSON
                             else "",
                         )
                         for index_info in index_infos
@@ -408,7 +421,10 @@ class SQLite3toMySQL:
                 for index_info in index_infos:
                     index_length = ""
                     # Limit the max BLOB field index length to 255
-                    if table_columns[index_info["name"]].upper() == "BLOB":
+                    if (
+                        table_columns[index_info["name"]].upper()
+                        in MYSQL_BLOB_COLUMN_TYPES
+                    ):
                         index_length = "({})".format(255)
                     else:
                         suffix = self.COLUMN_LENGTH_PATTERN.search(
@@ -443,7 +459,8 @@ class SQLite3toMySQL:
                             "`{column}`{length}".format(
                                 column=safe_identifier_length(index_info["name"]),
                                 length="({})".format(255)
-                                if table_columns[index_info["name"]].upper() == "TEXT"
+                                if table_columns[index_info["name"]].upper()
+                                in MYSQL_TEXT_COLUMN_TYPES_WITH_JSON
                                 else "",
                             )
                             for index_info in index_infos

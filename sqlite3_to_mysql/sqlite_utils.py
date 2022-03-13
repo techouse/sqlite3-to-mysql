@@ -2,12 +2,18 @@
 
 from __future__ import division
 
-from datetime import timedelta
+from datetime import date, datetime, timedelta
 from decimal import Decimal
+from sys import version_info
 
 import six
 from pytimeparse.timeparse import timeparse
 from unidecode import unidecode
+
+if version_info.major == 3 and 4 <= version_info.minor <= 6:
+    from backports.datetime_fromisoformat import MonkeyPatch  # pylint: disable=E0401
+
+    MonkeyPatch.patch_fromisoformat()
 
 
 def adapt_decimal(value):
@@ -42,3 +48,20 @@ def unicase_compare(string_1, string_2):
     _string_1 = unidecode(string_1).lower()
     _string_2 = unidecode(string_2).lower()
     return 1 if _string_1 > _string_2 else -1 if _string_1 < _string_2 else 0
+
+
+def convert_date(value):
+    """Handle SQLite date conversion."""
+    if six.PY3:
+        try:
+            return date.fromisoformat(value.decode())
+        except ValueError as err:
+            raise ValueError(  # pylint: disable=W0707
+                "DATE field contains {}".format(err)
+            )
+    try:
+        return datetime.strptime(value.decode(), "%Y-%m-%d").date()
+    except ValueError as err:
+        raise ValueError(  # pylint: disable=W0707
+            "DATE field contains Invalid isoformat string: {}".format(err)
+        )

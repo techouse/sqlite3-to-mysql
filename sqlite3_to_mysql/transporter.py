@@ -20,6 +20,7 @@ from sqlite3_to_mysql.sqlite_utils import (
     adapt_decimal,
     adapt_timedelta,
     convert_blob,
+    convert_date,
     convert_decimal,
     convert_timedelta,
     unicase_compare,
@@ -124,6 +125,7 @@ class SQLite3toMySQL:
         sqlite3.register_adapter(Decimal, adapt_decimal)
         sqlite3.register_converter("DECIMAL", convert_decimal)
         sqlite3.register_adapter(timedelta, adapt_timedelta)
+        sqlite3.register_converter("DATE", convert_date)
         sqlite3.register_converter("TIME", convert_timedelta)
 
         if six.PY2:

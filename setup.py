@@ -21,6 +21,7 @@ requires = [
     "tabulate ; python_version>='3.5'",
     "Unidecode<=1.2.0 ; python_version<'3.5'",
     "Unidecode>=1.2.0 ; python_version>='3.5'",
+    "backports-datetime-fromisoformat>=1.0.0 ; python_version<'3.7'",
 ]
 
 about = {}

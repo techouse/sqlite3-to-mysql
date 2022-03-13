@@ -53,7 +53,7 @@ Options:
                                   to INT(11).
   --mysql-string-type TEXT        MySQL default string field type. Defaults to
                                   VARCHAR(255).
-  --mysql-text-type [TINYTEXT|MEDIUMTEXT|TEXT|LONGTEXT]
+  --mysql-text-type [MEDIUMTEXT|LONGTEXT|TEXT|TINYTEXT]
                                   MySQL default text field type. Defaults to
                                   TEXT.
   --mysql-charset TEXT            MySQL database and table character set
@@ -66,6 +66,7 @@ Options:
   -c, --chunk INTEGER             Chunk reading/writing SQL records
   -l, --log-file PATH             Log file
   -q, --quiet                     Quiet. Display only errors.
+  --debug                         Debug mode. Will throw exceptions.
   --version                       Show the version and exit.
   --help                          Show this message and exit.
 ```

@@ -104,6 +104,7 @@ from .mysql_utils import MYSQL_TEXT_COLUMN_TYPES, mysql_supported_character_sets
 )
 @click.option("-l", "--log-file", type=click.Path(), help="Log file")
 @click.option("-q", "--quiet", is_flag=True, help="Quiet. Display only errors.")
+@click.option("--debug", is_flag=True, help="Debug mode. Will throw exceptions.")
 @click.version_option(
     message=tabulate(info(), headers=["software", "version"], tablefmt="github")
 )
@@ -128,6 +129,7 @@ def cli(
     chunk,
     log_file,
     quiet,
+    debug,
 ):
     """Transfer SQLite to MySQL using the provided CLI options."""
     try:
@@ -170,8 +172,12 @@ def cli(
         )
         converter.transfer()
     except KeyboardInterrupt:
+        if debug:
+            raise
         click.echo("\nProcess interrupted. Exiting...")
         sys.exit(1)
     except Exception as err:  # pylint: disable=W0703
+        if debug:
+            raise
         click.echo(err)
         sys.exit(1)

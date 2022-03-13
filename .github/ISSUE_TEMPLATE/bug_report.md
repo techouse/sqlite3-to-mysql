@@ -30,3 +30,5 @@ This command is only available on v1.3.6 and greater. Otherwise, please provide 
 
 **Additional context**
 Add any other context about the problem here.
+
+In case of errors please run the same command with `--debug`. This option is only available on v1.4.12 or greater.

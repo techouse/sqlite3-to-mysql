@@ -528,11 +528,6 @@ jobs:
         options: "--name=mysqld"
 
     steps:
-      - name: Fix MySQL GA
-        run: |
-          sudo apt-get update
-          sudo apt-get remove mysql* && sudo apt-get install -y mysql-server libmysqlclient-dev
-    
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.py }}
         uses: actions/setup-python@v2

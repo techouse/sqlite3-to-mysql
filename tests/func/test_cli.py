@@ -285,15 +285,19 @@ class TestSQLite3toMySQL:
             mysql_credentials.host,
             "-P",
             mysql_credentials.port,
-            "--mysql-integer-type",
-            mysql_integer_type,
-            "--mysql-string-type",
-            mysql_string_type,
-            "--mysql-text-type",
-            mysql_text_type,
-            "-c",
-            chunk,
         ]
+        if mysql_integer_type:
+            arguments.append("--mysql-integer-type")
+            arguments.append(mysql_integer_type)
+        if mysql_string_type:
+            arguments.append("--mysql-string-type")
+            arguments.append(mysql_string_type)
+        if mysql_text_type:
+            arguments.append("--mysql-text-type")
+            arguments.append(mysql_text_type)
+        if chunk:
+            arguments.append("-c")
+            arguments.append(chunk)
         if with_rowid:
             arguments.append("--with-rowid")
         result = cli_runner.invoke(
@@ -457,12 +461,12 @@ class TestSQLite3toMySQL:
     def test_quiet(
         self,
         cli_runner,
+        mysql_database,
         sqlite_database,
         mysql_credentials,
         mysql_integer_type,
         mysql_string_type,
         mysql_text_type,
-        mysql_database,
         chunk,
         with_rowid,
     ):
@@ -479,16 +483,20 @@ class TestSQLite3toMySQL:
             mysql_credentials.host,
             "-P",
             mysql_credentials.port,
-            "--mysql-integer-type",
-            mysql_integer_type,
-            "--mysql-string-type",
-            mysql_string_type,
-            "--mysql-text-type",
-            mysql_text_type,
-            "-c",
-            chunk,
             "-q",
         ]
+        if mysql_integer_type:
+            arguments.append("--mysql-integer-type")
+            arguments.append(mysql_integer_type)
+        if mysql_string_type:
+            arguments.append("--mysql-string-type")
+            arguments.append(mysql_string_type)
+        if mysql_text_type:
+            arguments.append("--mysql-text-type")
+            arguments.append(mysql_text_type)
+        if chunk:
+            arguments.append("-c")
+            arguments.append(chunk)
         if with_rowid:
             arguments.append("--with-rowid")
         result = cli_runner.invoke(

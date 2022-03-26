@@ -218,7 +218,33 @@ class TestSQLite3toMySQL:
 
     @pytest.mark.transfer
     @pytest.mark.parametrize(
-        "chunk, with_rowid", [(None, False), (None, True), (10, False), (10, True)]
+        "chunk, with_rowid, mysql_insert_method, ignore_duplicate_keys",
+        [
+            (None, False, "IGNORE", False),
+            (None, False, "IGNORE", True),
+            (None, False, "UPDATE", True),
+            (None, False, "UPDATE", False),
+            (None, False, "DEFAULT", True),
+            (None, False, "DEFAULT", False),
+            (None, True, "IGNORE", False),
+            (None, True, "IGNORE", True),
+            (None, True, "UPDATE", True),
+            (None, True, "UPDATE", False),
+            (None, True, "DEFAULT", True),
+            (None, True, "DEFAULT", False),
+            (10, False, "IGNORE", False),
+            (10, False, "IGNORE", True),
+            (10, False, "UPDATE", True),
+            (10, False, "UPDATE", False),
+            (10, False, "DEFAULT", True),
+            (10, False, "DEFAULT", False),
+            (10, True, "IGNORE", False),
+            (10, True, "IGNORE", True),
+            (10, True, "UPDATE", True),
+            (10, True, "UPDATE", False),
+            (10, True, "DEFAULT", True),
+            (10, True, "DEFAULT", False),
+        ],
     )
     def test_transfer_transfers_all_tables_in_sqlite_file(
         self,
@@ -230,6 +256,8 @@ class TestSQLite3toMySQL:
         caplog,
         chunk,
         with_rowid,
+        mysql_insert_method,
+        ignore_duplicate_keys,
     ):
         proc = SQLite3toMySQL(
             sqlite_file=sqlite_database,
@@ -240,6 +268,8 @@ class TestSQLite3toMySQL:
             mysql_database=mysql_credentials.database,
             chunk=chunk,
             with_rowid=with_rowid,
+            mysql_insert_method=mysql_insert_method,
+            ignore_duplicate_keys=ignore_duplicate_keys,
         )
         caplog.set_level(logging.DEBUG)
         proc.transfer()
@@ -385,7 +415,33 @@ class TestSQLite3toMySQL:
 
     @pytest.mark.transfer
     @pytest.mark.parametrize(
-        "chunk, with_rowid", [(None, False), (None, True), (10, False), (10, True)]
+        "chunk, with_rowid, mysql_insert_method, ignore_duplicate_keys",
+        [
+            (None, False, "IGNORE", False),
+            (None, False, "IGNORE", True),
+            (None, False, "UPDATE", True),
+            (None, False, "UPDATE", False),
+            (None, False, "DEFAULT", True),
+            (None, False, "DEFAULT", False),
+            (None, True, "IGNORE", False),
+            (None, True, "IGNORE", True),
+            (None, True, "UPDATE", True),
+            (None, True, "UPDATE", False),
+            (None, True, "DEFAULT", True),
+            (None, True, "DEFAULT", False),
+            (10, False, "IGNORE", False),
+            (10, False, "IGNORE", True),
+            (10, False, "UPDATE", True),
+            (10, False, "UPDATE", False),
+            (10, False, "DEFAULT", True),
+            (10, False, "DEFAULT", False),
+            (10, True, "IGNORE", False),
+            (10, True, "IGNORE", True),
+            (10, True, "UPDATE", True),
+            (10, True, "UPDATE", False),
+            (10, True, "DEFAULT", True),
+            (10, True, "DEFAULT", False),
+        ],
     )
     def test_transfer_specific_tables_transfers_only_specified_tables_from_sqlite_file(
         self,
@@ -397,6 +453,8 @@ class TestSQLite3toMySQL:
         caplog,
         chunk,
         with_rowid,
+        mysql_insert_method,
+        ignore_duplicate_keys,
     ):
         sqlite_engine = create_engine(
             "sqlite:///{database}".format(database=sqlite_database),
@@ -425,6 +483,8 @@ class TestSQLite3toMySQL:
             mysql_database=mysql_credentials.database,
             chunk=chunk,
             with_rowid=with_rowid,
+            mysql_insert_method=mysql_insert_method,
+            ignore_duplicate_keys=ignore_duplicate_keys,
         )
         caplog.set_level(logging.DEBUG)
         proc.transfer()

@@ -53,11 +53,17 @@ Options:
   -h, --mysql-host TEXT           MySQL host. Defaults to localhost.
   -P, --mysql-port INTEGER        MySQL port. Defaults to 3306.
   -S, --skip-ssl                  Disable MySQL connection encryption.
+  -i, --mysql-insert-method [UPDATE|IGNORE|DEFAULT]
+                                  MySQL insert method. DEFAULT will throw
+                                  errors when encountering duplicate records;
+                                  UPDATE will update existing rows; IGNORE
+                                  will ignore insert errors. Defaults to
+                                  IGNORE.
   --mysql-integer-type TEXT       MySQL default integer field type. Defaults
                                   to INT(11).
   --mysql-string-type TEXT        MySQL default string field type. Defaults to
                                   VARCHAR(255).
-  --mysql-text-type [LONGTEXT|TINYTEXT|MEDIUMTEXT|TEXT]
+  --mysql-text-type [MEDIUMTEXT|TINYTEXT|TEXT|LONGTEXT]
                                   MySQL default text field type. Defaults to
                                   TEXT.
   --mysql-charset TEXT            MySQL database and table character set

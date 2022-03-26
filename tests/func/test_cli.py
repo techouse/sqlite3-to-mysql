@@ -7,6 +7,7 @@ from sqlalchemy import create_engine, inspect
 
 from sqlite3_to_mysql import SQLite3toMySQL
 from sqlite3_to_mysql.cli import cli as sqlite3mysql
+from sqlite3_to_mysql.mysql_utils import MYSQL_INSERT_METHOD
 
 
 @pytest.mark.cli
@@ -192,72 +193,78 @@ class TestSQLite3toMySQL:
         )
 
     @pytest.mark.parametrize(
-        "mysql_integer_type, mysql_string_type, mysql_text_type, chunk, with_rowid",
+        "mysql_integer_type,"
+        "mysql_string_type,"
+        "mysql_text_type,"
+        "chunk,"
+        "with_rowid,"
+        "mysql_insert_method,"
+        "ignore_duplicate_keys",
         [
             # 00000
-            (None, None, None, None, False),
+            (None, None, None, None, False, "DEFAULT", False),
             # 10000
-            ("BIGINT(19)", None, None, None, False),
+            ("BIGINT(19)", None, None, None, False, "UPDATE", True),
             # 01000
-            (None, "VARCHAR(512)", None, None, False),
+            (None, "VARCHAR(512)", None, None, False, "IGNORE", False),
             # 11000
-            ("BIGINT(19)", "VARCHAR(512)", None, None, False),
+            ("BIGINT(19)", "VARCHAR(512)", None, None, False, "DEFAULT", True),
             # 00100
-            (None, None, "MEDIUMTEXT", None, False),
+            (None, None, "MEDIUMTEXT", None, False, "UPDATE", False),
             # 10100
-            ("BIGINT(19)", None, "MEDIUMTEXT", None, False),
+            ("BIGINT(19)", None, "MEDIUMTEXT", None, False, "IGNORE", True),
             # 01100
-            (None, "VARCHAR(512)", "MEDIUMTEXT", None, False),
+            (None, "VARCHAR(512)", "MEDIUMTEXT", None, False, "DEFAULT", False),
             # 11100
-            ("BIGINT(19)", "VARCHAR(512)", "MEDIUMTEXT", None, False),
+            ("BIGINT(19)", "VARCHAR(512)", "MEDIUMTEXT", None, False, "UPDATE", True),
             # 00010
-            (None, None, None, 10, False),
+            (None, None, None, 10, False, "IGNORE", False),
             # 10010
-            ("BIGINT(19)", None, None, 10, False),
+            ("BIGINT(19)", None, None, 10, False, "DEFAULT", True),
             # 01010
-            (None, "VARCHAR(512)", None, 10, False),
+            (None, "VARCHAR(512)", None, 10, False, "UPDATE", False),
             # 11010
-            ("BIGINT(19)", "VARCHAR(512)", None, 10, False),
+            ("BIGINT(19)", "VARCHAR(512)", None, 10, False, "IGNORE", True),
             # 00110
-            (None, None, "MEDIUMTEXT", 10, False),
+            (None, None, "MEDIUMTEXT", 10, False, "DEFAULT", False),
             # 10110
-            ("BIGINT(19)", None, "MEDIUMTEXT", 10, False),
+            ("BIGINT(19)", None, "MEDIUMTEXT", 10, False, "UPDATE", True),
             # 01110
-            (None, "VARCHAR(512)", "MEDIUMTEXT", 10, False),
+            (None, "VARCHAR(512)", "MEDIUMTEXT", 10, False, "IGNORE", False),
             # 11110
-            ("BIGINT(19)", "VARCHAR(512)", "MEDIUMTEXT", 10, False),
+            ("BIGINT(19)", "VARCHAR(512)", "MEDIUMTEXT", 10, False, "DEFAULT", True),
             # 00001
-            (None, None, None, None, True),
+            (None, None, None, None, True, "UPDATE", False),
             # 10001
-            ("BIGINT(19)", None, None, None, True),
+            ("BIGINT(19)", None, None, None, True, "IGNORE", True),
             # 01001
-            (None, "VARCHAR(512)", None, None, True),
+            (None, "VARCHAR(512)", None, None, True, "DEFAULT", False),
             # 11001
-            ("BIGINT(19)", "VARCHAR(512)", None, None, True),
+            ("BIGINT(19)", "VARCHAR(512)", None, None, True, "UPDATE", True),
             # 00101
-            (None, None, "MEDIUMTEXT", None, True),
+            (None, None, "MEDIUMTEXT", None, True, "IGNORE", False),
             # 10101
-            ("BIGINT(19)", None, "MEDIUMTEXT", None, True),
+            ("BIGINT(19)", None, "MEDIUMTEXT", None, True, "DEFAULT", True),
             # 01101
-            (None, "VARCHAR(512)", "MEDIUMTEXT", None, True),
+            (None, "VARCHAR(512)", "MEDIUMTEXT", None, True, "UPDATE", False),
             # 11101
-            ("BIGINT(19)", "VARCHAR(512)", "MEDIUMTEXT", None, True),
+            ("BIGINT(19)", "VARCHAR(512)", "MEDIUMTEXT", None, True, "IGNORE", True),
             # 00011
-            (None, None, None, 10, True),
+            (None, None, None, 10, True, "DEFAULT", False),
             # 10011
-            ("BIGINT(19)", None, None, 10, True),
+            ("BIGINT(19)", None, None, 10, True, "UPDATE", True),
             # 01011
-            (None, "VARCHAR(512)", None, 10, True),
+            (None, "VARCHAR(512)", None, 10, True, "IGNORE", False),
             # 11011
-            ("BIGINT(19)", "VARCHAR(512)", None, 10, True),
+            ("BIGINT(19)", "VARCHAR(512)", None, 10, True, "DEFAULT", True),
             # 00111
-            (None, None, "MEDIUMTEXT", 10, True),
+            (None, None, "MEDIUMTEXT", 10, True, "UPDATE", False),
             # 10111
-            ("BIGINT(19)", None, "MEDIUMTEXT", 10, True),
+            ("BIGINT(19)", None, "MEDIUMTEXT", 10, True, "IGNORE", True),
             # 01111
-            (None, "VARCHAR(512)", "MEDIUMTEXT", 10, True),
+            (None, "VARCHAR(512)", "MEDIUMTEXT", 10, True, "DEFAULT", False),
             # 11111
-            ("BIGINT(19)", "VARCHAR(512)", "MEDIUMTEXT", 10, True),
+            ("BIGINT(19)", "VARCHAR(512)", "MEDIUMTEXT", 10, True, "UPDATE", True),
         ],
     )
     def test_minimum_valid_parameters(
@@ -271,6 +278,8 @@ class TestSQLite3toMySQL:
         mysql_database,
         chunk,
         with_rowid,
+        mysql_insert_method,
+        ignore_duplicate_keys,
     ):
         arguments = [
             "-f",
@@ -285,6 +294,8 @@ class TestSQLite3toMySQL:
             mysql_credentials.host,
             "-P",
             mysql_credentials.port,
+            "--mysql-insert-method",
+            mysql_insert_method,
         ]
         if mysql_integer_type:
             arguments.append("--mysql-integer-type")
@@ -300,6 +311,8 @@ class TestSQLite3toMySQL:
             arguments.append(chunk)
         if with_rowid:
             arguments.append("--with-rowid")
+        if ignore_duplicate_keys:
+            arguments.append("--ignore-duplicate-keys")
         result = cli_runner.invoke(
             sqlite3mysql,
             arguments,

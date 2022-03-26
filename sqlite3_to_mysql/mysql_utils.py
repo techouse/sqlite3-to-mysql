@@ -69,6 +69,12 @@ MYSQL_COLUMN_TYPES_WITHOUT_DEFAULT = {"GEOMETRY"}.union(
 
 CharSet = namedtuple("CharSet", ["id", "charset", "collation"])
 
+MYSQL_INSERT_METHOD = {
+    "DEFAULT",
+    "IGNORE",
+    "UPDATE",
+}
+
 
 def mysql_supported_character_sets(charset=None):
     """Get supported MySQL character sets."""

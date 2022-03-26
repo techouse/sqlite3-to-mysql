@@ -7,6 +7,7 @@ import re
 import sqlite3
 from datetime import timedelta
 from decimal import Decimal
+from itertools import chain
 from math import ceil
 from os.path import isfile, realpath
 from sys import stdout
@@ -30,6 +31,7 @@ from .mysql_utils import (
     MYSQL_BLOB_COLUMN_TYPES,
     MYSQL_COLUMN_TYPES,
     MYSQL_COLUMN_TYPES_WITHOUT_DEFAULT,
+    MYSQL_INSERT_METHOD,
     MYSQL_TEXT_COLUMN_TYPES,
     MYSQL_TEXT_COLUMN_TYPES_WITH_JSON,
     check_mysql_fulltext_support,
@@ -93,6 +95,12 @@ class SQLite3toMySQL:
         )
 
         self._mysql_database = str(kwargs.get("mysql_database") or "transfer")
+
+        self._mysql_insert_method = str(
+            kwargs.get("mysql_integer_type") or "IGNORE"
+        ).upper()
+        if self._mysql_insert_method not in MYSQL_INSERT_METHOD:
+            self._mysql_insert_method = "IGNORE"
 
         self._mysql_integer_type = str(
             kwargs.get("mysql_integer_type") or "INT(11)"
@@ -692,15 +700,43 @@ class SQLite3toMySQL:
                         safe_identifier_length(column[0])
                         for column in self._sqlite_cur.description
                     ]
-                    sql = """
-                        INSERT IGNORE
-                        INTO `{table}` ({fields})
-                        VALUES ({placeholders})
-                    """.format(
-                        table=safe_identifier_length(table["name"]),
-                        fields=("`{}`, " * len(columns)).rstrip(" ,").format(*columns),
-                        placeholders=("%s, " * len(columns)).rstrip(" ,"),
-                    )
+                    if self._mysql_insert_method.upper() == "UPDATE":
+                        sql = """
+                            INSERT
+                            INTO `{table}` ({fields})
+                            VALUES ({placeholders}) AS `__new__`
+                            ON DUPLICATE KEY UPDATE {field_updates}
+                        """.format(
+                            table=safe_identifier_length(table["name"]),
+                            fields=("`{}`, " * len(columns))
+                            .rstrip(" ,")
+                            .format(*columns),
+                            placeholders=("%s, " * len(columns)).rstrip(" ,"),
+                            field_updates=("`{}`=`__new__`.`{}`, " * len(columns))
+                            .rstrip(" ,")
+                            .format(
+                                *list(
+                                    chain.from_iterable(
+                                        (column, column) for column in columns
+                                    )
+                                )
+                            ),
+                        )
+                    else:
+                        sql = """
+                            INSERT {ignore}
+                            INTO `{table}` ({fields})
+                            VALUES ({placeholders})
+                        """.format(
+                            ignore="IGNORE"
+                            if self._mysql_insert_method.upper() == "IGNORE"
+                            else "",
+                            table=safe_identifier_length(table["name"]),
+                            fields=("`{}`, " * len(columns))
+                            .rstrip(" ,")
+                            .format(*columns),
+                            placeholders=("%s, " * len(columns)).rstrip(" ,"),
+                        )
                     try:
                         self._transfer_table_data(sql=sql, total_records=total_records)
                     except mysql.connector.Error as err:

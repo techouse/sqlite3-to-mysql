@@ -9,7 +9,11 @@ from tabulate import tabulate
 from . import SQLite3toMySQL
 from .click_utils import OptionEatAll, prompt_password
 from .debug_info import info
-from .mysql_utils import MYSQL_TEXT_COLUMN_TYPES, mysql_supported_character_sets
+from .mysql_utils import (
+    MYSQL_INSERT_METHOD,
+    MYSQL_TEXT_COLUMN_TYPES,
+    mysql_supported_character_sets,
+)
 
 
 @click.command()
@@ -60,6 +64,14 @@ from .mysql_utils import MYSQL_TEXT_COLUMN_TYPES, mysql_supported_character_sets
 )
 @click.option(
     "-S", "--skip-ssl", is_flag=True, help="Disable MySQL connection encryption."
+)
+@click.option(
+    "-i",
+    "--mysql-insert-method",
+    type=click.Choice(MYSQL_INSERT_METHOD, case_sensitive=False),
+    default="IGNORE",
+    help="MySQL insert method. DEFAULT will throw errors when encountering duplicate records; "
+    "UPDATE will update existing rows; IGNORE will ignore insert errors. Defaults to IGNORE.",
 )
 @click.option(
     "--mysql-integer-type",
@@ -127,6 +139,7 @@ def cli(
     mysql_host,
     mysql_port,
     skip_ssl,
+    mysql_insert_method,
     mysql_integer_type,
     mysql_string_type,
     mysql_text_type,
@@ -167,6 +180,7 @@ def cli(
             mysql_host=mysql_host,
             mysql_port=mysql_port,
             mysql_ssl_disabled=skip_ssl,
+            mysql_insert_method=mysql_insert_method,
             mysql_integer_type=mysql_integer_type,
             mysql_string_type=mysql_string_type,
             mysql_text_type=mysql_text_type,

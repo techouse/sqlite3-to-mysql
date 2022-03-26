@@ -33,6 +33,13 @@ from .mysql_utils import MYSQL_TEXT_COLUMN_TYPES, mysql_supported_character_sets
     "-X", "--without-foreign-keys", is_flag=True, help="Do not transfer foreign keys."
 )
 @click.option(
+    "-W",
+    "--ignore-duplicate-keys",
+    is_flag=True,
+    help="Ignore duplicate keys. The default behavior is to create new ones with a numerical suffix, e.g. "
+    "'exising_key' -> 'existing_key_1'",
+)
+@click.option(
     "-d", "--mysql-database", default=None, help="MySQL database name", required=True
 )
 @click.option("-u", "--mysql-user", default=None, help="MySQL user", required=True)
@@ -112,6 +119,7 @@ def cli(
     sqlite_file,
     sqlite_tables,
     without_foreign_keys,
+    ignore_duplicate_keys,
     mysql_user,
     prompt_mysql_password,
     mysql_password,
@@ -164,6 +172,7 @@ def cli(
             mysql_text_type=mysql_text_type,
             mysql_charset=mysql_charset.lower() if mysql_charset else "utf8mb4",
             mysql_collation=mysql_collation.lower() if mysql_collation else None,
+            ignore_duplicate_keys=ignore_duplicate_keys,
             use_fulltext=use_fulltext,
             with_rowid=with_rowid,
             chunk=chunk,

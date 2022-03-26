@@ -118,6 +118,8 @@ class SQLite3toMySQL:
         ):
             self._mysql_collation = "utf8mb4_general_ci"
 
+        self.ignore_duplicate_keys = kwargs.get("ignore_duplicate_keys") or False
+
         self._use_fulltext = kwargs.get("use_fulltext") or False
 
         self._with_rowid = kwargs.get("with_rowid") or False
@@ -510,15 +512,29 @@ class SQLite3toMySQL:
             self._mysql.commit()
         except mysql.connector.Error as err:
             if err.errno == errorcode.ER_DUP_KEYNAME:
-                # handle a duplicate key name
-                self._add_index(
-                    table_name=table_name,
-                    index_type=index_type,
-                    index=index,
-                    index_columns=index_columns,
-                    index_infos=index_infos,
-                    index_iteration=index_iteration + 1,
-                )
+                if not self.ignore_duplicate_keys:
+                    # handle a duplicate key name
+                    self._add_index(
+                        table_name=table_name,
+                        index_type=index_type,
+                        index=index,
+                        index_columns=index_columns,
+                        index_infos=index_infos,
+                        index_iteration=index_iteration + 1,
+                    )
+                    self._logger.warning(
+                        """Duplicate key "%s" in table %s detected! Trying to create new key "%s_%s" ...""",
+                        safe_identifier_length(index),
+                        safe_identifier_length(table_name),
+                        safe_identifier_length(index),
+                        index_iteration + 1,
+                    )
+                else:
+                    self._logger.warning(
+                        """Ignoring duplicate key "%s" in table %s!""",
+                        safe_identifier_length(index),
+                        safe_identifier_length(table_name),
+                    )
             elif err.errno == errorcode.ER_BAD_FT_COLUMN:
                 # handle bad FULLTEXT index
                 self._logger.warning(

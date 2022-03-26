@@ -42,6 +42,10 @@ Options:
                                   foreign-keys which inhibits the transfer of
                                   foreign keys.
   -X, --without-foreign-keys      Do not transfer foreign keys.
+  -W, --ignore-duplicate-keys     Ignore duplicate keys. The default behavior
+                                  is to create new ones with a numerical
+                                  suffix, e.g. 'exising_key' ->
+                                  'existing_key_1'
   -d, --mysql-database TEXT       MySQL database name  [required]
   -u, --mysql-user TEXT           MySQL user  [required]
   -p, --prompt-mysql-password     Prompt for MySQL password
@@ -53,7 +57,7 @@ Options:
                                   to INT(11).
   --mysql-string-type TEXT        MySQL default string field type. Defaults to
                                   VARCHAR(255).
-  --mysql-text-type [MEDIUMTEXT|LONGTEXT|TEXT|TINYTEXT]
+  --mysql-text-type [LONGTEXT|TINYTEXT|MEDIUMTEXT|TEXT]
                                   MySQL default text field type. Defaults to
                                   TEXT.
   --mysql-charset TEXT            MySQL database and table character set

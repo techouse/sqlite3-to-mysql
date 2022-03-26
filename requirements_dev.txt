@@ -2,12 +2,17 @@ Click>=7.0,<8.0.0 ; python_version<"3.6"
 Click>=7.0 ; python_version>="3.6"
 docker>=4.0.2
 factory-boy
-Faker>=4.1.0 ; python_version>="3.0"
+Faker>=3.0.1,<4.0.0 ; python_version<"3.0"
+Faker>=4.1.0 ; python_version>="3.0" and python_version<="3.6"
+Faker>=5.0.0 ; python_version>="3.6"
 mysql-connector-python>=8.0.18,<8.0.24 ; python_version<"3.6"
 mysql-connector-python>=8.0.18 ; python_version>="3.6"
 PyMySQL>=0.9.3
 PyMySQL[rsa]
-pytest>=4.6.5
+pytest>=4.6.5,<5.0.0 ; python_version<"3.5"
+pytest>=5.0.0,<6.2.0 ; python_version>="3.5" and python_version<"3.6"
+pytest>=6.2.0,<7.1.0 ; python_version>="3.6" and python_version<"3.7"
+pytest>=7.1.0 ; python_version>="3.7"
 pytest-cov
 pytest-faker ; python_version<"3.0"
 pytest-mock

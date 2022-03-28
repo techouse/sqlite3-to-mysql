@@ -532,15 +532,15 @@ class SQLite3toMySQL:
                     )
                     self._logger.warning(
                         """Duplicate key "%s" in table %s detected! Trying to create new key "%s_%s" ...""",
-                        safe_identifier_length(index),
+                        safe_identifier_length(index["name"]),
                         safe_identifier_length(table_name),
-                        safe_identifier_length(index),
+                        safe_identifier_length(index["name"]),
                         index_iteration + 1,
                     )
                 else:
                     self._logger.warning(
                         """Ignoring duplicate key "%s" in table %s!""",
-                        safe_identifier_length(index),
+                        safe_identifier_length(index["name"]),
                         safe_identifier_length(table_name),
                     )
             elif err.errno == errorcode.ER_BAD_FT_COLUMN:

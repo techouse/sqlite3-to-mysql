@@ -139,4 +139,4 @@ def check_mysql_fulltext_support(version_string):
 
 def safe_identifier_length(identifier_name, max_length=64):
     """https://dev.mysql.com/doc/refman/8.0/en/identifier-length.html."""
-    return identifier_name[:max_length]
+    return str(identifier_name)[:max_length]

@@ -102,6 +102,8 @@ class SQLite3toMySQL:
         if self._mysql_insert_method not in MYSQL_INSERT_METHOD:
             self._mysql_insert_method = "IGNORE"
 
+        self._mysql_truncate_tables = kwargs.get("mysql_truncate_tables") or False
+
         self._mysql_integer_type = str(
             kwargs.get("mysql_integer_type") or "INT(11)"
         ).upper()
@@ -384,6 +386,25 @@ class SQLite3toMySQL:
                 err,
             )
             raise
+
+    def _truncate_table(self, table_name):
+        self._mysql_cur.execute(
+            """
+            SELECT `TABLE_NAME`
+            FROM `INFORMATION_SCHEMA`.`TABLES`
+            WHERE `TABLE_SCHEMA` = %s
+            AND `TABLE_NAME` = %s
+            LIMIT 1
+            """,
+            (self._mysql_database, safe_identifier_length(table_name)),
+        )
+        if len(self._mysql_cur.fetchall()) > 0:
+            self._logger.info("Truncating table %s", safe_identifier_length(table_name))
+            self._mysql_cur.execute(
+                "TRUNCATE TABLE `{}`".format(
+                    safe_identifier_length(table_name),
+                ),
+            )
 
     def _add_indices(self, table_name):
         self._sqlite_cur.execute('PRAGMA table_info("{}")'.format(table_name))
@@ -677,6 +698,10 @@ class SQLite3toMySQL:
 
                 # create the table
                 self._create_table(table["name"], transfer_rowid=transfer_rowid)
+
+                # truncate the table on request
+                if self._mysql_truncate_tables:
+                    self._truncate_table(table["name"])
 
                 # get the size of the data
                 self._sqlite_cur.execute(

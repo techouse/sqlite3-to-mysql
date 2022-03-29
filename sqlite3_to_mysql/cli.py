@@ -74,6 +74,12 @@ from .mysql_utils import (
     "UPDATE will update existing rows; IGNORE will ignore insert errors. Defaults to IGNORE.",
 )
 @click.option(
+    "-E",
+    "--mysql-truncate-tables",
+    is_flag=True,
+    help="Truncates existing tables before inserting data.",
+)
+@click.option(
     "--mysql-integer-type",
     default="INT(11)",
     help="MySQL default integer field type. Defaults to INT(11).",
@@ -140,6 +146,7 @@ def cli(
     mysql_port,
     skip_ssl,
     mysql_insert_method,
+    mysql_truncate_tables,
     mysql_integer_type,
     mysql_string_type,
     mysql_text_type,
@@ -181,6 +188,7 @@ def cli(
             mysql_port=mysql_port,
             mysql_ssl_disabled=skip_ssl,
             mysql_insert_method=mysql_insert_method,
+            mysql_truncate_tables=mysql_truncate_tables,
             mysql_integer_type=mysql_integer_type,
             mysql_string_type=mysql_string_type,
             mysql_text_type=mysql_text_type,

@@ -59,11 +59,13 @@ Options:
                                   UPDATE will update existing rows; IGNORE
                                   will ignore insert errors. Defaults to
                                   IGNORE.
+  -E, --mysql-truncate-tables     Truncates existing tables before inserting
+                                  data.
   --mysql-integer-type TEXT       MySQL default integer field type. Defaults
                                   to INT(11).
   --mysql-string-type TEXT        MySQL default string field type. Defaults to
                                   VARCHAR(255).
-  --mysql-text-type [MEDIUMTEXT|TINYTEXT|TEXT|LONGTEXT]
+  --mysql-text-type [MEDIUMTEXT|TEXT|TINYTEXT|LONGTEXT]
                                   MySQL default text field type. Defaults to
                                   TEXT.
   --mysql-charset TEXT            MySQL database and table character set

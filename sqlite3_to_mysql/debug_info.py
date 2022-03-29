@@ -8,7 +8,7 @@ from __future__ import print_function
 import platform
 import sqlite3
 import sys
-from distutils.spawn import find_executable
+from distutils.spawn import find_executable  # pylint: disable=W0402
 from subprocess import check_output
 
 import click

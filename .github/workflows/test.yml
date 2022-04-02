@@ -586,7 +586,7 @@ jobs:
           LEGACY_DB: ${{ matrix.legacy_db }}
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v1
+        uses: codecov/codecov-action@v2
         with:
           files: ./coverage.xml
           env_vars: OS,PYTHON

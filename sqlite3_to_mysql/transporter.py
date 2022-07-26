@@ -158,7 +158,9 @@ class SQLite3toMySQL:
                 host=self._mysql_host,
                 port=self._mysql_port,
                 ssl_disabled=self._mysql_ssl_disabled,
-                use_pure=True,
+                charset=self._mysql_charset,
+                collation=self._mysql_collation,
+                use_pure=True
             )
             if not self._mysql.is_connected():
                 raise ConnectionError("Unable to connect to MySQL")

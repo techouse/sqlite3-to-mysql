@@ -14,7 +14,12 @@ from sys import stdout
 
 import mysql.connector
 import six
-from mysql.connector import CharacterSet, errorcode
+from mysql.connector import (
+    CharacterSet,
+    __version__ as mysql_connector_version_string,
+    errorcode,
+)
+from packaging import version
 from tqdm import tqdm, trange
 
 from sqlite3_to_mysql.sqlite_utils import (
@@ -26,7 +31,6 @@ from sqlite3_to_mysql.sqlite_utils import (
     convert_timedelta,
     unicase_compare,
 )
-
 from .mysql_utils import (
     MYSQL_BLOB_COLUMN_TYPES,
     MYSQL_COLUMN_TYPES,
@@ -151,6 +155,9 @@ class SQLite3toMySQL:
 
         self._sqlite_cur = self._sqlite.cursor()
 
+        self._connect()
+
+    def _connect(self, retried_mysql_57=False):
         try:
             self._mysql = mysql.connector.connect(
                 user=self._mysql_user,
@@ -184,6 +191,23 @@ class SQLite3toMySQL:
                 raise ValueError(
                     "Your MySQL version does not support InnoDB FULLTEXT indexes!"
                 )
+        except mysql.connector.ProgrammingError as err:
+            if not retried_mysql_57:
+                # Looks like we're dealing with mysql-connector-python >= 8.0.30 and MySQL 5.7 or MariaDB
+                # https://github.com/techouse/sqlite3-to-mysql/issues/46
+                # https://dev.mysql.com/doc/relnotes/connector-python/en/news-8-0-30.html
+                mysql_connector_version = version.parse(mysql_connector_version_string)
+                if (
+                    mysql_connector_version.major >= 8
+                    and mysql_connector_version.micro >= 30
+                ):
+                    self._logger.warning(
+                        "Looks like you're using mysql-connector-python >= 8.0.30 with an older version of MySQL."
+                    )
+                    CharacterSet.set_mysql_version((5, 7))
+                    return self._connect(retried_mysql_57=True)
+            self._logger.error(err)
+            raise
         except mysql.connector.Error as err:
             self._logger.error(err)
             raise
@@ -243,7 +267,7 @@ class SQLite3toMySQL:
             self._mysql_cur.close()
             self._mysql.commit()
             self._mysql.database = self._mysql_database
-            self._mysql_cur = self._mysql.cursor(prepared=True)
+            self._mysql_cur = self._mysql.cursor(prepared=True)  # pylint: disable=W0201
         except mysql.connector.Error as err:
             self._logger.error(
                 "MySQL failed creating databse %s: %s",

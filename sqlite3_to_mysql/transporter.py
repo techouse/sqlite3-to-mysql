@@ -124,39 +124,15 @@ class SQLite3toMySQL:
 
         self._mysql_charset = kwargs.get("mysql_charset") or "utf8mb4"
 
-        try:
-            self._mysql_collation = (
-                kwargs.get("mysql_collation")
-                or CharacterSet.get_default_collation(self._mysql_charset.lower())[0]
-            )
-            if (
-                not kwargs.get("mysql_collation")
-                and self._mysql_collation == "utf8mb4_0900_ai_ci"
-            ):
-                self._mysql_collation = "utf8mb4_general_ci"
-        except mysql.connector.errors.ProgrammingError:
-            if (
-                self.MYSQL_CONNECTOR_VERSION.major >= 8
-                and self.MYSQL_CONNECTOR_VERSION.micro >= 30
-            ):
-                # Looks like we're dealing with mysql-connector-python >= 8.0.30 and MySQL 5.7 or MariaDB
-                # https://github.com/techouse/sqlite3-to-mysql/issues/46
-                # https://dev.mysql.com/doc/relnotes/connector-python/en/news-8-0-30.html
-                self._logger.warning(
-                    "Looks like you're using mysql-connector-python >= 8.0.30 with an older version of MySQL."
-                )
-                CharacterSet.set_mysql_version((5, 7))
-                self._mysql_collation = (
-                    kwargs.get("mysql_collation")
-                    or CharacterSet.get_default_collation(self._mysql_charset.lower())[
-                        0
-                    ]
-                )
-                if (
-                    not kwargs.get("mysql_collation")
-                    and self._mysql_collation == "utf8mb4_0900_ai_ci"
-                ):
-                    self._mysql_collation = "utf8mb4_general_ci"
+        self._mysql_collation = (
+            kwargs.get("mysql_collation")
+            or CharacterSet.get_default_collation(self._mysql_charset.lower())[0]
+        )
+        if (
+            not kwargs.get("mysql_collation")
+            and self._mysql_collation == "utf8mb4_0900_ai_ci"
+        ):
+            self._mysql_collation = "utf8mb4_general_ci"
 
         self.ignore_duplicate_keys = kwargs.get("ignore_duplicate_keys") or False
 
@@ -181,9 +157,6 @@ class SQLite3toMySQL:
 
         self._sqlite_cur = self._sqlite.cursor()
 
-        self._connect()
-
-    def _connect(self, retried_mysql_57=False):
         try:
             self._mysql = mysql.connector.connect(
                 user=self._mysql_user,
@@ -217,22 +190,6 @@ class SQLite3toMySQL:
                 raise ValueError(
                     "Your MySQL version does not support InnoDB FULLTEXT indexes!"
                 )
-        except mysql.connector.errors.ProgrammingError as err:
-            if not retried_mysql_57:
-                if (
-                    self.MYSQL_CONNECTOR_VERSION.major >= 8
-                    and self.MYSQL_CONNECTOR_VERSION.micro >= 30
-                ):
-                    # Looks like we're dealing with mysql-connector-python >= 8.0.30 and MySQL 5.7 or MariaDB
-                    # https://github.com/techouse/sqlite3-to-mysql/issues/46
-                    # https://dev.mysql.com/doc/relnotes/connector-python/en/news-8-0-30.html
-                    self._logger.warning(
-                        "Looks like you're using mysql-connector-python >= 8.0.30 with an older version of MySQL."
-                    )
-                    CharacterSet.set_mysql_version((5, 7))
-                    return self._connect(retried_mysql_57=True)
-            self._logger.error(err)
-            raise
         except mysql.connector.Error as err:
             self._logger.error(err)
             raise

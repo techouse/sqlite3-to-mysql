@@ -53,6 +53,8 @@ class SQLite3toMySQL:
     COLUMN_PATTERN = re.compile(r"^[^(]+")
     COLUMN_LENGTH_PATTERN = re.compile(r"\(\d+\)$")
 
+    MYSQL_CONNECTOR_VERSION = version.parse(mysql_connector_version_string)
+
     def __init__(self, **kwargs):
         """Constructor."""
         if not kwargs.get("sqlite_file"):
@@ -122,15 +124,39 @@ class SQLite3toMySQL:
 
         self._mysql_charset = kwargs.get("mysql_charset") or "utf8mb4"
 
-        self._mysql_collation = (
-            kwargs.get("mysql_collation")
-            or CharacterSet.get_default_collation(self._mysql_charset.lower())[0]
-        )
-        if (
-            not kwargs.get("mysql_collation")
-            and self._mysql_collation == "utf8mb4_0900_ai_ci"
-        ):
-            self._mysql_collation = "utf8mb4_general_ci"
+        try:
+            self._mysql_collation = (
+                kwargs.get("mysql_collation")
+                or CharacterSet.get_default_collation(self._mysql_charset.lower())[0]
+            )
+            if (
+                not kwargs.get("mysql_collation")
+                and self._mysql_collation == "utf8mb4_0900_ai_ci"
+            ):
+                self._mysql_collation = "utf8mb4_general_ci"
+        except mysql.connector.ProgrammingError:
+            if (
+                self.MYSQL_CONNECTOR_VERSION.major >= 8
+                and self.MYSQL_CONNECTOR_VERSION.micro >= 30
+            ):
+                # Looks like we're dealing with mysql-connector-python >= 8.0.30 and MySQL 5.7 or MariaDB
+                # https://github.com/techouse/sqlite3-to-mysql/issues/46
+                # https://dev.mysql.com/doc/relnotes/connector-python/en/news-8-0-30.html
+                self._logger.warning(
+                    "Looks like you're using mysql-connector-python >= 8.0.30 with an older version of MySQL."
+                )
+                CharacterSet.set_mysql_version((5, 7))
+                self._mysql_collation = (
+                    kwargs.get("mysql_collation")
+                    or CharacterSet.get_default_collation(self._mysql_charset.lower())[
+                        0
+                    ]
+                )
+                if (
+                    not kwargs.get("mysql_collation")
+                    and self._mysql_collation == "utf8mb4_0900_ai_ci"
+                ):
+                    self._mysql_collation = "utf8mb4_general_ci"
 
         self.ignore_duplicate_keys = kwargs.get("ignore_duplicate_keys") or False
 
@@ -193,14 +219,13 @@ class SQLite3toMySQL:
                 )
         except mysql.connector.ProgrammingError as err:
             if not retried_mysql_57:
-                # Looks like we're dealing with mysql-connector-python >= 8.0.30 and MySQL 5.7 or MariaDB
-                # https://github.com/techouse/sqlite3-to-mysql/issues/46
-                # https://dev.mysql.com/doc/relnotes/connector-python/en/news-8-0-30.html
-                mysql_connector_version = version.parse(mysql_connector_version_string)
                 if (
-                    mysql_connector_version.major >= 8
-                    and mysql_connector_version.micro >= 30
+                    self.MYSQL_CONNECTOR_VERSION.major >= 8
+                    and self.MYSQL_CONNECTOR_VERSION.micro >= 30
                 ):
+                    # Looks like we're dealing with mysql-connector-python >= 8.0.30 and MySQL 5.7 or MariaDB
+                    # https://github.com/techouse/sqlite3-to-mysql/issues/46
+                    # https://dev.mysql.com/doc/relnotes/connector-python/en/news-8-0-30.html
                     self._logger.warning(
                         "Looks like you're using mysql-connector-python >= 8.0.30 with an older version of MySQL."
                     )

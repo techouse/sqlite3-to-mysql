@@ -134,7 +134,7 @@ class SQLite3toMySQL:
                 and self._mysql_collation == "utf8mb4_0900_ai_ci"
             ):
                 self._mysql_collation = "utf8mb4_general_ci"
-        except mysql.connector.ProgrammingError:
+        except mysql.connector.errors.ProgrammingError:
             if (
                 self.MYSQL_CONNECTOR_VERSION.major >= 8
                 and self.MYSQL_CONNECTOR_VERSION.micro >= 30
@@ -217,7 +217,7 @@ class SQLite3toMySQL:
                 raise ValueError(
                     "Your MySQL version does not support InnoDB FULLTEXT indexes!"
                 )
-        except mysql.connector.ProgrammingError as err:
+        except mysql.connector.errors.ProgrammingError as err:
             if not retried_mysql_57:
                 if (
                     self.MYSQL_CONNECTOR_VERSION.major >= 8

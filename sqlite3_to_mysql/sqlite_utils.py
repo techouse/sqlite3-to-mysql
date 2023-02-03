@@ -2,7 +2,7 @@
 
 from __future__ import division
 
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 from sys import version_info
 
@@ -65,3 +65,11 @@ def convert_date(value):
         raise ValueError(  # pylint: disable=W0707
             "DATE field contains Invalid isoformat string: {}".format(err)
         )
+
+
+def convert_epoch(value):
+    """Convert unix epoch time to datetime."""
+    _intval = int(value)
+    if _intval > 10000000000:
+        return datetime.fromtimestamp(int(_intval / 1000), timezone.utc)
+    return datetime.fromtimestamp(_intval, timezone.utc)

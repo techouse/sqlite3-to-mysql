@@ -69,7 +69,7 @@ def convert_date(value):
 
 def convert_epoch(value):
     """Convert unix epoch time to datetime."""
-    _intval = int(value)  
+    _intval = int(value)
     if _intval >= pow(2,31):  #convert 64 bit epoch date to 32 bit
         return datetime.fromtimestamp(int(_intval / 1000), timezone.utc)
     return datetime.fromtimestamp(_intval, timezone.utc)

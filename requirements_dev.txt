@@ -16,9 +16,9 @@ pytimeparse>=1.1.8
 simplejson>=3.16.0
 six>=1.12.0
 sqlalchemy>=1.3.7,<1.4.0 ; python_version<"3.0"
-sqlalchemy>=1.3.7 ; python_version>="3.0"
+sqlalchemy>=1.3.7,<=1.4.44 ; python_version>="3.0"
 sqlalchemy-utils==0.36.6 ; python_version<"3.0"
-sqlalchemy-utils>=0.36.6 ; python_version>="3.0"
+sqlalchemy-utils>=0.36.6,<0.40.0 ; python_version>="3.0"
 tox
 tqdm>=4.35.0
 packaging>=20.3

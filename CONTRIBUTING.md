@@ -1,30 +1,34 @@
 # Contributing
 
-I'm really glad you're reading this, because we need volunteer developers to help this project come to fruition.
+I greatly appreciate your interest in reading this message, as this project requires volunteer developers to assist
+in developing and maintaining it.
 
-When contributing to this repository, please first discuss the change you wish to make via issue, email, or any other 
-method with the owners of this repository before making a change.
+Before making any changes to this repository, please first discuss the proposed modifications with the repository owners
+through an issue, email, or any other appropriate communication channel.
 
-Please note we have a code of conduct, please follow it in all your interactions with the project.
+Please be aware that a [code of conduct](CODE-OF-CONDUCT.md) is in place, and should be adhered to during all
+interactions related to the project.
 
 ## Python version support
 
-Backwards compatibility is a must.
+Ensuring backward compatibility is an imperative requirement.
 
-Currently, the tool supports Python versions 2.7, 3.5, 3.6, 3.7, 3.8, 3.9 and 3.10.
+Currently, the tool supports Python versions 2.7, 3.5, 3.6, 3.7, 3.8, 3.9, 3.10 and 3.11.
 
-Even though Python 2.7 has reached the end of its life at the beginning of 2020, a lot of people still rely on it. 
-Therefore, we should continue to support it as long as the underlying tools do not completely drop support for it.
+Despite the fact that Python 2.7 has indeed reached the conclusion of its lifecycle in early 2020, a considerable number
+of individuals still rely heavily upon it. Consequently, it is incumbent upon us to maintain our support for this
+version until such time as the fundamental tools unequivocally discontinue their backing for it.
 
 ## MySQL version support
 
-This tool supports and should continue to support MySQL versions 5.5, 5.6, 5.7 and 8.0. This includes any includes major
-forks of MySQL, e.g. MariaDB.
+This tool is intended to fully support MySQL versions 5.5, 5.6, 5.7, and 8.0, including major forks like MariaDB.
+We should prioritize and be dedicated to maintaining compatibility with these versions for a smooth user experience.
 
 ## Testing
 
-Since this project/tool deals with transferring data from one database type to another it is crucial that it is
-thoroughly tested. Please write tests for any new code you create. All tests must be written using [pytest](https://docs.pytest.org/en/latest/).
+As this project/tool involves the critical process of transferring data between different database types, it is of
+utmost importance to ensure thorough testing. Please remember to write tests for any new code you create, utilizing the
+[pytest](https://docs.pytest.org/en/latest/) framework for all test cases.
 
 ### Running the test suite
 
@@ -56,14 +60,17 @@ tox
 
 ## Submitting changes
 
-Send a new [pull request](https://github.com/techouse/sqlite3-to-mysql/pull/new/master) with a clear list of what
-you've done (read more about [pull requests](http://help.github.com/pull-requests/)). When you send a pull request, 
-we will love you forever if you include [pytest]((https://docs.pytest.org/en/latest/)) tests. We can always use more 
-test coverage. Please follow our coding conventions (below) and make sure all of your commits are atomic (one feature 
-per commit).
+To contribute to this project, please submit a
+new [pull request](https://github.com/techouse/sqlite3-to-mysql/pull/new/master) and provide a clear list of your
+modifications. For guidance on creating pull requests, you can refer
+to [this resource](http://help.github.com/pull-requests/).
 
-Always write a clear log message for your commits. One-line messages are fine for small changes, but bigger changes 
-should look like this:
+When sending a pull request, we highly appreciate the inclusion of [pytest](https://docs.pytest.org/en/latest/) tests,
+as we strive to enhance our test coverage. Following our coding conventions is essential, and it would be ideal if you
+ensure that each commit focuses on a single feature.
+
+For commits, please write clear log messages. While concise one-line messages are suitable for small changes, more
+substantial modifications should follow a format similar to the example below:
 
 ```bash
 git commit -m "A brief summary of the commit
@@ -73,16 +80,17 @@ git commit -m "A brief summary of the commit
     
 ## Coding standards
 
-Your code should be readable and concise. Always use [Black](https://github.com/psf/black) to format your code.
-Additionally, once you feel you're done, run 
+It is essential to prioritize code readability and conciseness. To achieve this, we recommend
+using [Black](https://github.com/psf/black) for code formatting.
+
+Once your work is deemed complete, it is advisable to run the following command:
 
 ```bash
 tox -e flake8,linters
-``` 
+```
 
-in order to run all various linters and checkers against it.
-
-
+This command executes various linters and checkers to identify any potential issues or inconsistencies in your code. By
+following these guidelines, you can ensure a high-quality codebase.
 
 Thanks,
 

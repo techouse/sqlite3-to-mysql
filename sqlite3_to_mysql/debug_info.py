@@ -84,7 +84,7 @@ def info():
         platform_info = "Unknown"
 
     return [
-        ["sqlite3-to-mysql", package_version.__version__],
+        ["sqlite3-to-mysql", package_version],
         ["", ""],
         ["Operating System", platform_info],
         ["Python", _implementation()],

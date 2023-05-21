@@ -1,2 +1,0 @@
-[run]
-omit = sqlite3_to_mysql/__version__.py

@@ -7,474 +7,474 @@ on:
     branches: [ master ]
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         include:
-          - toxenv: "py27"
+          - toxenv: "python2.7"
             db: "mariadb:5.5"
             legacy_db: 1
             experimental: false
             py: "2.7"
 
-          - toxenv: "py37"
+          - toxenv: "python3.7"
             db: "mariadb:5.5"
             legacy_db: 1
             experimental: false
             py: "3.7"
 
-          - toxenv: "py38"
+          - toxenv: "python3.8"
             db: "mariadb:5.5"
             legacy_db: 1
             experimental: false
             py: "3.8"
 
-          - toxenv: "py39"
+          - toxenv: "python3.9"
             db: "mariadb:5.5"
             legacy_db: 1
             experimental: false
             py: "3.9"
 
-          - toxenv: "py310"
+          - toxenv: "python3.10"
             db: "mariadb:5.5"
             legacy_db: 1
             experimental: false
             py: "3.10"
 
-          - toxenv: "py311"
+          - toxenv: "python3.11"
             db: "mariadb:5.5"
             legacy_db: 1
             experimental: false
             py: "3.11"
 
-          - toxenv: "py27"
+          - toxenv: "python2.7"
             db: "mariadb:10.0"
             legacy_db: 1
             experimental: false
             py: "2.7"
 
-          - toxenv: "py37"
+          - toxenv: "python3.7"
             db: "mariadb:10.0"
             legacy_db: 1
             experimental: false
             py: "3.7"
 
-          - toxenv: "py38"
+          - toxenv: "python3.8"
             db: "mariadb:10.0"
             legacy_db: 1
             experimental: false
             py: "3.8"
 
-          - toxenv: "py39"
+          - toxenv: "python3.9"
             db: "mariadb:10.0"
             legacy_db: 1
             experimental: false
             py: "3.9"
 
-          - toxenv: "py310"
+          - toxenv: "python3.10"
             db: "mariadb:10.0"
             legacy_db: 1
             experimental: false
             py: "3.10"
 
-          - toxenv: "py311"
+          - toxenv: "python3.11"
             db: "mariadb:10.0"
             legacy_db: 1
             experimental: false
             py: "3.11"
 
-          - toxenv: "py27"
+          - toxenv: "python2.7"
             db: "mariadb:10.1"
             legacy_db: 1
             experimental: false
             py: "2.7"
 
-          - toxenv: "py37"
+          - toxenv: "python3.7"
             db: "mariadb:10.1"
             legacy_db: 1
             experimental: false
             py: "3.7"
 
-          - toxenv: "py38"
+          - toxenv: "python3.8"
             db: "mariadb:10.1"
             legacy_db: 1
             experimental: false
             py: "3.8"
 
-          - toxenv: "py39"
+          - toxenv: "python3.9"
             db: "mariadb:10.1"
             legacy_db: 1
             experimental: false
             py: "3.9"
 
-          - toxenv: "py310"
+          - toxenv: "python3.10"
             db: "mariadb:10.1"
             legacy_db: 1
             experimental: false
             py: "3.10"
 
-          - toxenv: "py311"
+          - toxenv: "python3.11"
             db: "mariadb:10.1"
             legacy_db: 1
             experimental: false
             py: "3.11"
 
-          - toxenv: "py27"
+          - toxenv: "python2.7"
             db: "mariadb:10.2"
             legacy_db: 0
             experimental: false
             py: "2.7"
 
-          - toxenv: "py37"
+          - toxenv: "python3.7"
             db: "mariadb:10.2"
             legacy_db: 0
             experimental: false
             py: "3.7"
 
-          - toxenv: "py38"
+          - toxenv: "python3.8"
             db: "mariadb:10.2"
             legacy_db: 0
             experimental: false
             py: "3.8"
 
-          - toxenv: "py39"
+          - toxenv: "python3.9"
             db: "mariadb:10.2"
             legacy_db: 0
             experimental: false
             py: "3.9"
 
-          - toxenv: "py310"
+          - toxenv: "python3.10"
             db: "mariadb:10.2"
             legacy_db: 0
             experimental: false
             py: "3.10"
 
-          - toxenv: "py311"
+          - toxenv: "python3.11"
             db: "mariadb:10.2"
             legacy_db: 0
             experimental: false
             py: "3.11"
 
-          - toxenv: "py27"
+          - toxenv: "python2.7"
             db: "mariadb:10.3"
             legacy_db: 0
             experimental: false
             py: "2.7"
 
-          - toxenv: "py37"
+          - toxenv: "python3.7"
             db: "mariadb:10.3"
             legacy_db: 0
             experimental: false
             py: "3.7"
 
-          - toxenv: "py38"
+          - toxenv: "python3.8"
             db: "mariadb:10.3"
             legacy_db: 0
             experimental: false
             py: "3.8"
 
-          - toxenv: "py39"
+          - toxenv: "python3.9"
             db: "mariadb:10.3"
             legacy_db: 0
             experimental: false
             py: "3.9"
 
-          - toxenv: "py310"
+          - toxenv: "python3.10"
             db: "mariadb:10.3"
             legacy_db: 0
             experimental: false
             py: "3.10"
 
-          - toxenv: "py311"
+          - toxenv: "python3.11"
             db: "mariadb:10.3"
             legacy_db: 0
             experimental: false
             py: "3.11"
 
-          - toxenv: "py27"
+          - toxenv: "python2.7"
             db: "mariadb:10.4"
             legacy_db: 0
             experimental: false
             py: "2.7"
 
-          - toxenv: "py37"
+          - toxenv: "python3.7"
             db: "mariadb:10.4"
             legacy_db: 0
             experimental: false
             py: "3.7"
 
-          - toxenv: "py38"
+          - toxenv: "python3.8"
             db: "mariadb:10.4"
             legacy_db: 0
             experimental: false
             py: "3.8"
 
-          - toxenv: "py39"
+          - toxenv: "python3.9"
             db: "mariadb:10.4"
             legacy_db: 0
             experimental: false
             py: "3.9"
 
-          - toxenv: "py310"
+          - toxenv: "python3.10"
             db: "mariadb:10.4"
             legacy_db: 0
             experimental: false
             py: "3.10"
 
-          - toxenv: "py311"
+          - toxenv: "python3.11"
             db: "mariadb:10.4"
             legacy_db: 0
             experimental: false
             py: "3.11"
 
-          - toxenv: "py27"
+          - toxenv: "python2.7"
             db: "mariadb:10.5"
             legacy_db: 0
             experimental: false
             py: "2.7"
 
-          - toxenv: "py37"
+          - toxenv: "python3.7"
             db: "mariadb:10.5"
             legacy_db: 0
             experimental: false
             py: "3.7"
 
-          - toxenv: "py38"
+          - toxenv: "python3.8"
             db: "mariadb:10.5"
             legacy_db: 0
             experimental: false
             py: "3.8"
 
-          - toxenv: "py39"
+          - toxenv: "python3.9"
             db: "mariadb:10.5"
             legacy_db: 0
             experimental: false
             py: "3.9"
 
-          - toxenv: "py310"
+          - toxenv: "python3.10"
             db: "mariadb:10.5"
             legacy_db: 0
             experimental: false
             py: "3.10"
 
-          - toxenv: "py311"
+          - toxenv: "python3.11"
             db: "mariadb:10.5"
             legacy_db: 0
             experimental: false
             py: "3.11"
 
-          - toxenv: "py27"
+          - toxenv: "python2.7"
             db: "mariadb:10.6"
             legacy_db: 0
             experimental: false
             py: "2.7"
 
-          - toxenv: "py37"
+          - toxenv: "python3.7"
             db: "mariadb:10.6"
             legacy_db: 0
             experimental: false
             py: "3.7"
 
-          - toxenv: "py38"
+          - toxenv: "python3.8"
             db: "mariadb:10.6"
             legacy_db: 0
             experimental: false
             py: "3.8"
 
-          - toxenv: "py39"
+          - toxenv: "python3.9"
             db: "mariadb:10.6"
             legacy_db: 0
             experimental: false
             py: "3.9"
 
-          - toxenv: "py310"
+          - toxenv: "python3.10"
             db: "mariadb:10.6"
             legacy_db: 0
             experimental: false
             py: "3.10"
 
-          - toxenv: "py311"
+          - toxenv: "python3.11"
             db: "mariadb:10.6"
             legacy_db: 0
             experimental: false
             py: "3.11"
 
-          - toxenv: "py27"
+          - toxenv: "python2.7"
             db: "mariadb:10.11"
             legacy_db: 0
             experimental: false
             py: "2.7"
 
-          - toxenv: "py37"
+          - toxenv: "python3.7"
             db: "mariadb:10.11"
             legacy_db: 0
             experimental: false
             py: "3.7"
 
-          - toxenv: "py38"
+          - toxenv: "python3.8"
             db: "mariadb:10.11"
             legacy_db: 0
             experimental: false
             py: "3.8"
 
-          - toxenv: "py39"
+          - toxenv: "python3.9"
             db: "mariadb:10.11"
             legacy_db: 0
             experimental: false
             py: "3.9"
 
-          - toxenv: "py310"
+          - toxenv: "python3.10"
             db: "mariadb:10.11"
             legacy_db: 0
             experimental: false
             py: "3.10"
 
-          - toxenv: "py311"
+          - toxenv: "python3.11"
             db: "mariadb:10.11"
             legacy_db: 0
             experimental: false
             py: "3.11"
 
-          - toxenv: "py27"
+          - toxenv: "python2.7"
             db: "mysql:5.5"
             legacy_db: 1
             experimental: false
             py: "2.7"
 
-          - toxenv: "py37"
+          - toxenv: "python3.7"
             db: "mysql:5.5"
             legacy_db: 1
             experimental: false
             py: "3.7"
 
-          - toxenv: "py38"
+          - toxenv: "python3.8"
             db: "mysql:5.5"
             legacy_db: 1
             experimental: false
             py: "3.8"
 
-          - toxenv: "py39"
+          - toxenv: "python3.9"
             db: "mysql:5.5"
             legacy_db: 1
             experimental: false
             py: "3.9"
 
-          - toxenv: "py310"
+          - toxenv: "python3.10"
             db: "mysql:5.5"
             legacy_db: 1
             experimental: false
             py: "3.10"
 
-          - toxenv: "py311"
+          - toxenv: "python3.11"
             db: "mysql:5.5"
             legacy_db: 1
             experimental: false
             py: "3.11"
 
-          - toxenv: "py27"
+          - toxenv: "python2.7"
             db: "mysql:5.6"
             legacy_db: 1
             experimental: false
             py: "2.7"
 
-          - toxenv: "py37"
+          - toxenv: "python3.7"
             db: "mysql:5.6"
             legacy_db: 1
             experimental: false
             py: "3.7"
 
-          - toxenv: "py38"
+          - toxenv: "python3.8"
             db: "mysql:5.6"
             legacy_db: 1
             experimental: false
             py: "3.8"
 
-          - toxenv: "py39"
+          - toxenv: "python3.9"
             db: "mysql:5.6"
             legacy_db: 1
             experimental: false
             py: "3.9"
 
-          - toxenv: "py310"
+          - toxenv: "python3.10"
             db: "mysql:5.6"
             legacy_db: 1
             experimental: false
             py: "3.10"
 
-          - toxenv: "py311"
+          - toxenv: "python3.11"
             db: "mysql:5.6"
             legacy_db: 1
             experimental: false
             py: "3.11"
 
-          - toxenv: "py27"
+          - toxenv: "python2.7"
             db: "mysql:5.7"
             legacy_db: 0
             experimental: false
             py: "2.7"
 
-          - toxenv: "py37"
+          - toxenv: "python3.7"
             db: "mysql:5.7"
             legacy_db: 0
             experimental: false
             py: "3.7"
 
-          - toxenv: "py38"
+          - toxenv: "python3.8"
             db: "mysql:5.7"
             legacy_db: 0
             experimental: false
             py: "3.8"
 
-          - toxenv: "py39"
+          - toxenv: "python3.9"
             db: "mysql:5.7"
             legacy_db: 0
             experimental: false
             py: "3.9"
 
-          - toxenv: "py310"
+          - toxenv: "python3.10"
             db: "mysql:5.7"
             legacy_db: 0
             experimental: false
             py: "3.10"
 
-          - toxenv: "py311"
+          - toxenv: "python3.11"
             db: "mysql:5.7"
             legacy_db: 0
             experimental: false
             py: "3.11"
 
-          - toxenv: "py27"
+          - toxenv: "python2.7"
             db: "mysql:8.0"
             legacy_db: 0
             experimental: false
             py: "2.7"
 
-          - toxenv: "py37"
+          - toxenv: "python3.7"
             db: "mysql:8.0"
             legacy_db: 0
             experimental: false
             py: "3.7"
 
-          - toxenv: "py38"
+          - toxenv: "python3.8"
             db: "mysql:8.0"
             legacy_db: 0
             experimental: false
             py: "3.8"
 
-          - toxenv: "py39"
+          - toxenv: "python3.9"
             db: "mysql:8.0"
             legacy_db: 0
             experimental: false
             py: "3.9"
 
-          - toxenv: "py310"
+          - toxenv: "python3.10"
             db: "mysql:8.0"
             legacy_db: 0
             experimental: false
             py: "3.10"
 
-          - toxenv: "py311"
+          - toxenv: "python3.11"
             db: "mysql:8.0"
             legacy_db: 0
             experimental: false

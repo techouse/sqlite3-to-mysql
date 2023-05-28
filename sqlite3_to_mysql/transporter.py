@@ -358,7 +358,10 @@ class SQLite3toMySQL:
             column = dict(row)
             mysql_safe_name = safe_identifier_length(column["name"])
             column_type = self._translate_type_from_sqlite_to_mysql(column["type"])
-            # read more on hidden columns here https://www.sqlite.org/pragma.html#pragma_table_xinfo
+
+            # The hidden" value is 0 for visible columns, 1 for "hidden" columns, 2 for computed
+            # virtual columns and 3 for computed stored columns.
+            # Read more on hidden columns here https://www.sqlite.org/pragma.html#pragma_table_xinfo
             hidden_column = "hidden" in column and column["hidden"] > 0
 
             if not hidden_column:

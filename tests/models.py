@@ -21,6 +21,7 @@ from sqlalchemy import (
     Time,
     TIMESTAMP,
     VARCHAR,
+    Computed,
 )
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, backref

@@ -30,6 +30,7 @@ from sqlite3_to_mysql.sqlite_utils import (
     convert_decimal,
     convert_timedelta,
     unicase_compare,
+    check_sqlite_table_xinfo_support,
 )
 from .mysql_utils import (
     MYSQL_BLOB_COLUMN_TYPES,
@@ -157,6 +158,11 @@ class SQLite3toMySQL:
 
         self._sqlite_cur = self._sqlite.cursor()
 
+        self._sqlite_version = self._get_sqlite_version()
+        self._sqlite_table_xinfo_support = check_sqlite_table_xinfo_support(
+            self._sqlite_version
+        )
+
         try:
             self._mysql = mysql.connector.connect(
                 user=self._mysql_user,
@@ -221,6 +227,17 @@ class SQLite3toMySQL:
         except (IndexError, mysql.connector.Error) as err:
             self._logger.error(
                 "MySQL failed checking for InnoDB version: %s",
+                err,
+            )
+            raise
+
+    def _get_sqlite_version(self):
+        try:
+            self._sqlite_cur.execute("SELECT sqlite_version()")
+            return self._sqlite_cur.fetchone()[0]
+        except (IndexError, sqlite3.Error) as err:
+            self._logger.error(
+                "SQLite failed checking for InnoDB version: %s",
                 err,
             )
             raise
@@ -323,7 +340,14 @@ class SQLite3toMySQL:
         if transfer_rowid:
             sql += " `rowid` BIGINT NOT NULL, "
 
-        self._sqlite_cur.execute('PRAGMA table_info("{}")'.format(table_name))
+        self._sqlite_cur.execute(
+            'PRAGMA {command}("{table_name}")'.format(
+                command="table_xinfo"
+                if self._sqlite_table_xinfo_support
+                else "table_info",
+                table_name=table_name,
+            )
+        )
 
         rows = self._sqlite_cur.fetchall()
         compound_primary_key = (
@@ -334,33 +358,38 @@ class SQLite3toMySQL:
             column = dict(row)
             mysql_safe_name = safe_identifier_length(column["name"])
             column_type = self._translate_type_from_sqlite_to_mysql(column["type"])
+            # read more on hidden columns here https://www.sqlite.org/pragma.html#pragma_table_xinfo
+            hidden_column = "hidden" in column and column["hidden"] > 0
 
-            sql += " `{name}` {type} {notnull} {default} {auto_increment}, ".format(
-                name=mysql_safe_name,
-                type=column_type,
-                notnull="NOT NULL" if column["notnull"] or column["pk"] else "NULL",
-                auto_increment="AUTO_INCREMENT"
-                if column["pk"] > 0
-                and column_type.startswith(("INT", "BIGINT"))
-                and not compound_primary_key
-                else "",
-                default="DEFAULT " + column["dflt_value"]
-                if column["dflt_value"]
-                and column_type not in MYSQL_COLUMN_TYPES_WITHOUT_DEFAULT
-                else "",
-            )
+            if not hidden_column:
+                sql += " `{name}` {type} {notnull} {default} {auto_increment}, ".format(
+                    name=mysql_safe_name,
+                    type=column_type,
+                    notnull="NOT NULL" if column["notnull"] or column["pk"] else "NULL",
+                    auto_increment="AUTO_INCREMENT"
+                    if column["pk"] > 0
+                    and column_type.startswith(("INT", "BIGINT"))
+                    and not compound_primary_key
+                    else "",
+                    default="DEFAULT " + column["dflt_value"]
+                    if column["dflt_value"]
+                    and column_type not in MYSQL_COLUMN_TYPES_WITHOUT_DEFAULT
+                    else "",
+                )
 
-            if column["pk"] > 0:
-                primary_key = {
-                    "column": mysql_safe_name,
-                    "length": "",
-                }
-                # In case we have a non-numeric primary key
-                if column_type in MYSQL_TEXT_COLUMN_TYPES_WITH_JSON.union(
-                    MYSQL_BLOB_COLUMN_TYPES
-                ) or column_type.startswith(("CHAR", "VARCHAR")):
-                    primary_key["length"] = self._column_type_length(column_type, 255)
-                primary_keys.append(primary_key)
+                if column["pk"] > 0:
+                    primary_key = {
+                        "column": mysql_safe_name,
+                        "length": "",
+                    }
+                    # In case we have a non-numeric primary key
+                    if column_type in MYSQL_TEXT_COLUMN_TYPES_WITH_JSON.union(
+                        MYSQL_BLOB_COLUMN_TYPES
+                    ) or column_type.startswith(("CHAR", "VARCHAR")):
+                        primary_key["length"] = self._column_type_length(
+                            column_type, 255
+                        )
+                    primary_keys.append(primary_key)
 
         sql = sql.rstrip(", ")
 

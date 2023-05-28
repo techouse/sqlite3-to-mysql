@@ -9,6 +9,7 @@ from sys import version_info
 import six
 from pytimeparse.timeparse import timeparse
 from unidecode import unidecode
+from packaging import version
 
 if version_info.major == 3 and 4 <= version_info.minor <= 6:
     from backports.datetime_fromisoformat import MonkeyPatch  # pylint: disable=E0401
@@ -65,3 +66,13 @@ def convert_date(value):
         raise ValueError(  # pylint: disable=W0707
             "DATE field contains Invalid isoformat string: {}".format(err)
         )
+
+
+def check_sqlite_table_xinfo_support(version_string):
+    """Check for SQLite table_xinfo support."""
+    sqlite_version = version.parse(version_string)
+    if sqlite_version.major > 3 or (
+        sqlite_version.major == 3 and sqlite_version.minor >= 26
+    ):
+        return True
+    return False

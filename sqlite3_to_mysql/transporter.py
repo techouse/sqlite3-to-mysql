@@ -359,40 +359,38 @@ class SQLite3toMySQL:
             mysql_safe_name = safe_identifier_length(column["name"])
             column_type = self._translate_type_from_sqlite_to_mysql(column["type"])
 
-            # The hidden" value is 0 for visible columns, 1 for "hidden" columns, 2 for computed
-            # virtual columns and 3 for computed stored columns.
+            # The "hidden" value is 0 for visible columns, 1 for "hidden" columns,
+            # 2 for computed virtual columns and 3 for computed stored columns.
             # Read more on hidden columns here https://www.sqlite.org/pragma.html#pragma_table_xinfo
-            hidden_column = "hidden" in column and column["hidden"] > 0
+            if "hidden" in column and column["hidden"] == 1:
+                continue
 
-            if not hidden_column:
-                sql += " `{name}` {type} {notnull} {default} {auto_increment}, ".format(
-                    name=mysql_safe_name,
-                    type=column_type,
-                    notnull="NOT NULL" if column["notnull"] or column["pk"] else "NULL",
-                    auto_increment="AUTO_INCREMENT"
-                    if column["pk"] > 0
-                    and column_type.startswith(("INT", "BIGINT"))
-                    and not compound_primary_key
-                    else "",
-                    default="DEFAULT " + column["dflt_value"]
-                    if column["dflt_value"]
-                    and column_type not in MYSQL_COLUMN_TYPES_WITHOUT_DEFAULT
-                    else "",
-                )
+            sql += " `{name}` {type} {notnull} {default} {auto_increment}, ".format(
+                name=mysql_safe_name,
+                type=column_type,
+                notnull="NOT NULL" if column["notnull"] or column["pk"] else "NULL",
+                auto_increment="AUTO_INCREMENT"
+                if column["pk"] > 0
+                and column_type.startswith(("INT", "BIGINT"))
+                and not compound_primary_key
+                else "",
+                default="DEFAULT " + column["dflt_value"]
+                if column["dflt_value"]
+                and column_type not in MYSQL_COLUMN_TYPES_WITHOUT_DEFAULT
+                else "",
+            )
 
-                if column["pk"] > 0:
-                    primary_key = {
-                        "column": mysql_safe_name,
-                        "length": "",
-                    }
-                    # In case we have a non-numeric primary key
-                    if column_type in MYSQL_TEXT_COLUMN_TYPES_WITH_JSON.union(
-                        MYSQL_BLOB_COLUMN_TYPES
-                    ) or column_type.startswith(("CHAR", "VARCHAR")):
-                        primary_key["length"] = self._column_type_length(
-                            column_type, 255
-                        )
-                    primary_keys.append(primary_key)
+            if column["pk"] > 0:
+                primary_key = {
+                    "column": mysql_safe_name,
+                    "length": "",
+                }
+                # In case we have a non-numeric primary key
+                if column_type in MYSQL_TEXT_COLUMN_TYPES_WITH_JSON.union(
+                    MYSQL_BLOB_COLUMN_TYPES
+                ) or column_type.startswith(("CHAR", "VARCHAR")):
+                    primary_key["length"] = self._column_type_length(column_type, 255)
+                primary_keys.append(primary_key)
 
         sql = sql.rstrip(", ")
 

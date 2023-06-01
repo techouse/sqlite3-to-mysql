@@ -25,9 +25,7 @@ class TestSQLite3toMySQL:
         )
 
     def test_non_existing_sqlite_file(self, cli_runner, mysql_database, faker):
-        result = cli_runner.invoke(
-            sqlite3mysql, ["-f", faker.file_path(depth=1, extension=".sqlite3")]
-        )
+        result = cli_runner.invoke(sqlite3mysql, ["-f", faker.file_path(depth=1, extension=".sqlite3")])
         assert result.exit_code > 0
         assert "Error: Invalid value" in result.output
         assert "does not exist" in result.output
@@ -43,12 +41,8 @@ class TestSQLite3toMySQL:
             }
         )
 
-    def test_no_database_user(
-        self, cli_runner, sqlite_database, mysql_credentials, mysql_database
-    ):
-        result = cli_runner.invoke(
-            sqlite3mysql, ["-f", sqlite_database, "-d", mysql_credentials.database]
-        )
+    def test_no_database_user(self, cli_runner, sqlite_database, mysql_credentials, mysql_database):
+        result = cli_runner.invoke(sqlite3mysql, ["-f", sqlite_database, "-d", mysql_credentials.database])
         assert result.exit_code > 0
         assert any(
             message in result.output
@@ -58,9 +52,7 @@ class TestSQLite3toMySQL:
             }
         )
 
-    def test_invalid_database_name(
-        self, cli_runner, sqlite_database, mysql_credentials, mysql_database, faker
-    ):
+    def test_invalid_database_name(self, cli_runner, sqlite_database, mysql_credentials, mysql_database, faker):
         result = cli_runner.invoke(
             sqlite3mysql,
             [
@@ -75,9 +67,7 @@ class TestSQLite3toMySQL:
         assert result.exit_code > 0
         assert "1045 (28000): Access denied" in result.output
 
-    def test_invalid_database_user(
-        self, cli_runner, sqlite_database, mysql_credentials, mysql_database, faker
-    ):
+    def test_invalid_database_user(self, cli_runner, sqlite_database, mysql_credentials, mysql_database, faker):
         result = cli_runner.invoke(
             sqlite3mysql,
             [
@@ -92,9 +82,7 @@ class TestSQLite3toMySQL:
         assert result.exit_code > 0
         assert "1045 (28000): Access denied" in result.output
 
-    def test_invalid_database_password(
-        self, cli_runner, sqlite_database, mysql_credentials, mysql_database, faker
-    ):
+    def test_invalid_database_password(self, cli_runner, sqlite_database, mysql_credentials, mysql_database, faker):
         result = cli_runner.invoke(
             sqlite3mysql,
             [
@@ -157,9 +145,7 @@ class TestSQLite3toMySQL:
         assert result.exit_code > 0
         assert "1045 (28000): Access denied" in result.output
 
-    def test_invalid_database_port(
-        self, cli_runner, sqlite_database, mysql_credentials, mysql_database, faker
-    ):
+    def test_invalid_database_port(self, cli_runner, sqlite_database, mysql_credentials, mysql_database, faker):
         if six.PY2:
             port = choice(xrange(2, 2**16 - 1))
         else:
@@ -319,9 +305,7 @@ class TestSQLite3toMySQL:
         )
         assert result.exit_code == 0
 
-    def test_keyboard_interrupt(
-        self, cli_runner, sqlite_database, mysql_credentials, mocker
-    ):
+    def test_keyboard_interrupt(self, cli_runner, sqlite_database, mysql_credentials, mocker):
         mocker.patch.object(SQLite3toMySQL, "transfer", side_effect=KeyboardInterrupt())
         result = cli_runner.invoke(
             sqlite3mysql,
@@ -343,9 +327,7 @@ class TestSQLite3toMySQL:
         assert result.exit_code > 0
         assert "Process interrupted" in result.output
 
-    def test_transfer_specific_tables_only(
-        self, cli_runner, sqlite_database, mysql_credentials
-    ):
+    def test_transfer_specific_tables_only(self, cli_runner, sqlite_database, mysql_credentials):
         sqlite_engine = create_engine(
             "sqlite:///{database}".format(database=sqlite_database),
             json_serializer=json.dumps,

@@ -57,22 +57,16 @@ def convert_date(value):
         try:
             return date.fromisoformat(value.decode())
         except ValueError as err:
-            raise ValueError(  # pylint: disable=W0707
-                "DATE field contains {}".format(err)
-            )
+            raise ValueError("DATE field contains {}".format(err))  # pylint: disable=W0707
     try:
         return datetime.strptime(value.decode(), "%Y-%m-%d").date()
     except ValueError as err:
-        raise ValueError(  # pylint: disable=W0707
-            "DATE field contains Invalid isoformat string: {}".format(err)
-        )
+        raise ValueError("DATE field contains Invalid isoformat string: {}".format(err))  # pylint: disable=W0707
 
 
 def check_sqlite_table_xinfo_support(version_string):
     """Check for SQLite table_xinfo support."""
     sqlite_version = version.parse(version_string)
-    if sqlite_version.major > 3 or (
-        sqlite_version.major == 3 and sqlite_version.minor >= 26
-    ):
+    if sqlite_version.major > 3 or (sqlite_version.major == 3 and sqlite_version.minor >= 26):
         return True
     return False

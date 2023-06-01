@@ -15,9 +15,7 @@ class Database:
 
     def __init__(self, database_uri):
         self.Session = sessionmaker()
-        self.engine = create_engine(
-            database_uri, json_serializer=self.dumps, json_deserializer=json.loads
-        )
+        self.engine = create_engine(database_uri, json_serializer=self.dumps, json_deserializer=json.loads)
         if not database_exists(database_uri):
             self._create_db_tables()
         self.Session.configure(bind=self.engine)

@@ -151,9 +151,7 @@ class Media(Base):
     description = Column(String(255), nullable=True)
 
     def __repr__(self):
-        return "<Media(id='{id}', title='{title}')>".format(
-            id=self.id, title=self.title
-        )
+        return "<Media(id='{id}', title='{title}')>".format(id=self.id, title=self.title)
 
 
 article_media = Table(
@@ -206,6 +204,4 @@ class Article(Base):
     )
 
     def __repr__(self):
-        return "<Article(id='{id}', title='{title}')>".format(
-            id=self.id, title=self.title
-        )
+        return "<Article(id='{id}', title='{title}')>".format(id=self.id, title=self.title)

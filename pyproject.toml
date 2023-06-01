@@ -74,3 +74,25 @@ universal = true
 
 [project.scripts]
 sqlite3mysql = "sqlite3_to_mysql.cli:cli"
+
+[tool.black]
+line-length = 120
+target-version = ["py35", "py36", "py37", "py38", "py39", "py310", "py311"]
+include = '\.pyi?$'
+exclude = '''
+(
+    /(
+        \.eggs
+        | \.git
+        | \.hg
+        | \.mypy_cache
+        | \.tox
+        | \.venv
+        | _build
+        | buck-out
+        | build
+        | dist
+    )/
+    | foo.py
+)
+'''

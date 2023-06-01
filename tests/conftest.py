@@ -244,9 +244,7 @@ def is_port_in_use(port, host="0.0.0.0"):
 
 @pytest.fixture(scope="session")
 def mysql_credentials(pytestconfig):
-    MySQLCredentials = namedtuple(
-        "MySQLCredentials", ["user", "password", "host", "port", "database"]
-    )
+    MySQLCredentials = namedtuple("MySQLCredentials", ["user", "password", "host", "port", "database"])
 
     db_credentials_file = abspath(join(dirname(__file__), "db_credentials.json"))
     if isfile(db_credentials_file):
@@ -265,14 +263,10 @@ def mysql_credentials(pytestconfig):
         while is_port_in_use(port, pytestconfig.getoption("mysql_host")):
             if port >= 2**16 - 1:
                 pytest.fail(
-                    "No ports appear to be available on the host {}".format(
-                        pytestconfig.getoption("mysql_host")
-                    )
+                    "No ports appear to be available on the host {}".format(pytestconfig.getoption("mysql_host"))
                 )
                 raise ConnectionError(
-                    "No ports appear to be available on the host {}".format(
-                        pytestconfig.getoption("mysql_host")
-                    )
+                    "No ports appear to be available on the host {}".format(pytestconfig.getoption("mysql_host"))
                 )
             port += 1
 
@@ -308,9 +302,7 @@ def mysql_instance(mysql_credentials, pytestconfig):
             pytest.fail(str(err))
             raise
 
-        docker_mysql_image = (
-            pytestconfig.getoption("docker_mysql_image") or "mysql:latest"
-        )
+        docker_mysql_image = pytestconfig.getoption("docker_mysql_image") or "mysql:latest"
 
         if not any(docker_mysql_image in image.tags for image in client.images.list()):
             print("Attempting to download Docker image {}'".format(docker_mysql_image))
@@ -364,9 +356,7 @@ def mysql_instance(mysql_credentials, pytestconfig):
                 mysql_connection.close()
     else:
         if not mysql_available and mysql_connection_retries <= 0:
-            raise ConnectionAbortedError(
-                "Maximum MySQL connection retries exhausted! Are you sure MySQL is running?"
-            )
+            raise ConnectionAbortedError("Maximum MySQL connection retries exhausted! Are you sure MySQL is running?")
 
     yield
 

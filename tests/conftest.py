@@ -1,15 +1,15 @@
+import json
 import socket
 from codecs import open
 from collections import namedtuple
-from contextlib import contextmanager, closing
-from os.path import join, isfile, realpath, dirname, abspath
+from contextlib import closing, contextmanager
+from os.path import abspath, dirname, isfile, join, realpath
 from time import sleep
 
 import docker
 import mysql.connector
 import pytest
 import six
-import json
 from click.testing import CliRunner
 from docker.errors import NotFound
 from mysql.connector import errorcode
@@ -19,14 +19,8 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy_utils import database_exists, drop_database
 
 from .database import Database
-from .factories import (
-    ArticleFactory,
-    AuthorFactory,
-    ImageFactory,
-    MiscFactory,
-    TagFactory,
-    MediaFactory,
-)
+from .factories import ArticleFactory, AuthorFactory, ImageFactory, MediaFactory, MiscFactory, TagFactory
+
 
 if six.PY2:
     from sixeptions import *

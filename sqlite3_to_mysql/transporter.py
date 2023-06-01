@@ -14,11 +14,9 @@ from sys import stdout
 
 import mysql.connector
 import six
-from mysql.connector import (
-    CharacterSet,
-    __version__ as mysql_connector_version_string,
-    errorcode,
-)
+from mysql.connector import CharacterSet
+from mysql.connector import __version__ as mysql_connector_version_string
+from mysql.connector import errorcode
 from packaging import version
 from tqdm import tqdm, trange
 
@@ -32,6 +30,7 @@ from sqlite3_to_mysql.sqlite_utils import (
     convert_timedelta,
     unicase_compare,
 )
+
 from .mysql_utils import (
     MYSQL_BLOB_COLUMN_TYPES,
     MYSQL_COLUMN_TYPES,
@@ -43,6 +42,7 @@ from .mysql_utils import (
     check_mysql_json_support,
     safe_identifier_length,
 )
+
 
 if six.PY2:
     from .sixeptions import *  # pylint: disable=W0622,W0401,W0614

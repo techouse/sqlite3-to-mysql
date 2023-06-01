@@ -9,11 +9,7 @@ from tabulate import tabulate
 from . import SQLite3toMySQL
 from .click_utils import OptionEatAll, prompt_password
 from .debug_info import info
-from .mysql_utils import (
-    MYSQL_INSERT_METHOD,
-    MYSQL_TEXT_COLUMN_TYPES,
-    mysql_supported_character_sets,
-)
+from .mysql_utils import MYSQL_INSERT_METHOD, MYSQL_TEXT_COLUMN_TYPES, mysql_supported_character_sets
 
 
 @click.command()

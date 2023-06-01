@@ -96,3 +96,10 @@ exclude = '''
     | foo.py
 )
 '''
+
+[tool.isort]
+line_length = 120
+profile = "black"
+lines_after_imports = 2
+known_first_party = "sqlite3_to_mysql"
+skip_gitignore = true

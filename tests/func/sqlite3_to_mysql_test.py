@@ -8,10 +8,11 @@ import mysql.connector
 import pytest
 import simplejson as json
 import six
-from mysql.connector import errorcode, MySQLConnection
-from sqlalchemy import create_engine, inspect, MetaData, Table, select, text
+from mysql.connector import MySQLConnection, errorcode
+from sqlalchemy import MetaData, Table, create_engine, inspect, select, text
 
 from sqlite3_to_mysql import SQLite3toMySQL
+
 
 if six.PY2:
     from ..sixeptions import *

@@ -7,9 +7,10 @@ from decimal import Decimal
 from sys import version_info
 
 import six
+from packaging import version
 from pytimeparse.timeparse import timeparse
 from unidecode import unidecode
-from packaging import version
+
 
 if version_info.major == 3 and 4 <= version_info.minor <= 6:
     from backports.datetime_fromisoformat import MonkeyPatch  # pylint: disable=E0401

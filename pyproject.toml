@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools", "wheel"]
+requires = ["setuptools>=61.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -58,9 +58,6 @@ packages = ["sqlite3_to_mysql"]
 include-package-data = true
 zip-safe = false
 license-files = ["LICENSE"]
-
-[tool.distutils.bdist_wheel]
-universal = true
 
 [project.scripts]
 sqlite3mysql = "sqlite3_to_mysql.cli:cli"

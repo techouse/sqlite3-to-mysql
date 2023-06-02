@@ -1,9 +1,8 @@
 """SQLite adapters and converters for unsupported data types."""
 
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 from decimal import Decimal
 
-import six
 from packaging import version
 from pytimeparse.timeparse import timeparse
 from unidecode import unidecode
@@ -40,15 +39,10 @@ def unicase_compare(string_1, string_2):
 
 def convert_date(value):
     """Handle SQLite date conversion."""
-    if six.PY3:
-        try:
-            return date.fromisoformat(value.decode())
-        except ValueError as err:
-            raise ValueError("DATE field contains {}".format(err))  # pylint: disable=W0707
     try:
-        return datetime.strptime(value.decode(), "%Y-%m-%d").date()
+        return date.fromisoformat(value.decode())
     except ValueError as err:
-        raise ValueError("DATE field contains Invalid isoformat string: {}".format(err))  # pylint: disable=W0707
+        raise ValueError("DATE field contains {}".format(err))  # pylint: disable=W0707
 
 
 def check_sqlite_table_xinfo_support(version_string):

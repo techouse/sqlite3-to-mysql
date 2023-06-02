@@ -2,12 +2,33 @@ name: Test
 
 on:
   push:
-    branches: [ master ]
+    branches:
+      - master
   pull_request:
-    branches: [ master ]
+    branches:
+      - master
+defaults:
+  run:
+    shell: bash
+permissions: read-all
 
 jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.x"
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          pip install -r requirements_dev.txt
+      - name: Run static analysis
+        run: tox -e linters
   test:
+    needs: analyze
     runs-on: ubuntu-latest
     strategy:
       matrix:

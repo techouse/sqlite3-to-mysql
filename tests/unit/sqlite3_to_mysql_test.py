@@ -66,81 +66,49 @@ class TestSQLite3toMySQL:
             if column in {"Insert", "insert", "dialect"}:
                 continue
             elif column == "VARCHAR":
-                assert (
-                    proc._translate_type_from_sqlite_to_mysql(column)
-                    == proc._mysql_string_type
-                )
+                assert proc._translate_type_from_sqlite_to_mysql(column) == proc._mysql_string_type
             elif column in {"INTEGER", "INT"}:
-                assert (
-                    proc._translate_type_from_sqlite_to_mysql(column)
-                    == proc._mysql_integer_type
-                )
+                assert proc._translate_type_from_sqlite_to_mysql(column) == proc._mysql_integer_type
             elif column in {"INT64", "NUMERIC"}:
                 assert proc._translate_type_from_sqlite_to_mysql(column) == "BIGINT(19)"
             elif column in {"TINYTEXT", "TEXT", "MEDIUMTEXT", "LONGTEXT"}:
-                assert (
-                    proc._translate_type_from_sqlite_to_mysql(column)
-                    == proc._mysql_text_type
-                )
+                assert proc._translate_type_from_sqlite_to_mysql(column) == proc._mysql_text_type
             elif column == "BOOLEAN":
                 assert proc._translate_type_from_sqlite_to_mysql(column) == "TINYINT(1)"
             else:
                 assert proc._translate_type_from_sqlite_to_mysql(column) == column
-        assert (
-            proc._translate_type_from_sqlite_to_mysql("TEXT") == proc._mysql_text_type
-        )
-        assert (
-            proc._translate_type_from_sqlite_to_mysql("CLOB") == proc._mysql_text_type
-        )
+        assert proc._translate_type_from_sqlite_to_mysql("TEXT") == proc._mysql_text_type
+        assert proc._translate_type_from_sqlite_to_mysql("CLOB") == proc._mysql_text_type
         assert proc._translate_type_from_sqlite_to_mysql("CHARACTER") == "CHAR"
         length = faker.pyint(min_value=1, max_value=99)
-        assert proc._translate_type_from_sqlite_to_mysql(
-            "CHARACTER({})".format(length)
-        ) == "CHAR({})".format(length)
+        assert proc._translate_type_from_sqlite_to_mysql("CHARACTER({})".format(length)) == "CHAR({})".format(length)
         assert proc._translate_type_from_sqlite_to_mysql("NCHAR") == "CHAR"
         length = faker.pyint(min_value=1, max_value=99)
-        assert proc._translate_type_from_sqlite_to_mysql(
-            "NCHAR({})".format(length)
-        ) == "CHAR({})".format(length)
+        assert proc._translate_type_from_sqlite_to_mysql("NCHAR({})".format(length)) == "CHAR({})".format(length)
         assert proc._translate_type_from_sqlite_to_mysql("NATIVE CHARACTER") == "CHAR"
         length = faker.pyint(min_value=1, max_value=99)
-        assert proc._translate_type_from_sqlite_to_mysql(
-            "NATIVE CHARACTER({})".format(length)
-        ) == "CHAR({})".format(length)
-        assert (
-            proc._translate_type_from_sqlite_to_mysql("VARCHAR")
-            == proc._mysql_string_type
+        assert proc._translate_type_from_sqlite_to_mysql("NATIVE CHARACTER({})".format(length)) == "CHAR({})".format(
+            length
         )
+        assert proc._translate_type_from_sqlite_to_mysql("VARCHAR") == proc._mysql_string_type
         length = faker.pyint(min_value=1, max_value=255)
-        assert proc._translate_type_from_sqlite_to_mysql(
-            "VARCHAR({})".format(length)
-        ) == re.sub(r"\d+", str(length), proc._mysql_string_type)
-        assert proc._translate_type_from_sqlite_to_mysql("DOUBLE PRECISION") == "DOUBLE"
-        assert (
-            proc._translate_type_from_sqlite_to_mysql("UNSIGNED BIG INT")
-            == "BIGINT UNSIGNED"
+        assert proc._translate_type_from_sqlite_to_mysql("VARCHAR({})".format(length)) == re.sub(
+            r"\d+", str(length), proc._mysql_string_type
         )
+        assert proc._translate_type_from_sqlite_to_mysql("DOUBLE PRECISION") == "DOUBLE"
+        assert proc._translate_type_from_sqlite_to_mysql("UNSIGNED BIG INT") == "BIGINT UNSIGNED"
         length = faker.pyint(min_value=1000000000, max_value=99999999999999999999)
         assert proc._translate_type_from_sqlite_to_mysql(
             "UNSIGNED BIG INT({})".format(length)
         ) == "BIGINT({}) UNSIGNED".format(length)
-        assert (
-            proc._translate_type_from_sqlite_to_mysql("INT1")
-            == proc._mysql_integer_type
-        )
-        assert (
-            proc._translate_type_from_sqlite_to_mysql("INT2")
-            == proc._mysql_integer_type
-        )
+        assert proc._translate_type_from_sqlite_to_mysql("INT1") == proc._mysql_integer_type
+        assert proc._translate_type_from_sqlite_to_mysql("INT2") == proc._mysql_integer_type
         length = faker.pyint(min_value=1, max_value=11)
-        assert proc._translate_type_from_sqlite_to_mysql(
-            "INT({})".format(length)
-        ) == re.sub(r"\d+", str(length), proc._mysql_integer_type)
+        assert proc._translate_type_from_sqlite_to_mysql("INT({})".format(length)) == re.sub(
+            r"\d+", str(length), proc._mysql_integer_type
+        )
         for column in {"META", "FOO", "BAR"}:
-            assert (
-                proc._translate_type_from_sqlite_to_mysql(column)
-                == proc._mysql_string_type
-            )
+            assert proc._translate_type_from_sqlite_to_mysql(column) == proc._mysql_string_type
         precision = faker.pyint(min_value=3, max_value=19)
         scale = faker.pyint(min_value=0, max_value=precision - 1)
         assert proc._translate_type_from_sqlite_to_mysql(
@@ -170,9 +138,7 @@ class TestSQLite3toMySQL:
 
         class FakeCursor:
             def execute(self, statement):
-                raise mysql.connector.Error(
-                    msg="Unknown MySQL error", errno=errorcode.CR_UNKNOWN_ERROR
-                )
+                raise mysql.connector.Error(msg="Unknown MySQL error", errno=errorcode.CR_UNKNOWN_ERROR)
 
         mocker.patch.object(proc, "_mysql_cur", FakeCursor())
 
@@ -180,9 +146,7 @@ class TestSQLite3toMySQL:
             caplog.set_level(logging.DEBUG)
             proc._create_database()
         assert str(errorcode.CR_UNKNOWN_ERROR) in str(excinfo.value)
-        assert any(
-            str(errorcode.CR_UNKNOWN_ERROR) in message for message in caplog.messages
-        )
+        assert any(str(errorcode.CR_UNKNOWN_ERROR) in message for message in caplog.messages)
 
     @pytest.mark.parametrize("quiet", [False, True])
     def test_create_table_cursor_error(
@@ -207,15 +171,11 @@ class TestSQLite3toMySQL:
 
         class FakeCursor:
             def execute(self, statement):
-                raise mysql.connector.Error(
-                    msg="Unknown MySQL error", errno=errorcode.CR_UNKNOWN_ERROR
-                )
+                raise mysql.connector.Error(msg="Unknown MySQL error", errno=errorcode.CR_UNKNOWN_ERROR)
 
         mocker.patch.object(proc, "_mysql_cur", FakeCursor())
 
-        sqlite_engine = create_engine(
-            "sqlite:///{database}".format(database=sqlite_database)
-        )
+        sqlite_engine = create_engine("sqlite:///{database}".format(database=sqlite_database))
         sqlite_inspect = inspect(sqlite_engine)
         sqlite_tables = sqlite_inspect.get_table_names()
 
@@ -223,9 +183,7 @@ class TestSQLite3toMySQL:
             caplog.set_level(logging.DEBUG)
             proc._create_table(choice(sqlite_tables))
         assert str(errorcode.CR_UNKNOWN_ERROR) in str(excinfo.value)
-        assert any(
-            str(errorcode.CR_UNKNOWN_ERROR) in message for message in caplog.messages
-        )
+        assert any(str(errorcode.CR_UNKNOWN_ERROR) in message for message in caplog.messages)
 
     @pytest.mark.parametrize("quiet", [False, True])
     def test_process_cursor_error(
@@ -249,9 +207,7 @@ class TestSQLite3toMySQL:
         )
 
         def fake_transfer_table_data(sql, total_records=0):
-            raise mysql.connector.Error(
-                msg="Unknown MySQL error", errno=errorcode.CR_UNKNOWN_ERROR
-            )
+            raise mysql.connector.Error(msg="Unknown MySQL error", errno=errorcode.CR_UNKNOWN_ERROR)
 
         mocker.patch.object(proc, "_transfer_table_data", fake_transfer_table_data)
 
@@ -259,9 +215,7 @@ class TestSQLite3toMySQL:
             caplog.set_level(logging.DEBUG)
             proc.transfer()
         assert str(errorcode.CR_UNKNOWN_ERROR) in str(excinfo.value)
-        assert any(
-            str(errorcode.CR_UNKNOWN_ERROR) in message for message in caplog.messages
-        )
+        assert any(str(errorcode.CR_UNKNOWN_ERROR) in message for message in caplog.messages)
 
     @pytest.mark.parametrize("quiet", [False, True])
     def test_add_indices_error(
@@ -284,9 +238,7 @@ class TestSQLite3toMySQL:
             quiet=quiet,
         )
 
-        sqlite_engine = create_engine(
-            "sqlite:///{database}".format(database=sqlite_database)
-        )
+        sqlite_engine = create_engine("sqlite:///{database}".format(database=sqlite_database))
         sqlite_inspect = inspect(sqlite_engine)
         sqlite_tables = sqlite_inspect.get_table_names()
 
@@ -300,9 +252,7 @@ class TestSQLite3toMySQL:
 
         class FakeCursor:
             def execute(self, statement):
-                raise mysql.connector.Error(
-                    msg="Unknown MySQL error", errno=errorcode.CR_UNKNOWN_ERROR
-                )
+                raise mysql.connector.Error(msg="Unknown MySQL error", errno=errorcode.CR_UNKNOWN_ERROR)
 
         mocker.patch.object(proc, "_mysql_cur", FakeCursor())
 
@@ -310,9 +260,7 @@ class TestSQLite3toMySQL:
             caplog.set_level(logging.DEBUG)
             proc._add_indices(table_name)
         assert str(errorcode.CR_UNKNOWN_ERROR) in str(excinfo.value)
-        assert any(
-            str(errorcode.CR_UNKNOWN_ERROR) in message for message in caplog.messages
-        )
+        assert any(str(errorcode.CR_UNKNOWN_ERROR) in message for message in caplog.messages)
 
     @pytest.mark.parametrize("quiet", [False, True])
     def test_add_foreign_keys_error(
@@ -335,9 +283,7 @@ class TestSQLite3toMySQL:
             quiet=quiet,
         )
 
-        sqlite_engine = create_engine(
-            "sqlite:///{database}".format(database=sqlite_database)
-        )
+        sqlite_engine = create_engine("sqlite:///{database}".format(database=sqlite_database))
         sqlite_inspect = inspect(sqlite_engine)
         sqlite_tables = sqlite_inspect.get_table_names()
 
@@ -357,9 +303,7 @@ class TestSQLite3toMySQL:
 
         class FakeCursor:
             def execute(self, statement):
-                raise mysql.connector.Error(
-                    msg="Unknown MySQL error", errno=errorcode.CR_UNKNOWN_ERROR
-                )
+                raise mysql.connector.Error(msg="Unknown MySQL error", errno=errorcode.CR_UNKNOWN_ERROR)
 
         mocker.patch.object(proc, "_mysql_cur", FakeCursor())
 
@@ -367,6 +311,4 @@ class TestSQLite3toMySQL:
             caplog.set_level(logging.DEBUG)
             proc._add_foreign_keys(table_name)
         assert str(errorcode.CR_UNKNOWN_ERROR) in str(excinfo.value)
-        assert any(
-            str(errorcode.CR_UNKNOWN_ERROR) in message for message in caplog.messages
-        )
+        assert any(str(errorcode.CR_UNKNOWN_ERROR) in message for message in caplog.messages)

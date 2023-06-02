@@ -1,7 +1,6 @@
 from os import environ
 
 import factory
-import six
 
 from . import models
 
@@ -41,7 +40,7 @@ class MiscFactory(factory.Factory):
     decimal_field = factory.Faker("pydecimal", left_digits=8, right_digits=2)
     float_field = factory.Faker("pyfloat", left_digits=8, right_digits=4)
     integer_field = factory.Faker("pyint", min_value=-(2**31), max_value=2**31 - 1)
-    if environ.get("LEGACY_DB", "0") == "0" and six.PY3:
+    if environ.get("LEGACY_DB", "0") == "0":
         json_field = factory.Faker(
             "pydict",
             nb_elements=10,

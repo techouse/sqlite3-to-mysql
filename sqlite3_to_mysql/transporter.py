@@ -1,7 +1,5 @@
 """Use to transfer an SQLite 3 database to MySQL."""
 
-from __future__ import division
-
 import logging
 import re
 import sqlite3
@@ -13,7 +11,6 @@ from os.path import isfile, realpath
 from sys import stdout
 
 import mysql.connector
-import six
 from mysql.connector import CharacterSet
 from mysql.connector import __version__ as mysql_connector_version_string
 from mysql.connector import errorcode
@@ -24,7 +21,6 @@ from sqlite3_to_mysql.sqlite_utils import (
     adapt_decimal,
     adapt_timedelta,
     check_sqlite_table_xinfo_support,
-    convert_blob,
     convert_date,
     convert_decimal,
     convert_timedelta,
@@ -42,10 +38,6 @@ from .mysql_utils import (
     check_mysql_json_support,
     safe_identifier_length,
 )
-
-
-if six.PY2:
-    from .sixeptions import *  # pylint: disable=W0622,W0401,W0614
 
 
 class SQLite3toMySQL:
@@ -126,9 +118,6 @@ class SQLite3toMySQL:
         sqlite3.register_adapter(timedelta, adapt_timedelta)
         sqlite3.register_converter("DATE", convert_date)
         sqlite3.register_converter("TIME", convert_timedelta)
-
-        if six.PY2:
-            sqlite3.register_converter("BLOB", convert_blob)
 
         self._sqlite = sqlite3.connect(realpath(self._sqlite_file), detect_types=sqlite3.PARSE_DECLTYPES)
         self._sqlite.row_factory = sqlite3.Row

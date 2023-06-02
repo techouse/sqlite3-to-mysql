@@ -7,15 +7,10 @@ from random import choice, sample
 import mysql.connector
 import pytest
 import simplejson as json
-import six
 from mysql.connector import MySQLConnection, errorcode
 from sqlalchemy import MetaData, Table, create_engine, inspect, select, text
 
 from sqlite3_to_mysql import SQLite3toMySQL
-
-
-if six.PY2:
-    from ..sixeptions import *
 
 
 @pytest.mark.usefixtures("sqlite_database", "mysql_instance")
@@ -435,10 +430,7 @@ class TestSQLite3toMySQL:
         sqlite_inspect = inspect(sqlite_engine)
         sqlite_tables = sqlite_inspect.get_table_names()
 
-        if six.PY2:
-            table_number = choice(xrange(1, len(sqlite_tables)))
-        else:
-            table_number = choice(range(1, len(sqlite_tables)))
+        table_number = choice(range(1, len(sqlite_tables)))
 
         random_sqlite_tables = sample(sqlite_tables, table_number)
         random_sqlite_tables.sort()

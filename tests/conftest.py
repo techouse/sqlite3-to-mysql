@@ -2,14 +2,13 @@ import json
 import socket
 from codecs import open
 from collections import namedtuple
-from contextlib import closing, contextmanager
+from contextlib import contextmanager
 from os.path import abspath, dirname, isfile, join, realpath
 from time import sleep
 
 import docker
 import mysql.connector
 import pytest
-import six
 from click.testing import CliRunner
 from docker.errors import NotFound
 from mysql.connector import errorcode
@@ -20,10 +19,6 @@ from sqlalchemy_utils import database_exists, drop_database
 
 from .database import Database
 from .factories import ArticleFactory, AuthorFactory, ImageFactory, MediaFactory, MiscFactory, TagFactory
-
-
-if six.PY2:
-    from sixeptions import *
 
 
 def pytest_addoption(parser):
@@ -140,100 +135,51 @@ def helpers():
     return Helpers
 
 
-if six.PY2:
+@pytest.fixture(scope="session")
+def sqlite_database(pytestconfig, _session_faker, tmpdir_factory):
+    db_file = pytestconfig.getoption("sqlite_file")
+    if db_file:
+        if not isfile(realpath(db_file)):
+            pytest.fail("{} does not exist".format(db_file))
+            raise FileNotFoundError("{} does not exist".format(db_file))
+        return realpath(db_file)
 
-    @pytest.fixture(scope="session")
-    def sqlite_database(pytestconfig, faker, tmpdir_factory):
-        db_file = pytestconfig.getoption("sqlite_file")
-        if db_file:
-            if not isfile(realpath(db_file)):
-                pytest.fail("{} does not exist".format(db_file))
-                raise FileNotFoundError("{} does not exist".format(db_file))
-            return realpath(db_file)
+    temp_data_dir = tmpdir_factory.mktemp("data")
+    temp_image_dir = tmpdir_factory.mktemp("images")
+    db_file = temp_data_dir.join("db.sqlite3")
+    db = Database("sqlite:///{}".format(str(db_file)))
 
-        temp_data_dir = tmpdir_factory.mktemp("data")
-        temp_image_dir = tmpdir_factory.mktemp("images")
-        db_file = temp_data_dir.join("db.sqlite3")
-        db = Database("sqlite:///{}".format(str(db_file)))
-
-        with Helpers.session_scope(db) as session:
-            for _ in range(faker.pyint(min_value=12, max_value=24)):
-                article = ArticleFactory()
-                article.authors.append(AuthorFactory())
-                article.tags.append(TagFactory())
-                article.misc.append(MiscFactory())
-                article.media.append(MediaFactory())
-                for _ in range(faker.pyint(min_value=1, max_value=4)):
-                    article.images.append(
-                        ImageFactory(
-                            path=join(
-                                str(temp_image_dir),
-                                faker.year(),
-                                faker.month(),
-                                faker.day_of_month(),
-                                faker.file_name(extension="jpg"),
-                            )
+    with Helpers.session_scope(db) as session:
+        for _ in range(_session_faker.pyint(min_value=12, max_value=24)):
+            article = ArticleFactory()
+            article.authors.append(AuthorFactory())
+            article.tags.append(TagFactory())
+            article.misc.append(MiscFactory())
+            article.media.append(MediaFactory())
+            for _ in range(_session_faker.pyint(min_value=1, max_value=4)):
+                article.images.append(
+                    ImageFactory(
+                        path=join(
+                            str(temp_image_dir),
+                            _session_faker.year(),
+                            _session_faker.month(),
+                            _session_faker.day_of_month(),
+                            _session_faker.file_name(extension="jpg"),
                         )
                     )
-                session.add(article)
-            try:
-                session.commit()
-            except IntegrityError:
-                session.rollback()
+                )
+            session.add(article)
+        try:
+            session.commit()
+        except IntegrityError:
+            session.rollback()
 
-        return str(db_file)
-
-else:
-
-    @pytest.fixture(scope="session")
-    def sqlite_database(pytestconfig, _session_faker, tmpdir_factory):
-        db_file = pytestconfig.getoption("sqlite_file")
-        if db_file:
-            if not isfile(realpath(db_file)):
-                pytest.fail("{} does not exist".format(db_file))
-                raise FileNotFoundError("{} does not exist".format(db_file))
-            return realpath(db_file)
-
-        temp_data_dir = tmpdir_factory.mktemp("data")
-        temp_image_dir = tmpdir_factory.mktemp("images")
-        db_file = temp_data_dir.join("db.sqlite3")
-        db = Database("sqlite:///{}".format(str(db_file)))
-
-        with Helpers.session_scope(db) as session:
-            for _ in range(_session_faker.pyint(min_value=12, max_value=24)):
-                article = ArticleFactory()
-                article.authors.append(AuthorFactory())
-                article.tags.append(TagFactory())
-                article.misc.append(MiscFactory())
-                article.media.append(MediaFactory())
-                for _ in range(_session_faker.pyint(min_value=1, max_value=4)):
-                    article.images.append(
-                        ImageFactory(
-                            path=join(
-                                str(temp_image_dir),
-                                _session_faker.year(),
-                                _session_faker.month(),
-                                _session_faker.day_of_month(),
-                                _session_faker.file_name(extension="jpg"),
-                            )
-                        )
-                    )
-                session.add(article)
-            try:
-                session.commit()
-            except IntegrityError:
-                session.rollback()
-
-        return str(db_file)
+    return str(db_file)
 
 
 def is_port_in_use(port, host="0.0.0.0"):
-    if six.PY2:
-        with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as s:
-            return s.connect_ex((host, port)) == 0
-    else:
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            return s.connect_ex((host, port)) == 0
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        return s.connect_ex((host, port)) == 0
 
 
 @pytest.fixture(scope="session")

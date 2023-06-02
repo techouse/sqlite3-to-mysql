@@ -2,12 +2,10 @@ from random import choice, sample
 
 import pytest
 import simplejson as json
-import six
 from sqlalchemy import create_engine, inspect
 
 from sqlite3_to_mysql import SQLite3toMySQL
 from sqlite3_to_mysql.cli import cli as sqlite3mysql
-from sqlite3_to_mysql.mysql_utils import MYSQL_INSERT_METHOD
 
 
 @pytest.mark.cli
@@ -146,10 +144,7 @@ class TestSQLite3toMySQL:
         assert "1045 (28000): Access denied" in result.output
 
     def test_invalid_database_port(self, cli_runner, sqlite_database, mysql_credentials, mysql_database, faker):
-        if six.PY2:
-            port = choice(xrange(2, 2**16 - 1))
-        else:
-            port = choice(range(2, 2**16 - 1))
+        port = choice(range(2, 2**16 - 1))
         if port == mysql_credentials.port:
             port -= 1
         result = cli_runner.invoke(
@@ -336,10 +331,7 @@ class TestSQLite3toMySQL:
         sqlite_inspect = inspect(sqlite_engine)
         sqlite_tables = sqlite_inspect.get_table_names()
 
-        if six.PY2:
-            table_number = choice(xrange(1, len(sqlite_tables)))
-        else:
-            table_number = choice(range(1, len(sqlite_tables)))
+        table_number = choice(range(1, len(sqlite_tables)))
 
         result = cli_runner.invoke(
             sqlite3mysql,
@@ -363,8 +355,6 @@ class TestSQLite3toMySQL:
         assert result.exit_code == 0
 
     def test_version(self, cli_runner):
-        if six.PY2:
-            pytest.xfail("Version test is not supported on Python 2")
         result = cli_runner.invoke(sqlite3mysql, ["--version"])
         assert result.exit_code == 0
         assert all(
@@ -380,7 +370,6 @@ class TestSQLite3toMySQL:
                 "mysql-connector-python",
                 "pytimeparse",
                 "simplejson",
-                "six",
                 "tabulate",
                 "tqdm",
             }

@@ -3,8 +3,6 @@
 Adapted from https://github.com/psf/requests/blob/master/requests/help.py
 """
 
-from __future__ import print_function
-
 import platform
 import sqlite3
 import sys
@@ -15,7 +13,6 @@ import click
 import mysql.connector
 import pytimeparse
 import simplejson
-import six
 import tabulate
 import tqdm
 
@@ -93,7 +90,6 @@ def info():
         ["mysql-connector-python", mysql.connector.__version__],
         ["pytimeparse", pytimeparse.__version__],
         ["simplejson", simplejson.__version__],
-        ["six", six.__version__],
         ["tabulate", tabulate.__version__],
         ["tqdm", tqdm.__version__],
     ]

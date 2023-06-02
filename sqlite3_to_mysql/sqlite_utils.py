@@ -1,21 +1,12 @@
 """SQLite adapters and converters for unsupported data types."""
 
-from __future__ import division
-
 from datetime import date, datetime, timedelta
 from decimal import Decimal
-from sys import version_info
 
 import six
 from packaging import version
 from pytimeparse.timeparse import timeparse
 from unidecode import unidecode
-
-
-if version_info.major == 3 and 4 <= version_info.minor <= 6:
-    from backports.datetime_fromisoformat import MonkeyPatch  # pylint: disable=E0401
-
-    MonkeyPatch.patch_fromisoformat()
 
 
 def adapt_decimal(value):
@@ -38,11 +29,6 @@ def adapt_timedelta(value):
 def convert_timedelta(value):
     """Convert %H:%M:%S string to datetime.timedelta."""
     return timedelta(seconds=timeparse(value.decode()))
-
-
-def convert_blob(value):
-    """In Python 2 MySQL binary protocol can not handle 'buffer' objects so we have to convert them."""
-    return six.binary_type(value)
 
 
 def unicase_compare(string_1, string_2):

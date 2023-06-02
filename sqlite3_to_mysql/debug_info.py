@@ -43,9 +43,7 @@ def _implementation():
             sys.pypy_version_info.minor,  # noqa: ignore=E1101 pylint: disable=E1101
             sys.pypy_version_info.micro,  # noqa: ignore=E1101 pylint: disable=E1101
         )
-        rel = (
-            sys.pypy_version_info.releaselevel  # noqa: ignore=E1101 pylint: disable=E1101
-        )
+        rel = sys.pypy_version_info.releaselevel  # noqa: ignore=E1101 pylint: disable=E1101
         if rel != "final":
             implementation_version = "".join([implementation_version, rel])
     elif implementation == "Jython":

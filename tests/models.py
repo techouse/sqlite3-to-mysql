@@ -3,28 +3,28 @@ from os import environ
 
 import sqlalchemy.types as types
 from sqlalchemy import (
-    Table,
-    Column,
-    ForeignKey,
-    BigInteger,
     BLOB,
-    Boolean,
     CHAR,
-    Date,
-    DateTime,
-    Integer,
     JSON,
     REAL,
-    SmallInteger,
-    String,
-    Text,
-    Time,
     TIMESTAMP,
     VARCHAR,
+    BigInteger,
+    Boolean,
+    Column,
     Computed,
+    Date,
+    DateTime,
+    ForeignKey,
+    Integer,
+    SmallInteger,
+    String,
+    Table,
+    Text,
+    Time,
 )
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship, backref
+from sqlalchemy.orm import backref, relationship
 from sqlalchemy.sql.functions import current_timestamp
 
 
@@ -151,9 +151,7 @@ class Media(Base):
     description = Column(String(255), nullable=True)
 
     def __repr__(self):
-        return "<Media(id='{id}', title='{title}')>".format(
-            id=self.id, title=self.title
-        )
+        return "<Media(id='{id}', title='{title}')>".format(id=self.id, title=self.title)
 
 
 article_media = Table(
@@ -206,6 +204,4 @@ class Article(Base):
     )
 
     def __repr__(self):
-        return "<Article(id='{id}', title='{title}')>".format(
-            id=self.id, title=self.title
-        )
+        return "<Article(id='{id}', title='{title}')>".format(id=self.id, title=self.title)

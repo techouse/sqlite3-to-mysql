@@ -93,3 +93,15 @@ profile = "black"
 lines_after_imports = 2
 known_first_party = "sqlite3_to_mysql"
 skip_gitignore = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+norecursedirs = [".*", "venv", "env", "*.egg", "dist", "build"]
+minversion = "7.3.1"
+addopts = "-rsxX -l --tb=short --strict"
+timeout = 300
+markers = [
+    "init: Run the initialisation test functions",
+    "transfer: Run the main transfer test functions",
+    "cli: Run the cli test functions",
+]

@@ -1,6 +1,7 @@
 """The command line interface of SQLite3toMySQL."""
 
 import sys
+import typing as t
 
 import click
 from mysql.connector import CharacterSet
@@ -77,10 +78,7 @@ from .mysql_utils import MYSQL_INSERT_METHOD, MYSQL_TEXT_COLUMN_TYPES, mysql_sup
 )
 @click.option(
     "--mysql-text-type",
-    type=click.Choice(
-        MYSQL_TEXT_COLUMN_TYPES,
-        case_sensitive=False,
-    ),
+    type=click.Choice(MYSQL_TEXT_COLUMN_TYPES, case_sensitive=False),
     default="TEXT",
     help="MySQL default text field type. Defaults to TEXT.",
 )
@@ -116,35 +114,37 @@ from .mysql_utils import MYSQL_INSERT_METHOD, MYSQL_TEXT_COLUMN_TYPES, mysql_sup
 @click.option("--debug", is_flag=True, help="Debug mode. Will throw exceptions.")
 @click.version_option(message=tabulate(info(), headers=["software", "version"], tablefmt="github"))
 def cli(
-    sqlite_file,
-    sqlite_tables,
-    without_foreign_keys,
-    ignore_duplicate_keys,
-    mysql_user,
-    prompt_mysql_password,
-    mysql_password,
-    mysql_database,
-    mysql_host,
-    mysql_port,
-    skip_ssl,
-    mysql_insert_method,
-    mysql_truncate_tables,
-    mysql_integer_type,
-    mysql_string_type,
-    mysql_text_type,
-    mysql_charset,
-    mysql_collation,
-    use_fulltext,
-    with_rowid,
-    chunk,
-    log_file,
-    quiet,
-    debug,
-):
+    sqlite_file: t.Optional[click.Path],
+    sqlite_tables: t.Tuple[str, ...],
+    without_foreign_keys: bool,
+    ignore_duplicate_keys: bool,
+    mysql_user: str,
+    prompt_mysql_password: bool,
+    mysql_password: str,
+    mysql_database: str,
+    mysql_host: str,
+    mysql_port: int,
+    skip_ssl: bool,
+    mysql_insert_method: str,
+    mysql_truncate_tables: bool,
+    mysql_integer_type: str,
+    mysql_string_type: str,
+    mysql_text_type: str,
+    mysql_charset: str,
+    mysql_collation: str,
+    use_fulltext: bool,
+    with_rowid: bool,
+    chunk: int,
+    log_file: click.Path,
+    quiet: bool,
+    debug: bool,
+) -> None:
     """Transfer SQLite to MySQL using the provided CLI options."""
     try:
         if mysql_collation:
-            charset_collations = tuple(cs.collation for cs in mysql_supported_character_sets(mysql_charset.lower()))
+            charset_collations: t.Tuple[str, ...] = tuple(
+                cs.collation for cs in mysql_supported_character_sets(mysql_charset.lower())
+            )
             if mysql_collation not in set(charset_collations):
                 raise click.ClickException(
                     "Error: Invalid value for '--collation' of charset '{charset}': '{collation}' is not one of "
@@ -155,7 +155,7 @@ def cli(
                     )
                 )
 
-        converter = SQLite3toMySQL(
+        SQLite3toMySQL(
             sqlite_file=sqlite_file,
             sqlite_tables=sqlite_tables,
             without_foreign_keys=without_foreign_keys or (sqlite_tables is not None and len(sqlite_tables) > 0),
@@ -178,8 +178,7 @@ def cli(
             chunk=chunk,
             log_file=log_file,
             quiet=quiet,
-        )
-        converter.transfer()
+        ).transfer()
     except KeyboardInterrupt:
         if debug:
             raise

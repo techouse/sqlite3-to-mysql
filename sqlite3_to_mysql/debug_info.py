@@ -6,6 +6,7 @@ Adapted from https://github.com/psf/requests/blob/master/requests/help.py
 import platform
 import sqlite3
 import sys
+import typing as t
 from distutils.spawn import find_executable  # pylint: disable=W0402
 from subprocess import check_output
 
@@ -19,7 +20,7 @@ import tqdm
 from . import __version__ as package_version
 
 
-def _implementation():
+def _implementation() -> str:
     """Return a dict with the Python implementation and version.
 
     Provide both the name and the version of the Python implementation
@@ -30,7 +31,7 @@ def _implementation():
     doesn't work for Jython or IronPython. Future investigation should be done
     to work out the correct shape of the code for those platforms.
     """
-    implementation = platform.python_implementation()
+    implementation: str = platform.python_implementation()
 
     if implementation == "CPython":
         implementation_version = platform.python_version()
@@ -55,10 +56,10 @@ def _implementation():
     )
 
 
-def _mysql_version():
+def _mysql_version() -> t.AnyStr:
     if find_executable("mysql"):
         try:
-            mysql_version = check_output(["mysql", "-V"])
+            mysql_version: t.AnyStr = check_output(["mysql", "-V"])
             try:
                 return mysql_version.decode().strip()
             except (UnicodeDecodeError, AttributeError):
@@ -68,7 +69,7 @@ def _mysql_version():
     return "MySQL client not found on the system"
 
 
-def info():
+def info() -> t.List[t.List[str]]:
     """Generate information for a bug report."""
     try:
         platform_info = "{system} {release}".format(

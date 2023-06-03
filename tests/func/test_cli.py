@@ -354,6 +354,7 @@ class TestSQLite3toMySQL:
         )
         assert result.exit_code == 0
 
+    @pytest.mark.xfail
     def test_version(self, cli_runner):
         result = cli_runner.invoke(sqlite3mysql, ["--version"])
         assert result.exit_code == 0

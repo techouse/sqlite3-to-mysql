@@ -75,6 +75,8 @@ MYSQL_INSERT_METHOD: t.Tuple[str, ...] = (
 
 
 class CharSet(t.NamedTuple):
+    """MySQL character set as a named tuple."""
+
     id: int
     charset: str
     collation: str

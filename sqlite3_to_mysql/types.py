@@ -1,3 +1,5 @@
+"""Types for sqlite3-to-mysql."""
+
 import typing as t
 from logging import Logger
 from sqlite3 import Connection, Cursor

@@ -8,6 +8,7 @@ import typing_extensions as tx
 from mysql.connector import MySQLConnection
 from mysql.connector.cursor import MySQLCursor
 
+
 if t.TYPE_CHECKING:
     from _typeshed import FileDescriptorOrPath
 

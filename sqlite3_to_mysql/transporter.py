@@ -1,7 +1,6 @@
 """Use to transfer an SQLite 3 database to MySQL."""
 
 import logging
-import os
 import re
 import sqlite3
 import typing as t
@@ -81,7 +80,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
 
         self._mysql_ssl_disabled = kwargs.get("mysql_ssl_disabled") or False
 
-        self._chunk_size = int(kwargs.get("chunk")) if kwargs.get("chunk") else None
+        self._chunk_size = int(kwargs.get("chunk")) if kwargs.get("chunk") else None  # type: ignore
 
         self._quiet = kwargs.get("quiet") or False
 
@@ -166,9 +165,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
             raise
 
     @classmethod
-    def _setup_logger(
-        cls, log_file: t.Optional[t.Union[str, os.PathLike[str]]] = None, quiet: bool = False
-    ) -> logging.Logger:
+    def _setup_logger(cls, log_file: t.Optional[str] = None, quiet: bool = False) -> logging.Logger:
         formatter = logging.Formatter(fmt="%(asctime)s %(levelname)-8s %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
         logger = logging.getLogger(cls.__name__)
         logger.setLevel(logging.DEBUG)

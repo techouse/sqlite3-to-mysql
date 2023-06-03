@@ -2,7 +2,6 @@
 
 import typing as t
 from logging import Logger
-from os import PathLike
 from sqlite3 import Connection, Cursor
 
 import typing_extensions as tx

@@ -1,7 +1,7 @@
 import json
 import socket
+import typing as t
 from codecs import open
-from collections import namedtuple
 from contextlib import contextmanager
 from os.path import abspath, dirname, isfile, join, realpath
 from time import sleep
@@ -9,19 +9,28 @@ from time import sleep
 import docker
 import mysql.connector
 import pytest
+from _pytest.compat import LEGACY_PATH
+from _pytest.config import Config
+from _pytest.config.argparsing import Parser
+from _pytest.legacypath import TempdirFactory
 from click.testing import CliRunner
+from docker import DockerClient
 from docker.errors import NotFound
-from mysql.connector import errorcode
+from docker.models.containers import Container
+from faker import Faker
+from mysql.connector import MySQLConnection, errorcode
 from requests import HTTPError
 from sqlalchemy import create_engine
+from sqlalchemy.engine import Engine
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
 from sqlalchemy_utils import database_exists, drop_database
 
 from .database import Database
 from .factories import ArticleFactory, AuthorFactory, ImageFactory, MediaFactory, MiscFactory, TagFactory
 
 
-def pytest_addoption(parser):
+def pytest_addoption(parser: "Parser") -> None:
     parser.addoption(
         "--sqlite-file",
         dest="sqlite_file",
@@ -84,9 +93,9 @@ def pytest_addoption(parser):
 
 
 @pytest.fixture(scope="session", autouse=True)
-def cleanup_hanged_docker_containers():
+def cleanup_hanged_docker_containers() -> None:
     try:
-        client = docker.from_env()
+        client: DockerClient = docker.from_env()
         for container in client.containers.list():
             if container.name == "pytest_sqlite3_to_mysql":
                 container.kill()
@@ -95,9 +104,9 @@ def cleanup_hanged_docker_containers():
         pass
 
 
-def pytest_keyboard_interrupt():
+def pytest_keyboard_interrupt() -> None:
     try:
-        client = docker.from_env()
+        client: DockerClient = docker.from_env()
         for container in client.containers.list():
             if container.name == "pytest_sqlite3_to_mysql":
                 container.kill()
@@ -109,7 +118,7 @@ def pytest_keyboard_interrupt():
 class Helpers:
     @staticmethod
     @contextmanager
-    def not_raises(exception):
+    def not_raises(exception: t.Type[Exception]) -> t.Generator:
         try:
             yield
         except exception:
@@ -117,9 +126,9 @@ class Helpers:
 
     @staticmethod
     @contextmanager
-    def session_scope(db):
+    def session_scope(db: Database) -> t.Generator:
         """Provide a transactional scope around a series of operations."""
-        session = db.Session()
+        session: Session = db.Session()
         try:
             yield session
             session.commit()
@@ -131,23 +140,22 @@ class Helpers:
 
 
 @pytest.fixture
-def helpers():
+def helpers() -> t.Type[Helpers]:
     return Helpers
 
 
 @pytest.fixture(scope="session")
-def sqlite_database(pytestconfig, _session_faker, tmpdir_factory):
-    db_file = pytestconfig.getoption("sqlite_file")
+def sqlite_database(pytestconfig: Config, _session_faker: Faker, tmpdir_factory: TempdirFactory) -> str:
+    db_file: LEGACY_PATH = pytestconfig.getoption("sqlite_file")
     if db_file:
         if not isfile(realpath(db_file)):
             pytest.fail("{} does not exist".format(db_file))
-            raise FileNotFoundError("{} does not exist".format(db_file))
-        return realpath(db_file)
+        return str(realpath(db_file))
 
-    temp_data_dir = tmpdir_factory.mktemp("data")
-    temp_image_dir = tmpdir_factory.mktemp("images")
+    temp_data_dir: LEGACY_PATH = tmpdir_factory.mktemp("data")
+    temp_image_dir: LEGACY_PATH = tmpdir_factory.mktemp("images")
     db_file = temp_data_dir.join("db.sqlite3")
-    db = Database("sqlite:///{}".format(str(db_file)))
+    db: Database = Database("sqlite:///{}".format(str(db_file)))
 
     with Helpers.session_scope(db) as session:
         for _ in range(_session_faker.pyint(min_value=12, max_value=24)):
@@ -177,19 +185,27 @@ def sqlite_database(pytestconfig, _session_faker, tmpdir_factory):
     return str(db_file)
 
 
-def is_port_in_use(port, host="0.0.0.0"):
+def is_port_in_use(port: int, host: str = "0.0.0.0") -> bool:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         return s.connect_ex((host, port)) == 0
 
 
-@pytest.fixture(scope="session")
-def mysql_credentials(pytestconfig):
-    MySQLCredentials = namedtuple("MySQLCredentials", ["user", "password", "host", "port", "database"])
+class MySQLCredentials(t.NamedTuple):
+    """MySQL credentials."""
 
-    db_credentials_file = abspath(join(dirname(__file__), "db_credentials.json"))
+    user: str
+    password: str
+    host: str
+    port: int
+    database: str
+
+
+@pytest.fixture(scope="session")
+def mysql_credentials(pytestconfig: Config):
+    db_credentials_file: str = abspath(join(dirname(__file__), "db_credentials.json"))
     if isfile(db_credentials_file):
         with open(db_credentials_file, "r", "utf-8") as fh:
-            db_credentials = json.load(fh)
+            db_credentials: t.Dict[str, t.Any] = json.load(fh)
             return MySQLCredentials(
                 user=db_credentials["mysql_user"],
                 password=db_credentials["mysql_password"],
@@ -198,14 +214,11 @@ def mysql_credentials(pytestconfig):
                 port=db_credentials["mysql_port"],
             )
 
-    port = pytestconfig.getoption("mysql_port") or 3306
+    port: int = pytestconfig.getoption("mysql_port") or 3306
     if pytestconfig.getoption("use_docker"):
         while is_port_in_use(port, pytestconfig.getoption("mysql_host")):
             if port >= 2**16 - 1:
                 pytest.fail(
-                    "No ports appear to be available on the host {}".format(pytestconfig.getoption("mysql_host"))
-                )
-                raise ConnectionError(
                     "No ports appear to be available on the host {}".format(pytestconfig.getoption("mysql_host"))
                 )
             port += 1
@@ -220,11 +233,11 @@ def mysql_credentials(pytestconfig):
 
 
 @pytest.fixture(scope="session")
-def mysql_instance(mysql_credentials, pytestconfig):
-    container = None
-    mysql_connection = None
-    mysql_available = False
-    mysql_connection_retries = 15  # failsafe
+def mysql_instance(mysql_credentials: MySQLCredentials, pytestconfig: Config) -> t.Generator:
+    container: t.Optional[Container] = None
+    mysql_connection: t.Optional[MySQLConnection] = None
+    mysql_available: bool = False
+    mysql_connection_retries: int = 15  # failsafe
 
     db_credentials_file = abspath(join(dirname(__file__), "db_credentials.json"))
     if isfile(db_credentials_file):
@@ -240,7 +253,6 @@ def mysql_instance(mysql_credentials, pytestconfig):
             client = docker.from_env()
         except Exception as err:
             pytest.fail(str(err))
-            raise
 
         docker_mysql_image = pytestconfig.getoption("docker_mysql_image") or "mysql:latest"
 
@@ -250,7 +262,6 @@ def mysql_instance(mysql_credentials, pytestconfig):
                 client.images.pull(docker_mysql_image)
             except (HTTPError, NotFound) as err:
                 pytest.fail(str(err))
-                raise
 
         container = client.containers.run(
             image=docker_mysql_image,
@@ -300,15 +311,15 @@ def mysql_instance(mysql_credentials, pytestconfig):
 
     yield
 
-    if use_docker:
+    if use_docker and container is not None:
         container.kill()
 
 
 @pytest.fixture()
-def mysql_database(mysql_instance, mysql_credentials):
+def mysql_database(mysql_instance: t.Generator, mysql_credentials: MySQLCredentials) -> t.Generator:
     yield
 
-    engine = create_engine(
+    engine: Engine = create_engine(
         "mysql+pymysql://{user}:{password}@{host}:{port}/{database}".format(
             user=mysql_credentials.user,
             password=mysql_credentials.password,
@@ -323,5 +334,5 @@ def mysql_database(mysql_instance, mysql_credentials):
 
 
 @pytest.fixture()
-def cli_runner():
+def cli_runner() -> t.Generator:
     yield CliRunner()

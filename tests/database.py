@@ -1,8 +1,10 @@
+import typing as t
 from datetime import datetime, timedelta
 from decimal import Decimal
 
 import simplejson as json
 from sqlalchemy import create_engine
+from sqlalchemy.engine import Engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy_utils import database_exists
 
@@ -10,8 +12,8 @@ from .models import Base
 
 
 class Database:
-    engine = None
-    Session = None
+    engine: Engine = None
+    Session: sessionmaker = None
 
     def __init__(self, database_uri):
         self.Session = sessionmaker()
@@ -20,15 +22,15 @@ class Database:
             self._create_db_tables()
         self.Session.configure(bind=self.engine)
 
-    def _create_db_tables(self):
+    def _create_db_tables(self) -> None:
         Base.metadata.create_all(self.engine)
 
     @classmethod
-    def dumps(cls, data):
+    def dumps(cls, data: t.Any) -> str:
         return json.dumps(data, default=cls.json_serializer)
 
     @staticmethod
-    def json_serializer(data):
+    def json_serializer(data: t.Any) -> t.Optional[str]:
         if isinstance(data, datetime):
             return data.isoformat()
         if isinstance(data, Decimal):
@@ -37,3 +39,4 @@ class Database:
             hours, remainder = divmod(data.total_seconds(), 3600)
             minutes, seconds = divmod(remainder, 60)
             return "{:02}:{:02}:{:02}".format(int(hours), int(minutes), int(seconds))
+        return None

@@ -4,12 +4,13 @@ import typing as t
 from codecs import open
 from contextlib import contextmanager
 from os.path import abspath, dirname, isfile, join, realpath
+from pathlib import Path
 from time import sleep
 
 import docker
 import mysql.connector
 import pytest
-from _pytest.compat import LEGACY_PATH
+from _pytest._py.path import LocalPath
 from _pytest.config import Config
 from _pytest.config.argparsing import Parser
 from _pytest.legacypath import TempdirFactory
@@ -146,15 +147,15 @@ def helpers() -> t.Type[Helpers]:
 
 @pytest.fixture(scope="session")
 def sqlite_database(pytestconfig: Config, _session_faker: Faker, tmpdir_factory: TempdirFactory) -> str:
-    db_file: LEGACY_PATH = pytestconfig.getoption("sqlite_file")
+    db_file: LocalPath = pytestconfig.getoption("sqlite_file")
     if db_file:
         if not isfile(realpath(db_file)):
             pytest.fail("{} does not exist".format(db_file))
         return str(realpath(db_file))
 
-    temp_data_dir: LEGACY_PATH = tmpdir_factory.mktemp("data")
-    temp_image_dir: LEGACY_PATH = tmpdir_factory.mktemp("images")
-    db_file = temp_data_dir.join("db.sqlite3")
+    temp_data_dir: LocalPath = tmpdir_factory.mktemp("data")
+    temp_image_dir: LocalPath = tmpdir_factory.mktemp("images")
+    db_file = temp_data_dir.join(Path("db.sqlite3"))
     db: Database = Database("sqlite:///{}".format(str(db_file)))
 
     with Helpers.session_scope(db) as session:
@@ -201,7 +202,7 @@ class MySQLCredentials(t.NamedTuple):
 
 
 @pytest.fixture(scope="session")
-def mysql_credentials(pytestconfig: Config):
+def mysql_credentials(pytestconfig: Config) -> MySQLCredentials:
     db_credentials_file: str = abspath(join(dirname(__file__), "db_credentials.json"))
     if isfile(db_credentials_file):
         with open(db_credentials_file, "r", "utf-8") as fh:
@@ -233,7 +234,7 @@ def mysql_credentials(pytestconfig: Config):
 
 
 @pytest.fixture(scope="session")
-def mysql_instance(mysql_credentials: MySQLCredentials, pytestconfig: Config) -> t.Generator:
+def mysql_instance(mysql_credentials: MySQLCredentials, pytestconfig: Config) -> t.Iterator[MySQLConnection]:
     container: t.Optional[Container] = None
     mysql_connection: t.Optional[MySQLConnection] = None
     mysql_available: bool = False
@@ -316,7 +317,7 @@ def mysql_instance(mysql_credentials: MySQLCredentials, pytestconfig: Config) ->
 
 
 @pytest.fixture()
-def mysql_database(mysql_instance: t.Generator, mysql_credentials: MySQLCredentials) -> t.Generator:
+def mysql_database(mysql_instance: t.Generator, mysql_credentials: MySQLCredentials) -> t.Iterator[Engine]:
     yield
 
     engine: Engine = create_engine(
@@ -334,5 +335,5 @@ def mysql_database(mysql_instance: t.Generator, mysql_credentials: MySQLCredenti
 
 
 @pytest.fixture()
-def cli_runner() -> t.Generator:
+def cli_runner() -> t.Iterator[CliRunner]:
     yield CliRunner()

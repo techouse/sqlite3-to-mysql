@@ -1,23 +1,34 @@
 import logging
 import re
+import typing as t
 from random import choice
 
 import mysql.connector
 import pytest
+from _pytest.logging import LogCaptureFixture
+from faker import Faker
 from mysql.connector import errorcode
+from pytest_mock import MockerFixture
 from sqlalchemy import create_engine, inspect
 from sqlalchemy.dialects.sqlite import __all__ as sqlite_column_types
+from sqlalchemy.engine import Engine
 
 from sqlite3_to_mysql import SQLite3toMySQL
+from tests.conftest import MySQLCredentials
 
 
 @pytest.mark.usefixtures("sqlite_database", "mysql_instance")
 class TestSQLite3toMySQL:
     @pytest.mark.parametrize("quiet", [False, True])
     def test_translate_type_from_sqlite_to_mysql_invalid_column_type(
-        self, sqlite_database, mysql_database, mysql_credentials, mocker, quiet
-    ):
-        proc = SQLite3toMySQL(
+        self,
+        sqlite_database: str,
+        mysql_database: Engine,
+        mysql_credentials: MySQLCredentials,
+        mocker: MockerFixture,
+        quiet: bool,
+    ) -> None:
+        proc: SQLite3toMySQL = SQLite3toMySQL(
             sqlite_file=sqlite_database,
             mysql_user=mysql_credentials.user,
             mysql_password=mysql_credentials.password,
@@ -42,15 +53,15 @@ class TestSQLite3toMySQL:
     )
     def test_translate_type_from_sqlite_to_mysql_all_valid_columns(
         self,
-        sqlite_database,
-        mysql_database,
-        mysql_credentials,
-        faker,
-        mysql_integer_type,
-        mysql_string_type,
-        mysql_text_type,
-    ):
-        proc = SQLite3toMySQL(
+        sqlite_database: str,
+        mysql_database: Engine,
+        mysql_credentials: MySQLCredentials,
+        faker: Faker,
+        mysql_integer_type: str,
+        mysql_string_type: str,
+        mysql_text_type: str,
+    ) -> None:
+        proc: SQLite3toMySQL = SQLite3toMySQL(
             sqlite_file=sqlite_database,
             mysql_user=mysql_credentials.user,
             mysql_password=mysql_credentials.password,
@@ -80,7 +91,7 @@ class TestSQLite3toMySQL:
         assert proc._translate_type_from_sqlite_to_mysql("TEXT") == proc._mysql_text_type
         assert proc._translate_type_from_sqlite_to_mysql("CLOB") == proc._mysql_text_type
         assert proc._translate_type_from_sqlite_to_mysql("CHARACTER") == "CHAR"
-        length = faker.pyint(min_value=1, max_value=99)
+        length: int = faker.pyint(min_value=1, max_value=99)
         assert proc._translate_type_from_sqlite_to_mysql("CHARACTER({})".format(length)) == "CHAR({})".format(length)
         assert proc._translate_type_from_sqlite_to_mysql("NCHAR") == "CHAR"
         length = faker.pyint(min_value=1, max_value=99)
@@ -109,8 +120,8 @@ class TestSQLite3toMySQL:
         )
         for column in {"META", "FOO", "BAR"}:
             assert proc._translate_type_from_sqlite_to_mysql(column) == proc._mysql_string_type
-        precision = faker.pyint(min_value=3, max_value=19)
-        scale = faker.pyint(min_value=0, max_value=precision - 1)
+        precision: int = faker.pyint(min_value=3, max_value=19)
+        scale: int = faker.pyint(min_value=0, max_value=precision - 1)
         assert proc._translate_type_from_sqlite_to_mysql(
             "DECIMAL({precision},{scale})".format(precision=precision, scale=scale)
         ) == "DECIMAL({precision},{scale})".format(precision=precision, scale=scale)
@@ -118,15 +129,15 @@ class TestSQLite3toMySQL:
     @pytest.mark.parametrize("quiet", [False, True])
     def test_create_database_connection_error(
         self,
-        sqlite_database,
-        mysql_database,
-        mysql_credentials,
-        mocker,
-        faker,
-        caplog,
-        quiet,
-    ):
-        proc = SQLite3toMySQL(
+        sqlite_database: str,
+        mysql_database: Engine,
+        mysql_credentials: MySQLCredentials,
+        mocker: MockerFixture,
+        faker: Faker,
+        caplog: LogCaptureFixture,
+        quiet: bool,
+    ) -> None:
+        proc: SQLite3toMySQL = SQLite3toMySQL(
             sqlite_file=sqlite_database,
             mysql_user=mysql_credentials.user,
             mysql_password=mysql_credentials.password,
@@ -137,7 +148,7 @@ class TestSQLite3toMySQL:
         )
 
         class FakeCursor:
-            def execute(self, statement):
+            def execute(self, statement: t.Any) -> None:
                 raise mysql.connector.Error(msg="Unknown MySQL error", errno=errorcode.CR_UNKNOWN_ERROR)
 
         mocker.patch.object(proc, "_mysql_cur", FakeCursor())

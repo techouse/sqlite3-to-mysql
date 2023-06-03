@@ -57,15 +57,15 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
         if not kwargs.get("sqlite_file"):
             raise ValueError("Please provide an SQLite file")
 
-        if not isfile(kwargs.get("sqlite_file")):
+        if not isfile(kwargs.get("sqlite_file")):  # type: ignore
             raise FileNotFoundError("SQLite file does not exist")
 
         if not kwargs.get("mysql_user"):
             raise ValueError("Please provide a MySQL user")
 
-        self._sqlite_file = realpath(kwargs.get("sqlite_file"))
+        self._sqlite_file = realpath(kwargs.get("sqlite_file"))  # type: ignore
 
-        self._sqlite_tables = tuple(kwargs.get("sqlite_tables")) if kwargs.get("sqlite_tables") is not None else tuple()
+        self._sqlite_tables = tuple(kwargs.get("sqlite_tables")) if kwargs.get("sqlite_tables") is not None else tuple()  # type: ignore
 
         self._without_foreign_keys = (
             True if len(self._sqlite_tables) > 0 else (kwargs.get("without_foreign_keys") or False)

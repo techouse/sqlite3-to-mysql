@@ -8,7 +8,6 @@ import typing_extensions as tx
 from mysql.connector import MySQLConnection
 from mysql.connector.cursor import MySQLCursor
 
-
 if t.TYPE_CHECKING:
     from _typeshed import FileDescriptorOrPath
 
@@ -38,7 +37,7 @@ class SQLite3toMySQLParams(tx.TypedDict):
 class SQLite3toMySQLAttributes:
     """SQLite3toMySQL attributes."""
 
-    _sqlite_file: t.AnyStr
+    _sqlite_file: t.Union[str, bytes]
     _sqlite_tables: t.Tuple[str, ...]
     _without_foreign_keys: bool
     _mysql_user: str

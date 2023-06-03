@@ -37,11 +37,11 @@ def _implementation() -> str:
         implementation_version = platform.python_version()
     elif implementation == "PyPy":
         implementation_version = "%s.%s.%s" % (
-            sys.pypy_version_info.major,  # noqa: ignore=E1101 pylint: disable=E1101
-            sys.pypy_version_info.minor,  # noqa: ignore=E1101 pylint: disable=E1101
-            sys.pypy_version_info.micro,  # noqa: ignore=E1101 pylint: disable=E1101
+            sys.pypy_version_info.major,  # type: ignore # noqa: ignore=E1101 pylint: disable=E1101
+            sys.pypy_version_info.minor,  # type: ignore # noqa: ignore=E1101 pylint: disable=E1101
+            sys.pypy_version_info.micro,  # type: ignore # noqa: ignore=E1101 pylint: disable=E1101
         )
-        rel = sys.pypy_version_info.releaselevel  # noqa: ignore=E1101 pylint: disable=E1101
+        rel = sys.pypy_version_info.releaselevel  # type: ignore # noqa: ignore=E1101 pylint: disable=E1101
         if rel != "final":
             implementation_version = "".join([implementation_version, rel])
     elif implementation == "Jython":
@@ -56,14 +56,14 @@ def _implementation() -> str:
     )
 
 
-def _mysql_version() -> t.AnyStr:
+def _mysql_version() -> str:
     if find_executable("mysql"):
         try:
-            mysql_version: t.AnyStr = check_output(["mysql", "-V"])
+            mysql_version: t.Union[str, bytes] = check_output(["mysql", "-V"])
             try:
-                return mysql_version.decode().strip()
+                return mysql_version.decode().strip()  # type: ignore
             except (UnicodeDecodeError, AttributeError):
-                return mysql_version
+                return str(mysql_version)
         except Exception:  # nosec pylint: disable=W0703
             pass
     return "MySQL client not found on the system"
@@ -90,7 +90,7 @@ def info() -> t.List[t.List[str]]:
         ["click", click.__version__],
         ["mysql-connector-python", mysql.connector.__version__],
         ["pytimeparse", pytimeparse.__version__],
-        ["simplejson", simplejson.__version__],
+        ["simplejson", simplejson.__version__],  # type: ignore
         ["tabulate", tabulate.__version__],
         ["tqdm", tqdm.__version__],
     ]

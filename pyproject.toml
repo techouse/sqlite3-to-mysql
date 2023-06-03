@@ -100,7 +100,7 @@ skip_gitignore = true
 testpaths = ["tests"]
 norecursedirs = [".*", "venv", "env", "*.egg", "dist", "build"]
 minversion = "7.3.1"
-addopts = "-rsxX -l --tb=short --strict"
+addopts = "-rsxX -l --tb=short --strict-markers"
 timeout = 300
 markers = [
     "init: Run the initialisation test functions",

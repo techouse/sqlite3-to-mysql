@@ -2,6 +2,7 @@
 
 import typing as t
 from logging import Logger
+from os import PathLike
 from sqlite3 import Connection, Cursor
 
 import typing_extensions as tx
@@ -17,7 +18,7 @@ class SQLite3toMySQLParams(tx.TypedDict):
     """SQLite3toMySQL parameters."""
 
     if t.TYPE_CHECKING:
-        sqlite_file: t.Optional[FileDescriptorOrPath]
+        sqlite_file: FileDescriptorOrPath
     else:
         sqlite_file: t.Any
 
@@ -61,12 +62,12 @@ class SQLite3toMySQLAttributes:
     _ignore_duplicate_keys: bool
     _use_fulltext: bool
     _with_rowid: bool
-    _sqlite: t.Optional[Connection]
-    _sqlite_cur: t.Optional[Cursor]
+    _sqlite: Connection
+    _sqlite_cur: Cursor
     _sqlite_version: str
     _sqlite_table_xinfo_support: bool
-    _mysql: t.Optional[MySQLConnection]
-    _mysql_cur: t.Optional[MySQLCursor]
+    _mysql: MySQLConnection
+    _mysql_cur: MySQLCursor
     _mysql_version: str
     _mysql_json_support: bool
     _mysql_fulltext_support: bool

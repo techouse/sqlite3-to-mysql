@@ -1,6 +1,7 @@
 """Use to transfer an SQLite 3 database to MySQL."""
 
 import logging
+import os
 import re
 import sqlite3
 import typing as t
@@ -165,7 +166,9 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
             raise
 
     @classmethod
-    def _setup_logger(cls, log_file: t.Optional[t.AnyStr] = None, quiet: bool = False) -> logging.Logger:
+    def _setup_logger(
+        cls, log_file: t.Optional[t.Union[str, os.PathLike[str]]] = None, quiet: bool = False
+    ) -> logging.Logger:
         formatter = logging.Formatter(fmt="%(asctime)s %(levelname)-8s %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
         logger = logging.getLogger(cls.__name__)
         logger.setLevel(logging.DEBUG)
@@ -185,7 +188,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
     def _get_mysql_version(self) -> str:
         try:
             self._mysql_cur.execute("SHOW VARIABLES LIKE 'version'")
-            return self._mysql_cur.fetchone()[1]
+            return str(self._mysql_cur.fetchone()[1])
         except (IndexError, mysql.connector.Error) as err:
             self._logger.error(
                 "MySQL failed checking for InnoDB version: %s",
@@ -196,7 +199,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
     def _get_sqlite_version(self) -> str:
         try:
             self._sqlite_cur.execute("SELECT sqlite_version()")
-            return self._sqlite_cur.fetchone()[0]
+            return str(self._sqlite_cur.fetchone()[0])
         except (IndexError, sqlite3.Error) as err:
             self._logger.error(
                 "SQLite failed checking for InnoDB version: %s",
@@ -260,7 +263,8 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
             if not length:
                 return self._mysql_string_type
             match = self._valid_column_type(self._mysql_string_type)
-            return match.group(0).upper() + length
+            if match:
+                return match.group(0).upper() + length
         if data_type == "DOUBLE PRECISION":
             return "DOUBLE"
         if data_type == "UNSIGNED BIG INT":
@@ -272,9 +276,10 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
             if not length:
                 return self._mysql_integer_type
             match = self._valid_column_type(self._mysql_integer_type)
-            if self._mysql_integer_type.endswith("UNSIGNED"):
-                return match.group(0).upper() + length + " UNSIGNED"
-            return match.group(0).upper() + length
+            if match:
+                if self._mysql_integer_type.endswith("UNSIGNED"):
+                    return match.group(0).upper() + length + " UNSIGNED"
+                return match.group(0).upper() + length
         if data_type in {"INT64", "NUMERIC"}:
             return "BIGINT" + self._column_type_length(column_type, 19)
         if data_type == "BOOLEAN":
@@ -284,7 +289,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
         return full_column_type
 
     @classmethod
-    def _column_type_length(cls, column_type: str, default: t.Optional[t.Union[t.AnyStr, int, float]] = None) -> str:
+    def _column_type_length(cls, column_type: str, default: t.Optional[t.Union[str, int, float]] = None) -> str:
         suffix: t.Optional[t.Match[str]] = cls.COLUMN_LENGTH_PATTERN.search(column_type)
         if suffix:
             return suffix.group(0)
@@ -421,7 +426,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                     )
                 else:
                     # Limit the max TEXT field index length to 255
-                    index_columns: str = ", ".join(
+                    index_columns = ", ".join(
                         "`{column}`{length}".format(
                             column=safe_identifier_length(index_info["name"]),
                             length="({})".format(255)
@@ -449,7 +454,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                             length=index_length,
                         )
                     )
-                index_columns: str = ", ".join(column_list)
+                index_columns = ", ".join(column_list)
 
             try:
                 self._add_index(
@@ -698,7 +703,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                             .format(*list(chain.from_iterable((column, column) for column in columns))),
                         )
                     else:
-                        sql: str = """
+                        sql = """
                             INSERT {ignore}
                             INTO `{table}` ({fields})
                             VALUES ({placeholders})

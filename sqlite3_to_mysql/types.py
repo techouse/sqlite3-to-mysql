@@ -9,18 +9,10 @@ from mysql.connector import MySQLConnection
 from mysql.connector.cursor import MySQLCursor
 
 
-if t.TYPE_CHECKING:
-    from _typeshed import FileDescriptorOrPath
-
-
 class SQLite3toMySQLParams(tx.TypedDict):
     """SQLite3toMySQL parameters."""
 
-    if t.TYPE_CHECKING:
-        sqlite_file: FileDescriptorOrPath
-    else:
-        sqlite_file: t.Any
-
+    sqlite_file: t.Optional[str]
     sqlite_tables: t.Optional[t.List[str]]
     without_foreign_keys: bool
     mysql_user: str

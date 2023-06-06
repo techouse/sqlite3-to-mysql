@@ -85,7 +85,7 @@ class CharSet(t.NamedTuple):
 def mysql_supported_character_sets(charset: t.Optional[str] = None) -> t.Iterator[CharSet]:
     """Get supported MySQL character sets."""
     index: int
-    info: t.Tuple[str, str, bool]
+    info: t.Optional[t.Tuple[str, str, bool]]
     if charset is not None:
         for index, info in enumerate(MYSQL_CHARACTER_SETS):
             if info is not None:

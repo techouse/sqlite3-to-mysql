@@ -65,8 +65,8 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
         self._sqlite_file = realpath(kwargs.get("sqlite_file"))  # type: ignore
 
         self._sqlite_tables = (
-            tuple(kwargs.get("sqlite_tables")) if kwargs.get("sqlite_tables") is not None else tuple()
-        )  # type: ignore
+            tuple(kwargs.get("sqlite_tables")) if kwargs.get("sqlite_tables") is not None else tuple()  # type: ignore
+        )
 
         self._without_foreign_keys = (
             True if len(self._sqlite_tables) > 0 else (kwargs.get("without_foreign_keys") or False)

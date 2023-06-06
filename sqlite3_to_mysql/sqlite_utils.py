@@ -5,7 +5,7 @@ from decimal import Decimal
 
 from packaging import version
 from packaging.version import Version
-from pytimeparse.timeparse import timeparse
+from pytimeparse2 import parse
 from unidecode import unidecode
 
 
@@ -28,7 +28,7 @@ def adapt_timedelta(value) -> str:
 
 def convert_timedelta(value) -> timedelta:
     """Convert %H:%M:%S string to datetime.timedelta."""
-    return timedelta(seconds=timeparse(value.decode()))
+    return timedelta(seconds=parse(value.decode()))
 
 
 def unicase_compare(string_1: str, string_2: str) -> int:

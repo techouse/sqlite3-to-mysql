@@ -416,7 +416,7 @@ class TestSQLite3toMySQL:
                 "SQLite",
                 "click",
                 "mysql-connector-python",
-                "pytimeparse",
+                "pytimeparse2",
                 "simplejson",
                 "tabulate",
                 "tqdm",

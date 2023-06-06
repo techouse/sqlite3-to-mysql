@@ -12,7 +12,7 @@ from subprocess import check_output
 
 import click
 import mysql.connector
-import pytimeparse
+import pytimeparse2
 import simplejson
 import tabulate
 import tqdm
@@ -89,7 +89,7 @@ def info() -> t.List[t.List[str]]:
         ["", ""],
         ["click", click.__version__],
         ["mysql-connector-python", mysql.connector.__version__],
-        ["pytimeparse", pytimeparse.__version__],
+        ["pytimeparse2", pytimeparse2.__version__],
         ["simplejson", simplejson.__version__],  # type: ignore
         ["tabulate", tabulate.__version__],
         ["tqdm", tqdm.__version__],

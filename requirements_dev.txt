@@ -10,11 +10,14 @@ pytest-mock
 pytest-timeout
 pytimeparse2
 simplejson>=3.19.1
+types-simplejson
 sqlalchemy>=1.3.7,<=1.4.44
 sqlalchemy-utils>=0.36.6,<0.40.0
 tox
 tqdm>=4.65.0
+types-tqdm
 packaging>=23.1
 tabulate
+types-tabulate
 Unidecode>=1.3.6
 typing_extensions

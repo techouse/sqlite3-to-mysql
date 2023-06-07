@@ -112,3 +112,7 @@ markers = [
 python_version = "3.7"
 warn_return_any = true
 warn_unused_configs = true
+
+[[tool.mypy.overrides]]
+module = "pytimeparse2.*"
+ignore_missing_imports = true

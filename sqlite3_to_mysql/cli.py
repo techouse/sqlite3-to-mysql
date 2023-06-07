@@ -1,5 +1,5 @@
 """The command line interface of SQLite3toMySQL."""
-
+import os
 import sys
 import typing as t
 
@@ -114,7 +114,7 @@ from .mysql_utils import MYSQL_INSERT_METHOD, MYSQL_TEXT_COLUMN_TYPES, mysql_sup
 @click.option("--debug", is_flag=True, help="Debug mode. Will throw exceptions.")
 @click.version_option(message=tabulate(info(), headers=["software", "version"], tablefmt="github"))
 def cli(
-    sqlite_file: click.Path,
+    sqlite_file: t.Union[str, bytes, int, "os.PathLike[t.Any]"],
     sqlite_tables: t.Optional[t.Sequence[str]],
     without_foreign_keys: bool,
     ignore_duplicate_keys: bool,
@@ -135,7 +135,7 @@ def cli(
     use_fulltext: bool,
     with_rowid: bool,
     chunk: int,
-    log_file: click.Path,
+    log_file: t.Union[str, bytes, int, "os.PathLike[t.Any]"],
     quiet: bool,
     debug: bool,
 ) -> None:

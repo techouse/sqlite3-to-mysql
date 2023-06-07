@@ -1,5 +1,5 @@
 """Types for sqlite3-to-mysql."""
-
+import os
 import typing as t
 from logging import Logger
 from sqlite3 import Connection, Cursor
@@ -12,7 +12,7 @@ from mysql.connector.cursor import MySQLCursor
 class SQLite3toMySQLParams(tx.TypedDict):
     """SQLite3toMySQL parameters."""
 
-    sqlite_file: str
+    sqlite_file: t.Union[str, bytes, int, "os.PathLike[t.Any]"]
     sqlite_tables: t.Sequence[str]
     without_foreign_keys: bool
     mysql_user: str
@@ -22,7 +22,7 @@ class SQLite3toMySQLParams(tx.TypedDict):
     mysql_ssl_disabled: bool
     chunk: t.Optional[int]
     quiet: bool
-    log_file: t.Optional[str]
+    log_file: t.Optional[t.Union[str, bytes, int, "os.PathLike[t.Any]"]]
     mysql_database: t.Optional[str]
     mysql_integer_type: t.Optional[str]
     mysql_truncate_tables: bool
@@ -39,7 +39,7 @@ class SQLite3toMySQLParams(tx.TypedDict):
 class SQLite3toMySQLAttributes:
     """SQLite3toMySQL attributes."""
 
-    _sqlite_file: str
+    _sqlite_file: t.Union[str, bytes, int, "os.PathLike[t.Any]"]
     _sqlite_tables: t.Sequence[str]
     _without_foreign_keys: bool
     _mysql_user: str
@@ -50,7 +50,7 @@ class SQLite3toMySQLAttributes:
     _chunk_size: t.Optional[int]
     _quiet: bool
     _logger: Logger
-    _log_file: str
+    _log_file: t.Union[str, bytes, int, "os.PathLike[t.Any]"]
     _mysql_database: str
     _mysql_insert_method: str
     _mysql_truncate_tables: bool

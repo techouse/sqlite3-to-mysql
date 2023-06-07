@@ -62,11 +62,9 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
         if not kwargs.get("mysql_user"):
             raise ValueError("Please provide a MySQL user")
 
-        self._sqlite_file = realpath(kwargs.get("sqlite_file"))  # type: ignore
+        self._sqlite_file = realpath(str(kwargs.get("sqlite_file")))
 
-        self._sqlite_tables = (
-            tuple(kwargs.get("sqlite_tables")) if kwargs.get("sqlite_tables") is not None else tuple()  # type: ignore
-        )
+        self._sqlite_tables = kwargs.get("sqlite_tables") if kwargs.get("sqlite_tables") is not None else tuple()  # type: ignore
 
         self._without_foreign_keys = (
             True if len(self._sqlite_tables) > 0 else (kwargs.get("without_foreign_keys") or False)
@@ -82,7 +80,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
 
         self._mysql_ssl_disabled = kwargs.get("mysql_ssl_disabled") or False
 
-        self._chunk_size = int(kwargs.get("chunk")) if kwargs.get("chunk") else None  # type: ignore
+        self._chunk_size = kwargs.get("chunk") if kwargs.get("chunk") else None
 
         self._quiet = kwargs.get("quiet") or False
 

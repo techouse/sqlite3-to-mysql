@@ -114,7 +114,7 @@ from .mysql_utils import MYSQL_INSERT_METHOD, MYSQL_TEXT_COLUMN_TYPES, mysql_sup
 @click.option("--debug", is_flag=True, help="Debug mode. Will throw exceptions.")
 @click.version_option(message=tabulate(info(), headers=["software", "version"], tablefmt="github"))
 def cli(
-    sqlite_file: t.Optional[click.Path],
+    sqlite_file: click.Path,
     sqlite_tables: t.Optional[t.Sequence[str]],
     without_foreign_keys: bool,
     ignore_duplicate_keys: bool,
@@ -157,7 +157,7 @@ def cli(
 
         SQLite3toMySQL(
             sqlite_file=sqlite_file,
-            sqlite_tables=sqlite_tables,
+            sqlite_tables=sqlite_tables or tuple(),
             without_foreign_keys=without_foreign_keys or (sqlite_tables is not None and len(sqlite_tables) > 0),
             mysql_user=mysql_user,
             mysql_password=mysql_password or prompt_mysql_password,

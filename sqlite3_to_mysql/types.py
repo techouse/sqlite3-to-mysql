@@ -12,8 +12,8 @@ from mysql.connector.cursor import MySQLCursor
 class SQLite3toMySQLParams(tx.TypedDict):
     """SQLite3toMySQL parameters."""
 
-    sqlite_file: t.Optional[str]
-    sqlite_tables: t.Optional[t.Sequence[str]]
+    sqlite_file: str
+    sqlite_tables: t.Sequence[str]
     without_foreign_keys: bool
     mysql_user: str
     mysql_password: t.Optional[t.Union[str, bool]]
@@ -39,7 +39,7 @@ class SQLite3toMySQLParams(tx.TypedDict):
 class SQLite3toMySQLAttributes:
     """SQLite3toMySQL attributes."""
 
-    _sqlite_file: t.Union[str, bytes]
+    _sqlite_file: str
     _sqlite_tables: t.Sequence[str]
     _without_foreign_keys: bool
     _mysql_user: str

@@ -1,6 +1,7 @@
 """Use to transfer an SQLite 3 database to MySQL."""
 
 import logging
+import os
 import re
 import sqlite3
 import typing as t
@@ -169,7 +170,9 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
             raise
 
     @classmethod
-    def _setup_logger(cls, log_file: t.Optional[str] = None, quiet: bool = False) -> logging.Logger:
+    def _setup_logger(
+        cls, log_file: t.Optional[t.Union[str, "os.PathLike[t.Any]"]] = None, quiet: bool = False
+    ) -> logging.Logger:
         formatter = logging.Formatter(fmt="%(asctime)s %(levelname)-8s %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
         logger = logging.getLogger(cls.__name__)
         logger.setLevel(logging.DEBUG)

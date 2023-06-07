@@ -4,6 +4,7 @@ import logging
 import re
 import sqlite3
 import typing as t
+from _decimal import Decimal
 from datetime import timedelta
 from decimal import Decimal
 from itertools import chain
@@ -28,7 +29,6 @@ from sqlite3_to_mysql.sqlite_utils import (
     convert_timedelta,
     unicase_compare,
 )
-
 from .mysql_utils import (
     MYSQL_BLOB_COLUMN_TYPES,
     MYSQL_COLUMN_TYPES,
@@ -134,7 +134,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
         self._sqlite_table_xinfo_support = check_sqlite_table_xinfo_support(self._sqlite_version)
 
         try:
-            self._mysql = mysql.connector.connect(
+            _mysql_connection = mysql.connector.connect(
                 user=self._mysql_user,
                 password=self._mysql_password,
                 host=self._mysql_host,
@@ -142,6 +142,10 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                 ssl_disabled=self._mysql_ssl_disabled,
                 use_pure=True,
             )
+            if isinstance(_mysql_connection, mysql.connector.MySQLConnection):
+                self._mysql = _mysql_connection
+            else:
+                raise ConnectionError("Unable to connect to MySQL")
             if not self._mysql.is_connected():
                 raise ConnectionError("Unable to connect to MySQL")
 
@@ -187,7 +191,12 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
     def _get_mysql_version(self) -> str:
         try:
             self._mysql_cur.execute("SHOW VARIABLES LIKE 'version'")
-            return str(self._mysql_cur.fetchone()[1])
+            row = self._mysql_cur.fetchone()
+            if row:
+                return str(row[1])
+            else:
+                self._logger.error("MySQL failed checking for InnoDB version")
+                raise mysql.connector.Error("MySQL failed checking for InnoDB version")
         except (IndexError, mysql.connector.Error) as err:
             self._logger.error(
                 "MySQL failed checking for InnoDB version: %s",
@@ -612,12 +621,12 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
             for _ in trange(0, int(ceil(total_records / self._chunk_size)), disable=self._quiet):
                 self._mysql_cur.executemany(
                     sql,
-                    (tuple(row) for row in self._sqlite_cur.fetchmany(self._chunk_size)),
+                    (tuple(row) for row in self._sqlite_cur.fetchmany(self._chunk_size)),  # type: ignore
                 )
         else:
             self._mysql_cur.executemany(
                 sql,
-                (
+                (  # type: ignore
                     tuple(row)
                     for row in tqdm(
                         self._sqlite_cur.fetchall(),

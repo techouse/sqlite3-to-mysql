@@ -115,7 +115,7 @@ from .mysql_utils import MYSQL_INSERT_METHOD, MYSQL_TEXT_COLUMN_TYPES, mysql_sup
 @click.version_option(message=tabulate(info(), headers=["software", "version"], tablefmt="github"))
 def cli(
     sqlite_file: t.Optional[click.Path],
-    sqlite_tables: t.Tuple[str, ...],
+    sqlite_tables: t.Optional[t.Sequence[str]],
     without_foreign_keys: bool,
     ignore_duplicate_keys: bool,
     mysql_user: str,

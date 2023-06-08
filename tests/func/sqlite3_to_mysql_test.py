@@ -323,6 +323,8 @@ class TestSQLite3toMySQL:
                 )
             for sqlite_index in sqlite_indices:
                 sqlite_index["unique"] = bool(sqlite_index["unique"])
+                if "dialect_options" in sqlite_index:
+                    sqlite_index.pop("dialect_options", None)
                 assert sqlite_index in mysql_indices
 
         """ Test if all the tables have the same foreign keys """
@@ -507,6 +509,8 @@ class TestSQLite3toMySQL:
                 )
             for sqlite_index in sqlite_indices:
                 sqlite_index["unique"] = bool(sqlite_index["unique"])
+                if "dialect_options" in sqlite_index:
+                    sqlite_index.pop("dialect_options", None)
                 assert sqlite_index in mysql_indices
 
         """ Check if all the data was transferred correctly """

@@ -13,24 +13,24 @@ class SQLite3toMySQLParams(tx.TypedDict):
     """SQLite3toMySQL parameters."""
 
     sqlite_file: t.Union[str, "os.PathLike[t.Any]"]
-    sqlite_tables: t.Sequence[str]
-    without_foreign_keys: bool
-    mysql_user: str
+    sqlite_tables: t.Optional[t.Sequence[str]]
+    without_foreign_keys: t.Optional[bool]
+    mysql_user: t.Optional[str]
     mysql_password: t.Optional[t.Union[str, bool]]
     mysql_host: t.Optional[str]
     mysql_port: t.Optional[int]
-    mysql_ssl_disabled: bool
+    mysql_ssl_disabled: t.Optional[bool]
     chunk: t.Optional[int]
-    quiet: bool
+    quiet: t.Optional[bool]
     log_file: t.Optional[t.Union[str, "os.PathLike[t.Any]"]]
     mysql_database: t.Optional[str]
     mysql_integer_type: t.Optional[str]
-    mysql_truncate_tables: bool
+    mysql_truncate_tables: t.Optional[bool]
     mysql_charset: t.Optional[str]
     mysql_collation: t.Optional[str]
-    ignore_duplicate_keys: bool
-    use_fulltext: bool
-    with_rowid: bool
+    ignore_duplicate_keys: t.Optional[bool]
+    use_fulltext: t.Optional[bool]
+    with_rowid: t.Optional[bool]
     mysql_insert_method: t.Optional[str]
     mysql_string_type: t.Optional[str]
     mysql_text_type: t.Optional[str]

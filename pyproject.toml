@@ -110,6 +110,13 @@ markers = [
 
 [tool.mypy]
 python_version = "3.7"
+exclude = [
+    "tests",
+    "build",
+    "dist",
+    "venv",
+    "env",
+]
 warn_return_any = true
 warn_unused_configs = true
 

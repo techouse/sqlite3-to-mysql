@@ -13,13 +13,18 @@ from subprocess import check_output
 
 import click
 import mysql.connector
-import pytimeparse
 import simplejson
 import six
 import tabulate
 import tqdm
 
 from . import __version__ as package_version
+
+
+if six.PY2 or (sys.version_info.major == 3 and 4 <= sys.version_info.minor <= 6):
+    import pytimeparse  # pylint: disable=E0401
+else:
+    import pytimeparse2 as pytimeparse
 
 
 def _implementation():

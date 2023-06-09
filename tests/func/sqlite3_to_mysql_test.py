@@ -17,6 +17,7 @@ from mysql.connector import MySQLConnection, errorcode
 from pytest_mock import MockFixture
 from sqlalchemy import MetaData, Table, create_engine, inspect, select, text
 from sqlalchemy.engine import Connection, CursorResult, Engine, Inspector, Row
+from sqlalchemy.engine.interfaces import ReflectedIndex
 from sqlalchemy.sql import Select
 from sqlalchemy.sql.elements import TextClause
 
@@ -337,21 +338,21 @@ class TestSQLite3toMySQL:
 
         """ Test if all the tables have the same indices """
         index_keys: t.Tuple[str, ...] = ("name", "column_names", "unique")
-        mysql_indices: t.Tuple[t.Dict[str, t.Any], ...] = tuple(
-            {key: index[key] for key in index_keys}
+        mysql_indices: t.Tuple[ReflectedIndex, ...] = tuple(
+            t.cast(ReflectedIndex, {key: index[key] for key in index_keys})
             for index in (chain.from_iterable(mysql_inspect.get_indexes(table_name) for table_name in mysql_tables))
         )
 
         for table_name in sqlite_tables:
-            sqlite_indices: t.List[t.Dict[str, t.Any]] = sqlite_inspect.get_indexes(table_name)
+            sqlite_indices: t.List[ReflectedIndex] = sqlite_inspect.get_indexes(table_name)
             if with_rowid:
                 sqlite_indices.insert(
                     0,
-                    {
-                        "name": "{}_rowid".format(table_name),
-                        "column_names": ["rowid"],
-                        "unique": 1,
-                    },
+                    ReflectedIndex(
+                        name="{}_rowid".format(table_name),
+                        column_names=["rowid"],
+                        unique=True,
+                    ),
                 )
             for sqlite_index in sqlite_indices:
                 sqlite_index["unique"] = bool(sqlite_index["unique"])
@@ -381,13 +382,19 @@ class TestSQLite3toMySQL:
                 constraint_type="FOREIGN KEY",
             )
             mysql_fk_result: CursorResult = mysql_cnx.execute(mysql_fk_stmt)
-            mysql_foreign_keys: t.List[t.Dict[str, t.Any]] = [dict(row) for row in mysql_fk_result]
+            mysql_foreign_keys: t.List[t.Dict[str, t.Any]] = [
+                {
+                    "table": fk["table"],
+                    "from": fk["from"],
+                    "to": fk["to"],
+                }
+                for fk in mysql_fk_result.mappings()
+            ]
 
-            sqlite_fk_stmt: str = 'PRAGMA foreign_key_list("{table}")'.format(table=table_name)
+            sqlite_fk_stmt: TextClause = text('PRAGMA foreign_key_list("{table}")'.format(table=table_name))
             sqlite_fk_result = sqlite_cnx.execute(sqlite_fk_stmt)
             if sqlite_fk_result.returns_rows:
-                for row in sqlite_fk_result:
-                    fk: t.Dict[str, t.Any] = dict(row)
+                for fk in sqlite_fk_result.mappings():
                     assert {
                         "table": fk["table"],
                         "from": fk["from"],
@@ -398,22 +405,27 @@ class TestSQLite3toMySQL:
         sqlite_results: t.List[t.Tuple[t.Tuple[t.Any, ...], ...]] = []
         mysql_results: t.List[t.Tuple[t.Tuple[t.Any, ...], ...]] = []
 
-        meta: MetaData = MetaData(bind=None)
+        meta: MetaData = MetaData()
         for table_name in sqlite_tables:
-            sqlite_table: Table = Table(table_name, meta, autoload=True, autoload_with=sqlite_engine)
-            sqlite_stmt: Select = select([sqlite_table])
-            sqlite_result: t.List[Row] = sqlite_cnx.execute(sqlite_stmt).fetchall()
+            sqlite_table: Table = Table(table_name, meta, autoload_with=sqlite_engine)
+            sqlite_stmt: Select = select(sqlite_table)
+            sqlite_result: t.List[Row[t.Any]] = list(sqlite_cnx.execute(sqlite_stmt).fetchall())
             sqlite_result.sort()
             sqlite_results.append(tuple(tuple(data for data in row) for row in sqlite_result))
 
         for table_name in mysql_tables:
-            mysql_table: Table = Table(table_name, meta, autoload=True, autoload_with=mysql_engine)
-            mysql_stmt: Select = select([mysql_table])
-            mysql_result: t.List[Row] = mysql_cnx.execute(mysql_stmt).fetchall()
+            mysql_table: Table = Table(table_name, meta, autoload_with=mysql_engine)
+            mysql_stmt: Select = select(mysql_table)
+            mysql_result: t.List[Row[t.Any]] = list(mysql_cnx.execute(mysql_stmt).fetchall())
             mysql_result.sort()
             mysql_results.append(tuple(tuple(data for data in row) for row in mysql_result))
 
         assert sqlite_results == mysql_results
+
+        mysql_cnx.close()
+        sqlite_cnx.close()
+        mysql_engine.dispose()
+        sqlite_engine.dispose()
 
     @pytest.mark.transfer
     @pytest.mark.parametrize(
@@ -518,21 +530,21 @@ class TestSQLite3toMySQL:
 
         """ Test if all the tables have the same indices """
         index_keys: t.Tuple[str, ...] = ("name", "column_names", "unique")
-        mysql_indices: t.Tuple[t.Dict[str, t.Any], ...] = tuple(
-            {key: index[key] for key in index_keys}
+        mysql_indices: t.Tuple[ReflectedIndex, ...] = tuple(
+            t.cast(ReflectedIndex, {key: index[key] for key in index_keys})
             for index in (chain.from_iterable(mysql_inspect.get_indexes(table_name) for table_name in mysql_tables))
         )
 
         for table_name in random_sqlite_tables:
-            sqlite_indices: t.List[t.Dict[str, t.Any]] = sqlite_inspect.get_indexes(table_name)
+            sqlite_indices: t.List[ReflectedIndex] = sqlite_inspect.get_indexes(table_name)
             if with_rowid:
                 sqlite_indices.insert(
                     0,
-                    {
-                        "name": "{}_rowid".format(table_name),
-                        "column_names": ["rowid"],
-                        "unique": 1,
-                    },
+                    ReflectedIndex(
+                        name="{}_rowid".format(table_name),
+                        column_names=["rowid"],
+                        unique=True,
+                    ),
                 )
             for sqlite_index in sqlite_indices:
                 sqlite_index["unique"] = bool(sqlite_index["unique"])
@@ -544,19 +556,24 @@ class TestSQLite3toMySQL:
         sqlite_results: t.List[t.Tuple[t.Tuple[t.Any, ...], ...]] = []
         mysql_results: t.List[t.Tuple[t.Tuple[t.Any, ...], ...]] = []
 
-        meta: MetaData = MetaData(bind=None)
+        meta: MetaData = MetaData()
         for table_name in random_sqlite_tables:
-            sqlite_table: Table = Table(table_name, meta, autoload=True, autoload_with=sqlite_engine)
-            sqlite_stmt: Select = select([sqlite_table])
-            sqlite_result: t.List[Row] = sqlite_cnx.execute(sqlite_stmt).fetchall()
+            sqlite_table: Table = Table(table_name, meta, autoload_with=sqlite_engine)
+            sqlite_stmt: Select = select(sqlite_table)
+            sqlite_result: t.List[Row[t.Any]] = list(sqlite_cnx.execute(sqlite_stmt).fetchall())
             sqlite_result.sort()
             sqlite_results.append(tuple(tuple(data for data in row) for row in sqlite_result))
 
         for table_name in mysql_tables:
-            mysql_table: Table = Table(table_name, meta, autoload=True, autoload_with=mysql_engine)
-            mysql_stmt: Select = select([mysql_table])
-            mysql_result: t.List[Row] = mysql_cnx.execute(mysql_stmt).fetchall()
+            mysql_table: Table = Table(table_name, meta, autoload_with=mysql_engine)
+            mysql_stmt: Select = select(mysql_table)
+            mysql_result: t.List[Row[t.Any]] = list(mysql_cnx.execute(mysql_stmt).fetchall())
             mysql_result.sort()
             mysql_results.append(tuple(tuple(data for data in row) for row in mysql_result))
 
         assert sqlite_results == mysql_results
+
+        mysql_cnx.close()
+        sqlite_cnx.close()
+        mysql_engine.dispose()
+        sqlite_engine.dispose()

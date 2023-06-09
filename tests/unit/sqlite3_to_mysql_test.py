@@ -8,10 +8,9 @@ import pytest
 from _pytest.logging import LogCaptureFixture
 from faker import Faker
 from mysql.connector import errorcode
-from pytest_mock import MockerFixture
-from sqlalchemy import create_engine, inspect
+from pytest_mock import MockerFixture, MockFixture
+from sqlalchemy import Connection, CursorResult, Engine, Inspector, TextClause, create_engine, inspect, text
 from sqlalchemy.dialects.sqlite import __all__ as sqlite_column_types
-from sqlalchemy.engine import Engine
 
 from sqlite3_to_mysql import SQLite3toMySQL
 from tests.conftest import MySQLCredentials
@@ -162,14 +161,14 @@ class TestSQLite3toMySQL:
     @pytest.mark.parametrize("quiet", [False, True])
     def test_create_table_cursor_error(
         self,
-        sqlite_database,
-        mysql_database,
-        mysql_credentials,
-        mocker,
-        faker,
-        caplog,
-        quiet,
-    ):
+        sqlite_database: str,
+        mysql_database: Engine,
+        mysql_credentials: MySQLCredentials,
+        mocker: MockerFixture,
+        faker: Faker,
+        caplog: LogCaptureFixture,
+        quiet: bool,
+    ) -> None:
         proc = SQLite3toMySQL(
             sqlite_file=sqlite_database,
             mysql_user=mysql_credentials.user,
@@ -186,9 +185,9 @@ class TestSQLite3toMySQL:
 
         mocker.patch.object(proc, "_mysql_cur", FakeCursor())
 
-        sqlite_engine = create_engine("sqlite:///{database}".format(database=sqlite_database))
-        sqlite_inspect = inspect(sqlite_engine)
-        sqlite_tables = sqlite_inspect.get_table_names()
+        sqlite_engine: Engine = create_engine("sqlite:///{database}".format(database=sqlite_database))
+        sqlite_inspect: Inspector = inspect(sqlite_engine)
+        sqlite_tables: t.List[str] = sqlite_inspect.get_table_names()
 
         with pytest.raises(mysql.connector.Error) as excinfo:
             caplog.set_level(logging.DEBUG)
@@ -196,17 +195,19 @@ class TestSQLite3toMySQL:
         assert str(errorcode.CR_UNKNOWN_ERROR) in str(excinfo.value)
         assert any(str(errorcode.CR_UNKNOWN_ERROR) in message for message in caplog.messages)
 
+        sqlite_engine.dispose()
+
     @pytest.mark.parametrize("quiet", [False, True])
     def test_process_cursor_error(
         self,
-        sqlite_database,
-        mysql_database,
-        mysql_credentials,
-        mocker,
-        faker,
-        caplog,
-        quiet,
-    ):
+        sqlite_database: str,
+        mysql_database: Engine,
+        mysql_credentials: MySQLCredentials,
+        mocker: MockerFixture,
+        faker: Faker,
+        caplog: LogCaptureFixture,
+        quiet: bool,
+    ) -> None:
         proc = SQLite3toMySQL(
             sqlite_file=sqlite_database,
             mysql_user=mysql_credentials.user,
@@ -231,14 +232,14 @@ class TestSQLite3toMySQL:
     @pytest.mark.parametrize("quiet", [False, True])
     def test_add_indices_error(
         self,
-        sqlite_database,
-        mysql_database,
-        mysql_credentials,
-        mocker,
-        faker,
-        caplog,
-        quiet,
-    ):
+        sqlite_database: str,
+        mysql_database: Engine,
+        mysql_credentials: MySQLCredentials,
+        mocker: MockerFixture,
+        faker: Faker,
+        caplog: LogCaptureFixture,
+        quiet: bool,
+    ) -> None:
         proc = SQLite3toMySQL(
             sqlite_file=sqlite_database,
             mysql_user=mysql_credentials.user,
@@ -249,16 +250,16 @@ class TestSQLite3toMySQL:
             quiet=quiet,
         )
 
-        sqlite_engine = create_engine("sqlite:///{database}".format(database=sqlite_database))
-        sqlite_inspect = inspect(sqlite_engine)
-        sqlite_tables = sqlite_inspect.get_table_names()
+        sqlite_engine: Engine = create_engine("sqlite:///{database}".format(database=sqlite_database))
+        sqlite_inspect: Inspector = inspect(sqlite_engine)
+        sqlite_tables: t.List[str] = sqlite_inspect.get_table_names()
 
-        tables_with_indices = []
+        tables_with_indices: t.List[str] = []
         for table in sqlite_tables:
             if sqlite_inspect.get_indexes(table):
                 tables_with_indices.append(table)
 
-        table_name = choice(tables_with_indices)
+        table_name: str = choice(tables_with_indices)
         proc._create_table(table_name)
 
         class FakeCursor:
@@ -273,17 +274,19 @@ class TestSQLite3toMySQL:
         assert str(errorcode.CR_UNKNOWN_ERROR) in str(excinfo.value)
         assert any(str(errorcode.CR_UNKNOWN_ERROR) in message for message in caplog.messages)
 
+        sqlite_engine.dispose()
+
     @pytest.mark.parametrize("quiet", [False, True])
     def test_add_foreign_keys_error(
         self,
-        sqlite_database,
-        mysql_database,
-        mysql_credentials,
-        mocker,
-        faker,
-        caplog,
-        quiet,
-    ):
+        sqlite_database: str,
+        mysql_database: Engine,
+        mysql_credentials: MySQLCredentials,
+        mocker: MockFixture,
+        faker: Faker,
+        caplog: LogCaptureFixture,
+        quiet: bool,
+    ) -> None:
         proc = SQLite3toMySQL(
             sqlite_file=sqlite_database,
             mysql_user=mysql_credentials.user,
@@ -294,21 +297,22 @@ class TestSQLite3toMySQL:
             quiet=quiet,
         )
 
-        sqlite_engine = create_engine("sqlite:///{database}".format(database=sqlite_database))
-        sqlite_inspect = inspect(sqlite_engine)
-        sqlite_tables = sqlite_inspect.get_table_names()
+        sqlite_engine: Engine = create_engine("sqlite:///{database}".format(database=sqlite_database))
+        sqlite_inspect: Inspector = inspect(sqlite_engine)
+        sqlite_cnx: Connection = sqlite_engine.connect()
+        sqlite_tables: t.List[str] = sqlite_inspect.get_table_names()
 
-        tables_with_foreign_keys = []
+        tables_with_foreign_keys: t.List[str] = []
 
         for table in sqlite_tables:
-            sqlite_fk_stmt = 'PRAGMA foreign_key_list("{table}")'.format(table=table)
-            sqlite_fk_result = sqlite_engine.execute(sqlite_fk_stmt)
+            sqlite_fk_stmt: TextClause = text('PRAGMA foreign_key_list("{table}")'.format(table=table))
+            sqlite_fk_result: CursorResult[t.Any] = sqlite_cnx.execute(sqlite_fk_stmt)
             if sqlite_fk_result.returns_rows:
                 for _ in sqlite_fk_result:
                     tables_with_foreign_keys.append(table)
                     break
 
-        table_name = choice(tables_with_foreign_keys)
+        table_name: str = choice(tables_with_foreign_keys)
 
         proc._create_table(table_name)
 
@@ -323,3 +327,6 @@ class TestSQLite3toMySQL:
             proc._add_foreign_keys(table_name)
         assert str(errorcode.CR_UNKNOWN_ERROR) in str(excinfo.value)
         assert any(str(errorcode.CR_UNKNOWN_ERROR) in message for message in caplog.messages)
+
+        sqlite_cnx.close()
+        sqlite_engine.dispose()

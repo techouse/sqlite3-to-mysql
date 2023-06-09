@@ -12,8 +12,8 @@ from .models import Base
 
 
 class Database:
-    engine: Engine = None
-    Session: sessionmaker = None
+    engine: Engine
+    Session: sessionmaker
 
     def __init__(self, database_uri):
         self.Session = sessionmaker()

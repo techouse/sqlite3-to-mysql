@@ -54,40 +54,37 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
 
     def __init__(self, **kwargs: tx.Unpack[SQLite3toMySQLParams]):
         """Constructor."""
-        if not kwargs.get("sqlite_file"):
+        if kwargs.get("sqlite_file") is None:
             raise ValueError("Please provide an SQLite file")
-
-        if not isfile(kwargs.get("sqlite_file")):  # type: ignore
+        elif not isfile(str(kwargs.get("sqlite_file"))):
             raise FileNotFoundError("SQLite file does not exist")
+        else:
+            self._sqlite_file = realpath(str(kwargs.get("sqlite_file")))
 
-        if not kwargs.get("mysql_user"):
+        if kwargs.get("mysql_user") is not None:
+            self._mysql_user = str(kwargs.get("mysql_user"))
+        else:
             raise ValueError("Please provide a MySQL user")
 
-        self._sqlite_file = realpath(str(kwargs.get("sqlite_file")))
+        self._mysql_password = str(kwargs.get("mysql_password")) or None
 
-        self._sqlite_tables = kwargs.get("sqlite_tables") if kwargs.get("sqlite_tables") is not None else tuple()  # type: ignore
+        self._mysql_host = kwargs.get("mysql_host") or "localhost"
 
-        self._without_foreign_keys = (
-            True if len(self._sqlite_tables) > 0 else (kwargs.get("without_foreign_keys") or False)
-        )
+        self._mysql_port = kwargs.get("mysql_port") or 3306
 
-        self._mysql_user = str(kwargs.get("mysql_user"))
+        self._sqlite_tables = kwargs.get("sqlite_tables") or tuple()
 
-        self._mysql_password = str(kwargs.get("mysql_password")) if kwargs.get("mysql_password") else None
-
-        self._mysql_host = str(kwargs.get("mysql_host") or "localhost")
-
-        self._mysql_port = int(kwargs.get("mysql_port") or 3306)
+        self._without_foreign_keys = len(self._sqlite_tables) > 0 or kwargs.get("without_foreign_keys") or False
 
         self._mysql_ssl_disabled = kwargs.get("mysql_ssl_disabled") or False
 
-        self._chunk_size = kwargs.get("chunk") if kwargs.get("chunk") else None
+        self._chunk_size = kwargs.get("chunk") or None
 
         self._quiet = kwargs.get("quiet") or False
 
         self._logger = self._setup_logger(log_file=kwargs.get("log_file") or None, quiet=self._quiet)
 
-        self._mysql_database = str(kwargs.get("mysql_database") or "transfer")
+        self._mysql_database = kwargs.get("mysql_database") or "transfer"
 
         self._mysql_insert_method = str(kwargs.get("mysql_integer_type") or "IGNORE").upper()
         if self._mysql_insert_method not in MYSQL_INSERT_METHOD:

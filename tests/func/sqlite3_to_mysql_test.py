@@ -296,7 +296,7 @@ class TestSQLite3toMySQL:
         out, err = capsys.readouterr()
 
         sqlite_engine: Engine = create_engine(
-            "sqlite:///{database}".format(database=sqlite_database),
+            f"sqlite:///{sqlite_database}",
             json_serializer=json.dumps,
             json_deserializer=json.loads,
         )
@@ -304,13 +304,7 @@ class TestSQLite3toMySQL:
         sqlite_inspect: Inspector = inspect(sqlite_engine)
         sqlite_tables: t.List[str] = sqlite_inspect.get_table_names()
         mysql_engine: Engine = create_engine(
-            "mysql+pymysql://{user}:{password}@{host}:{port}/{database}".format(
-                user=mysql_credentials.user,
-                password=mysql_credentials.password,
-                host=mysql_credentials.host,
-                port=mysql_credentials.port,
-                database=mysql_credentials.database,
-            ),
+            f"mysql+pymysql://{mysql_credentials.user}:{mysql_credentials.password}@{mysql_credentials.host}:{mysql_credentials.port}/{mysql_credentials.database}",
             json_serializer=json.dumps,
             json_deserializer=json.loads,
         )
@@ -352,7 +346,7 @@ class TestSQLite3toMySQL:
                 sqlite_indices.insert(
                     0,
                     ReflectedIndex(
-                        name="{}_rowid".format(table_name),
+                        name=f"{table_name}_rowid",
                         column_names=["rowid"],
                         unique=True,
                     ),
@@ -394,7 +388,7 @@ class TestSQLite3toMySQL:
                 for fk in mysql_fk_result.mappings()
             ]
 
-            sqlite_fk_stmt: TextClause = text('PRAGMA foreign_key_list("{table}")'.format(table=table_name))
+            sqlite_fk_stmt: TextClause = text(f'PRAGMA foreign_key_list("{table_name}")')
             sqlite_fk_result = sqlite_cnx.execute(sqlite_fk_stmt)
             if sqlite_fk_result.returns_rows:
                 for fk in sqlite_fk_result.mappings():
@@ -474,7 +468,7 @@ class TestSQLite3toMySQL:
         ignore_duplicate_keys: bool,
     ) -> None:
         sqlite_engine: Engine = create_engine(
-            "sqlite:///{database}".format(database=sqlite_database),
+            f"sqlite:///{sqlite_database}",
             json_serializer=json.dumps,
             json_deserializer=json.loads,
         )
@@ -507,13 +501,7 @@ class TestSQLite3toMySQL:
         out, err = capsys.readouterr()
 
         mysql_engine: Engine = create_engine(
-            "mysql+pymysql://{user}:{password}@{host}:{port}/{database}".format(
-                user=mysql_credentials.user,
-                password=mysql_credentials.password,
-                host=mysql_credentials.host,
-                port=mysql_credentials.port,
-                database=mysql_credentials.database,
-            ),
+            f"mysql+pymysql://{mysql_credentials.user}:{mysql_credentials.password}@{mysql_credentials.host}:{mysql_credentials.port}/{mysql_credentials.database}",
             json_serializer=json.dumps,
             json_deserializer=json.loads,
         )
@@ -544,7 +532,7 @@ class TestSQLite3toMySQL:
                 sqlite_indices.insert(
                     0,
                     ReflectedIndex(
-                        name="{}_rowid".format(table_name),
+                        name=f"{table_name}_rowid",
                         column_names=["rowid"],
                         unique=True,
                     ),

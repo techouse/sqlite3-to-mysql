@@ -371,7 +371,7 @@ class TestSQLite3toMySQL:
         mysql_credentials: MySQLCredentials,
     ) -> None:
         sqlite_engine: Engine = create_engine(
-            "sqlite:///{database}".format(database=sqlite_database),
+            f"sqlite:///{sqlite_database}",
             json_serializer=json.dumps,
             json_deserializer=json.loads,
         )

@@ -147,12 +147,7 @@ def cli(
             )
             if mysql_collation not in set(charset_collations):
                 raise click.ClickException(
-                    "Error: Invalid value for '--collation' of charset '{charset}': '{collation}' is not one of "
-                    "{collations}.".format(
-                        collation=mysql_collation,
-                        charset=mysql_charset,
-                        collations="'" + "', '".join(charset_collations) + "'",
-                    )
+                    f"""Error: Invalid value for '--collation' of charset '{mysql_charset}': '{mysql_collation}' is not one of {"'" + "', '".join(charset_collations) + "'"}."""
                 )
 
         SQLite3toMySQL(

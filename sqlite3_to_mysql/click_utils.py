@@ -13,7 +13,7 @@ class OptionEatAll(click.Option):
         self.save_other_options = kwargs.pop("save_other_options", True)
         nargs = kwargs.pop("nargs", -1)
         if nargs != -1:
-            raise ValueError("nargs, if set, must be -1 not {}".format(nargs))
+            raise ValueError(f"nargs, if set, must be -1 not {nargs}")
         super(OptionEatAll, self).__init__(*args, **kwargs)
         self._previous_parser_process = None
         self._eat_all_parser = None

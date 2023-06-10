@@ -49,7 +49,7 @@ class Author(Base):
     name: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
 
     def __repr__(self):
-        return "<Author(id='{id}', name='{name}')>".format(id=self.id, name=self.name)
+        return f"<Author(id='{self.id}', name='{self.name}')>"
 
 
 article_authors: Table = Table(
@@ -67,7 +67,7 @@ class Image(Base):
     description: Mapped[str] = mapped_column(String(255), nullable=True)
 
     def __repr__(self):
-        return "<Image(id='{id}', path='{path}')>".format(id=self.id, path=self.path)
+        return f"<Image(id='{self.id}', path='{self.path}')>"
 
 
 article_images: Table = Table(
@@ -84,7 +84,7 @@ class Tag(Base):
     name: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
 
     def __repr__(self):
-        return "<Tag(id='{id}', name='{name}')>".format(id=self.id, name=self.name)
+        return f"<Tag(id='{self.id}', name='{self.name}')>"
 
 
 article_tags = Table(
@@ -137,7 +137,7 @@ class Media(Base):
     description: Mapped[str] = mapped_column(String(255), nullable=True)
 
     def __repr__(self):
-        return "<Media(id='{id}', title='{title}')>".format(id=self.id, title=self.title)
+        return f"<Media(id='{self.id}', title='{self.title}')>"
 
 
 article_media = Table(
@@ -190,4 +190,4 @@ class Article(Base):
     )
 
     def __repr__(self):
-        return "<Article(id='{id}', title='{title}')>".format(id=self.id, title=self.title)
+        return f"<Article(id='{self.id}', title='{self.title}')>"

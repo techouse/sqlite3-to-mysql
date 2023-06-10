@@ -124,7 +124,7 @@ class Helpers:
         try:
             yield
         except exception:
-            raise pytest.fail("DID RAISE {0}".format(exception))
+            raise pytest.fail(f"DID RAISE {exception}")
 
     @staticmethod
     @contextmanager
@@ -151,13 +151,13 @@ def sqlite_database(pytestconfig: Config, _session_faker: Faker, tmpdir_factory:
     db_file: LocalPath = pytestconfig.getoption("sqlite_file")
     if db_file:
         if not isfile(realpath(db_file)):
-            pytest.fail("{} does not exist".format(db_file))
+            pytest.fail(f"{db_file} does not exist")
         return str(realpath(db_file))
 
     temp_data_dir: LocalPath = tmpdir_factory.mktemp("data")
     temp_image_dir: LocalPath = tmpdir_factory.mktemp("images")
     db_file = temp_data_dir.join(Path("db.sqlite3"))
-    db: Database = Database("sqlite:///{}".format(str(db_file)))
+    db: Database = Database(f"sqlite:///{db_file}")
 
     with Helpers.session_scope(db) as session:
         for _ in range(_session_faker.pyint(min_value=12, max_value=24)):
@@ -220,9 +220,7 @@ def mysql_credentials(pytestconfig: Config) -> MySQLCredentials:
     if pytestconfig.getoption("use_docker"):
         while is_port_in_use(port, pytestconfig.getoption("mysql_host")):
             if port >= 2**16 - 1:
-                pytest.fail(
-                    "No ports appear to be available on the host {}".format(pytestconfig.getoption("mysql_host"))
-                )
+                pytest.fail(f'No ports appear to be available on the host {pytestconfig.getoption("mysql_host")}')
             port += 1
 
     return MySQLCredentials(
@@ -259,7 +257,7 @@ def mysql_instance(mysql_credentials: MySQLCredentials, pytestconfig: Config) ->
         docker_mysql_image = pytestconfig.getoption("docker_mysql_image") or "mysql:latest"
 
         if not any(docker_mysql_image in image.tags for image in client.images.list()):
-            print("Attempting to download Docker image {}'".format(docker_mysql_image))
+            print(f"Attempting to download Docker image {docker_mysql_image}'")
             try:
                 client.images.pull(docker_mysql_image)
             except (HTTPError, NotFound) as err:
@@ -271,7 +269,7 @@ def mysql_instance(mysql_credentials: MySQLCredentials, pytestconfig: Config) ->
             ports={
                 "3306/tcp": (
                     mysql_credentials.host,
-                    "{}/tcp".format(mysql_credentials.port),
+                    f"{mysql_credentials.port}/tcp",
                 )
             },
             environment={
@@ -322,13 +320,7 @@ def mysql_database(mysql_instance: t.Generator, mysql_credentials: MySQLCredenti
     yield  # type: ignore[misc]
 
     engine: Engine = create_engine(
-        "mysql+pymysql://{user}:{password}@{host}:{port}/{database}".format(
-            user=mysql_credentials.user,
-            password=mysql_credentials.password,
-            host=mysql_credentials.host,
-            port=mysql_credentials.port,
-            database=mysql_credentials.database,
-        )
+        f"mysql+pymysql://{mysql_credentials.user}:{mysql_credentials.password}@{mysql_credentials.host}:{mysql_credentials.port}/{mysql_credentials.database}"
     )
 
     if database_exists(engine.url):

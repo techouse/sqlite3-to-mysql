@@ -1,12 +1,13 @@
 [build-system]
-requires = ["setuptools", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "sqlite3-to-mysql"
 description = "A simple Python tool to transfer data from SQLite 3 to MySQL"
+readme = "README.md"
 license = { text = "MIT" }
-requires-python = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
+requires-python = ">=3.7"
 authors = [
     { name = "Klemen Tusar", email = "techouse@gmail.com" },
 ]
@@ -28,11 +29,7 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python",
-    "Programming Language :: Python :: 2",
-    "Programming Language :: Python :: 2.7",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.5",
-    "Programming Language :: Python :: 3.6",
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
@@ -42,43 +39,37 @@ classifiers = [
     "Topic :: Database",
 ]
 dependencies = [
-    "Click>=7.0,<8.0.0 ; python_version<'3.6'",
-    "Click>=7.0 ; python_version>='3.6'",
-    "mysql-connector-python>=8.0.18,<8.0.24 ; python_version<'3.6'",
-    "mysql-connector-python>=8.0.18,!=8.0.30,!=8.0.31 ; python_version>='3.6'",
-    "pytimeparse>=1.1.8; python_version<'3.6'",
-    "pytimeparse2; python_version>='3.6'",
-    "six>=1.12.0",
-    "simplejson>=3.16.0",
-    "tqdm>=4.35.0",
-    "packaging>=20.3",
-    "tabulate<0.8.6 ; python_version<'3.5'",
-    "tabulate ; python_version>='3.5'",
-    "Unidecode<=1.2.0 ; python_version<'3.5'",
-    "Unidecode>=1.2.0 ; python_version>='3.5'",
-    "backports-datetime-fromisoformat>=1.0.0 ; python_version>='3.4' and python_version<='3.6'",
+    "Click>=8.1.3",
+    "mysql-connector-python>=8.0.33",
+    "pytimeparse2",
+    "simplejson>=3.19.1",
+    "tqdm>=4.65.0",
+    "packaging>=23.1",
+    "tabulate",
+    "Unidecode>=1.3.6",
+    "typing_extensions",
 ]
-dynamic = ["version", "readme"]
+dynamic = ["version"]
 
-[tool.setuptools.dynamic]
-version = { attr = "sqlite3_to_mysql.__version__" }
-readme = { file = "README.md", content-type = "text/markdown" }
+[tool.hatch.version]
+path = "sqlite3_to_mysql/__init__.py"
 
-[tool.setuptools]
-packages = ["sqlite3_to_mysql"]
-include-package-data = true
-zip-safe = false
-license-files = ["LICENSE"]
-
-[tool.distutils.bdist_wheel]
-universal = true
+[tool.hatch.build.targets.sdist]
+include = [
+    "sqlite3_to_mysql",
+    "tests",
+    "README.md",
+    "CODE-OF-CONDUCT.md",
+    "LICENSE",
+    "requirements_dev.txt",
+]
 
 [project.scripts]
 sqlite3mysql = "sqlite3_to_mysql.cli:cli"
 
 [tool.black]
 line-length = 120
-target-version = ["py35", "py36", "py37", "py38", "py39", "py310", "py311"]
+target-version = ["py37", "py38", "py39", "py310", "py311"]
 include = '\.pyi?$'
 exclude = '''
 (
@@ -104,3 +95,31 @@ profile = "black"
 lines_after_imports = 2
 known_first_party = "sqlite3_to_mysql"
 skip_gitignore = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+norecursedirs = [".*", "venv", "env", "*.egg", "dist", "build"]
+minversion = "7.3.1"
+addopts = "-rsxX -l --tb=short --strict-markers"
+timeout = 300
+markers = [
+    "init: Run the initialisation test functions",
+    "transfer: Run the main transfer test functions",
+    "cli: Run the cli test functions",
+]
+
+[tool.mypy]
+python_version = "3.7"
+exclude = [
+    "tests",
+    "build",
+    "dist",
+    "venv",
+    "env",
+]
+warn_return_any = true
+warn_unused_configs = true
+
+[[tool.mypy.overrides]]
+module = "pytimeparse2.*,factory.*,docker.*"
+ignore_missing_imports = true

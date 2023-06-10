@@ -33,12 +33,6 @@ jobs:
     strategy:
       matrix:
         include:
-          - toxenv: "python2.7"
-            db: "mariadb:5.5"
-            legacy_db: 1
-            experimental: false
-            py: "2.7"
-
           - toxenv: "python3.7"
             db: "mariadb:5.5"
             legacy_db: 1
@@ -68,12 +62,6 @@ jobs:
             legacy_db: 1
             experimental: false
             py: "3.11"
-
-          - toxenv: "python2.7"
-            db: "mariadb:10.0"
-            legacy_db: 1
-            experimental: false
-            py: "2.7"
 
           - toxenv: "python3.7"
             db: "mariadb:10.0"
@@ -105,12 +93,6 @@ jobs:
             experimental: false
             py: "3.11"
 
-          - toxenv: "python2.7"
-            db: "mariadb:10.1"
-            legacy_db: 1
-            experimental: false
-            py: "2.7"
-
           - toxenv: "python3.7"
             db: "mariadb:10.1"
             legacy_db: 1
@@ -140,12 +122,6 @@ jobs:
             legacy_db: 1
             experimental: false
             py: "3.11"
-
-          - toxenv: "python2.7"
-            db: "mariadb:10.2"
-            legacy_db: 0
-            experimental: false
-            py: "2.7"
 
           - toxenv: "python3.7"
             db: "mariadb:10.2"
@@ -177,12 +153,6 @@ jobs:
             experimental: false
             py: "3.11"
 
-          - toxenv: "python2.7"
-            db: "mariadb:10.3"
-            legacy_db: 0
-            experimental: false
-            py: "2.7"
-
           - toxenv: "python3.7"
             db: "mariadb:10.3"
             legacy_db: 0
@@ -212,12 +182,6 @@ jobs:
             legacy_db: 0
             experimental: false
             py: "3.11"
-
-          - toxenv: "python2.7"
-            db: "mariadb:10.4"
-            legacy_db: 0
-            experimental: false
-            py: "2.7"
 
           - toxenv: "python3.7"
             db: "mariadb:10.4"
@@ -249,12 +213,6 @@ jobs:
             experimental: false
             py: "3.11"
 
-          - toxenv: "python2.7"
-            db: "mariadb:10.5"
-            legacy_db: 0
-            experimental: false
-            py: "2.7"
-
           - toxenv: "python3.7"
             db: "mariadb:10.5"
             legacy_db: 0
@@ -284,12 +242,6 @@ jobs:
             legacy_db: 0
             experimental: false
             py: "3.11"
-
-          - toxenv: "python2.7"
-            db: "mariadb:10.6"
-            legacy_db: 0
-            experimental: false
-            py: "2.7"
 
           - toxenv: "python3.7"
             db: "mariadb:10.6"
@@ -321,12 +273,6 @@ jobs:
             experimental: false
             py: "3.11"
 
-          - toxenv: "python2.7"
-            db: "mariadb:10.11"
-            legacy_db: 0
-            experimental: false
-            py: "2.7"
-
           - toxenv: "python3.7"
             db: "mariadb:10.11"
             legacy_db: 0
@@ -356,12 +302,6 @@ jobs:
             legacy_db: 0
             experimental: false
             py: "3.11"
-
-          - toxenv: "python2.7"
-            db: "mysql:5.5"
-            legacy_db: 1
-            experimental: false
-            py: "2.7"
 
           - toxenv: "python3.7"
             db: "mysql:5.5"
@@ -393,12 +333,6 @@ jobs:
             experimental: false
             py: "3.11"
 
-          - toxenv: "python2.7"
-            db: "mysql:5.6"
-            legacy_db: 1
-            experimental: false
-            py: "2.7"
-
           - toxenv: "python3.7"
             db: "mysql:5.6"
             legacy_db: 1
@@ -429,12 +363,6 @@ jobs:
             experimental: false
             py: "3.11"
 
-          - toxenv: "python2.7"
-            db: "mysql:5.7"
-            legacy_db: 0
-            experimental: false
-            py: "2.7"
-
           - toxenv: "python3.7"
             db: "mysql:5.7"
             legacy_db: 0
@@ -464,12 +392,6 @@ jobs:
             legacy_db: 0
             experimental: false
             py: "3.11"
-
-          - toxenv: "python2.7"
-            db: "mysql:8.0"
-            legacy_db: 0
-            experimental: false
-            py: "2.7"
 
           - toxenv: "python3.7"
             db: "mysql:8.0"

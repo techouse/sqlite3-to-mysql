@@ -39,14 +39,14 @@ class TestSQLite3toMySQL:
     @pytest.mark.parametrize("quiet", [False, True])
     def test_invalid_sqlite_file_raises_exception(self, faker: Faker, quiet: bool) -> None:
         with pytest.raises((FileNotFoundError, IOError)) as excinfo:
-            SQLite3toMySQL(sqlite_file=faker.file_path(depth=1, extension=".sqlite3"), quiet=quiet)  # type: ignore
+            SQLite3toMySQL(sqlite_file=faker.file_path(depth=1, extension=".sqlite3"), quiet=quiet)  # type: ignore[call-arg]
         assert "SQLite file does not exist" in str(excinfo.value)
 
     @pytest.mark.init
     @pytest.mark.parametrize("quiet", [False, True])
     def test_missing_mysql_user_raises_exception(self, sqlite_database: str, quiet: bool) -> None:
         with pytest.raises(ValueError) as excinfo:
-            SQLite3toMySQL(sqlite_file=sqlite_database, quiet=quiet)  # type: ignore
+            SQLite3toMySQL(sqlite_file=sqlite_database, quiet=quiet)  # type: ignore[call-arg]
         assert "Please provide a MySQL user" in str(excinfo.value)
 
     @pytest.mark.init

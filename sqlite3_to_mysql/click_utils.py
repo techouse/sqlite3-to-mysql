@@ -1,5 +1,7 @@
 """Click utilities."""
 
+import typing as t
+
 import click
 
 
@@ -11,17 +13,17 @@ class OptionEatAll(click.Option):
         self.save_other_options = kwargs.pop("save_other_options", True)
         nargs = kwargs.pop("nargs", -1)
         if nargs != -1:
-            raise ValueError("nargs, if set, must be -1 not {}".format(nargs))
+            raise ValueError(f"nargs, if set, must be -1 not {nargs}")
         super(OptionEatAll, self).__init__(*args, **kwargs)
         self._previous_parser_process = None
         self._eat_all_parser = None
 
-    def add_to_parser(self, parser, ctx):
+    def add_to_parser(self, parser, ctx) -> None:
         """Override."""
 
-        def parser_process(value, state):
+        def parser_process(value, state) -> None:
             # method to hook to the parser.process
-            done = False
+            done: bool = False
             value = [value]
             if self.save_other_options:
                 # grab everything up to the next option
@@ -52,7 +54,7 @@ class OptionEatAll(click.Option):
         return retval
 
 
-def prompt_password(ctx, param, use_password):  # pylint: disable=W0613
+def prompt_password(ctx: click.core.Context, param: t.Any, use_password: bool):  # pylint: disable=W0613
     """Prompt for password."""
     if use_password:
         mysql_password = ctx.params.get("mysql_password")

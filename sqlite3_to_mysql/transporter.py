@@ -1,10 +1,10 @@
 """Use to transfer an SQLite 3 database to MySQL."""
 
-from __future__ import division
-
 import logging
+import os
 import re
 import sqlite3
+import typing as t
 from datetime import timedelta
 from decimal import Decimal
 from itertools import chain
@@ -13,7 +13,7 @@ from os.path import isfile, realpath
 from sys import stdout
 
 import mysql.connector
-import six
+import typing_extensions as tx
 from mysql.connector import CharacterSet
 from mysql.connector import __version__ as mysql_connector_version_string
 from mysql.connector import errorcode
@@ -24,7 +24,6 @@ from sqlite3_to_mysql.sqlite_utils import (
     adapt_decimal,
     adapt_timedelta,
     check_sqlite_table_xinfo_support,
-    convert_blob,
     convert_date,
     convert_decimal,
     convert_epoch,
@@ -43,56 +42,50 @@ from .mysql_utils import (
     check_mysql_json_support,
     safe_identifier_length,
 )
+from .types import SQLite3toMySQLAttributes, SQLite3toMySQLParams
 
 
-if six.PY2:
-    from .sixeptions import *  # pylint: disable=W0622,W0401,W0614
-
-
-class SQLite3toMySQL:
+class SQLite3toMySQL(SQLite3toMySQLAttributes):
     """Use this class to transfer an SQLite 3 database to MySQL."""
 
-    COLUMN_PATTERN = re.compile(r"^[^(]+")
-    COLUMN_LENGTH_PATTERN = re.compile(r"\(\d+\)$")
+    COLUMN_PATTERN: t.Pattern[str] = re.compile(r"^[^(]+")
+    COLUMN_LENGTH_PATTERN: t.Pattern[str] = re.compile(r"\(\d+\)$")
 
-    MYSQL_CONNECTOR_VERSION = version.parse(mysql_connector_version_string)
+    MYSQL_CONNECTOR_VERSION: version.Version = version.parse(mysql_connector_version_string)
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: tx.Unpack[SQLite3toMySQLParams]):
         """Constructor."""
-        if not kwargs.get("sqlite_file"):
+        if kwargs.get("sqlite_file") is None:
             raise ValueError("Please provide an SQLite file")
-
-        if not isfile(kwargs.get("sqlite_file")):
+        elif not isfile(str(kwargs.get("sqlite_file"))):
             raise FileNotFoundError("SQLite file does not exist")
+        else:
+            self._sqlite_file = realpath(str(kwargs.get("sqlite_file")))
 
-        if not kwargs.get("mysql_user"):
+        if kwargs.get("mysql_user") is not None:
+            self._mysql_user = str(kwargs.get("mysql_user"))
+        else:
             raise ValueError("Please provide a MySQL user")
 
-        self._sqlite_file = realpath(kwargs.get("sqlite_file"))
+        self._mysql_password = str(kwargs.get("mysql_password")) or None
 
-        self._sqlite_tables = tuple(kwargs.get("sqlite_tables")) if kwargs.get("sqlite_tables") is not None else tuple()
+        self._mysql_host = kwargs.get("mysql_host") or "localhost"
 
-        self._without_foreign_keys = (
-            True if len(self._sqlite_tables) > 0 else (kwargs.get("without_foreign_keys") or False)
-        )
+        self._mysql_port = kwargs.get("mysql_port") or 3306
 
-        self._mysql_user = str(kwargs.get("mysql_user"))
+        self._sqlite_tables = kwargs.get("sqlite_tables") or tuple()
 
-        self._mysql_password = str(kwargs.get("mysql_password")) if kwargs.get("mysql_password") else None
-
-        self._mysql_host = str(kwargs.get("mysql_host") or "localhost")
-
-        self._mysql_port = int(kwargs.get("mysql_port") or 3306)
+        self._without_foreign_keys = len(self._sqlite_tables) > 0 or kwargs.get("without_foreign_keys") or False
 
         self._mysql_ssl_disabled = kwargs.get("mysql_ssl_disabled") or False
 
-        self._chunk_size = int(kwargs.get("chunk")) if kwargs.get("chunk") else None
+        self._chunk_size = kwargs.get("chunk") or None
 
         self._quiet = kwargs.get("quiet") or False
 
         self._logger = self._setup_logger(log_file=kwargs.get("log_file") or None, quiet=self._quiet)
 
-        self._mysql_database = str(kwargs.get("mysql_database") or "transfer")
+        self._mysql_database = kwargs.get("mysql_database") or "transfer"
 
         self._mysql_insert_method = str(kwargs.get("mysql_integer_type") or "IGNORE").upper()
         if self._mysql_insert_method not in MYSQL_INSERT_METHOD:
@@ -116,7 +109,7 @@ class SQLite3toMySQL:
         if not kwargs.get("mysql_collation") and self._mysql_collation == "utf8mb4_0900_ai_ci":
             self._mysql_collation = "utf8mb4_general_ci"
 
-        self.ignore_duplicate_keys = kwargs.get("ignore_duplicate_keys") or False
+        self._ignore_duplicate_keys = kwargs.get("ignore_duplicate_keys") or False
 
         self._use_fulltext = kwargs.get("use_fulltext") or False
 
@@ -129,9 +122,6 @@ class SQLite3toMySQL:
         sqlite3.register_converter("DATETIME", convert_epoch)
         sqlite3.register_converter("TIME", convert_timedelta)
 
-        if six.PY2:
-            sqlite3.register_converter("BLOB", convert_blob)
-
         self._sqlite = sqlite3.connect(realpath(self._sqlite_file), detect_types=sqlite3.PARSE_DECLTYPES)
         self._sqlite.row_factory = sqlite3.Row
         self._sqlite.create_collation("unicase", unicase_compare)
@@ -142,7 +132,7 @@ class SQLite3toMySQL:
         self._sqlite_table_xinfo_support = check_sqlite_table_xinfo_support(self._sqlite_version)
 
         try:
-            self._mysql = mysql.connector.connect(
+            _mysql_connection = mysql.connector.connect(
                 user=self._mysql_user,
                 password=self._mysql_password,
                 host=self._mysql_host,
@@ -150,6 +140,10 @@ class SQLite3toMySQL:
                 ssl_disabled=self._mysql_ssl_disabled,
                 use_pure=True,
             )
+            if isinstance(_mysql_connection, mysql.connector.MySQLConnection):
+                self._mysql = _mysql_connection
+            else:
+                raise ConnectionError("Unable to connect to MySQL")
             if not self._mysql.is_connected():
                 raise ConnectionError("Unable to connect to MySQL")
 
@@ -175,7 +169,9 @@ class SQLite3toMySQL:
             raise
 
     @classmethod
-    def _setup_logger(cls, log_file=None, quiet=False):
+    def _setup_logger(
+        cls, log_file: t.Optional[t.Union[str, "os.PathLike[t.Any]"]] = None, quiet: bool = False
+    ) -> logging.Logger:
         formatter = logging.Formatter(fmt="%(asctime)s %(levelname)-8s %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
         logger = logging.getLogger(cls.__name__)
         logger.setLevel(logging.DEBUG)
@@ -192,10 +188,15 @@ class SQLite3toMySQL:
 
         return logger
 
-    def _get_mysql_version(self):
+    def _get_mysql_version(self) -> str:
         try:
             self._mysql_cur.execute("SHOW VARIABLES LIKE 'version'")
-            return self._mysql_cur.fetchone()[1]
+            row = self._mysql_cur.fetchone()
+            if row:
+                return str(row[1])
+            else:
+                self._logger.error("MySQL failed checking for InnoDB version")
+                raise mysql.connector.Error("MySQL failed checking for InnoDB version")
         except (IndexError, mysql.connector.Error) as err:
             self._logger.error(
                 "MySQL failed checking for InnoDB version: %s",
@@ -203,10 +204,10 @@ class SQLite3toMySQL:
             )
             raise
 
-    def _get_sqlite_version(self):
+    def _get_sqlite_version(self) -> str:
         try:
             self._sqlite_cur.execute("SELECT sqlite_version()")
-            return self._sqlite_cur.fetchone()[0]
+            return str(self._sqlite_cur.fetchone()[0])
         except (IndexError, sqlite3.Error) as err:
             self._logger.error(
                 "SQLite failed checking for InnoDB version: %s",
@@ -214,26 +215,22 @@ class SQLite3toMySQL:
             )
             raise
 
-    def _sqlite_table_has_rowid(self, table):
+    def _sqlite_table_has_rowid(self, table: str) -> bool:
         try:
-            self._sqlite_cur.execute("""SELECT rowid FROM "{}" LIMIT 1""".format(table))
+            self._sqlite_cur.execute(f'SELECT rowid FROM "{table}" LIMIT 1')
             self._sqlite_cur.fetchall()
             return True
         except sqlite3.OperationalError:
             return False
 
-    def _create_database(self):
+    def _create_database(self) -> None:
         try:
             self._mysql_cur.execute(
-                """
-                CREATE DATABASE IF NOT EXISTS `{database}`
-                DEFAULT CHARACTER SET {charset}
-                DEFAULT COLLATE {collation}
-            """.format(
-                    database=self._mysql_database,
-                    charset=self._mysql_charset,
-                    collation=self._mysql_collation,
-                )
+                f"""
+                CREATE DATABASE IF NOT EXISTS `{self._mysql_database}`
+                DEFAULT CHARACTER SET {self._mysql_charset}
+                DEFAULT COLLATE {self._mysql_collation}
+            """
             )
             self._mysql_cur.close()
             self._mysql.commit()
@@ -248,17 +245,17 @@ class SQLite3toMySQL:
             raise
 
     @classmethod
-    def _valid_column_type(cls, column_type):
+    def _valid_column_type(cls, column_type: str) -> t.Optional[t.Match[str]]:
         return cls.COLUMN_PATTERN.match(column_type.strip())
 
-    def _translate_type_from_sqlite_to_mysql(self, column_type):
+    def _translate_type_from_sqlite_to_mysql(self, column_type: str) -> str:
         """This could be optimized even further, however is seems adequate."""
-        full_column_type = column_type.upper()
-        match = self._valid_column_type(column_type)
+        full_column_type: str = column_type.upper()
+        match: t.Optional[t.Match[str]] = self._valid_column_type(column_type)
         if not match:
             raise ValueError("Invalid column_type!")
 
-        data_type = match.group(0).upper()
+        data_type: str = match.group(0).upper()
         if data_type in {"TEXT", "CLOB", "STRING"}:
             return self._mysql_text_type
         if data_type in {"CHARACTER", "NCHAR", "NATIVE CHARACTER"}:
@@ -270,7 +267,8 @@ class SQLite3toMySQL:
             if not length:
                 return self._mysql_string_type
             match = self._valid_column_type(self._mysql_string_type)
-            return match.group(0).upper() + length
+            if match:
+                return match.group(0).upper() + length
         if data_type == "DOUBLE PRECISION":
             return "DOUBLE"
         if data_type == "UNSIGNED BIG INT":
@@ -282,9 +280,10 @@ class SQLite3toMySQL:
             if not length:
                 return self._mysql_integer_type
             match = self._valid_column_type(self._mysql_integer_type)
-            if self._mysql_integer_type.endswith("UNSIGNED"):
-                return match.group(0).upper() + length + " UNSIGNED"
-            return match.group(0).upper() + length
+            if match:
+                if self._mysql_integer_type.endswith("UNSIGNED"):
+                    return match.group(0).upper() + length + " UNSIGNED"
+                return match.group(0).upper() + length
         if data_type in {"INT64", "NUMERIC"}:
             return "BIGINT" + self._column_type_length(column_type, 19)
         if data_type == "BOOLEAN":
@@ -294,36 +293,34 @@ class SQLite3toMySQL:
         return full_column_type
 
     @classmethod
-    def _column_type_length(cls, column_type, default=None):
-        suffix = cls.COLUMN_LENGTH_PATTERN.search(column_type)
+    def _column_type_length(cls, column_type: str, default: t.Optional[t.Union[str, int, float]] = None) -> str:
+        suffix: t.Optional[t.Match[str]] = cls.COLUMN_LENGTH_PATTERN.search(column_type)
         if suffix:
             return suffix.group(0)
         if default:
-            return "({})".format(default)
+            return f"({default})"
         return ""
 
-    def _create_table(self, table_name, transfer_rowid=False):
-        primary_keys = []
+    def _create_table(self, table_name: str, transfer_rowid: bool = False) -> None:
+        primary_keys: t.List[t.Dict[str, str]] = []
 
-        sql = "CREATE TABLE IF NOT EXISTS `{}` ( ".format(safe_identifier_length(table_name))
+        sql: str = f"CREATE TABLE IF NOT EXISTS `{safe_identifier_length(table_name)}` ( "
 
         if transfer_rowid:
             sql += " `rowid` BIGINT NOT NULL, "
 
-        self._sqlite_cur.execute(
-            'PRAGMA {command}("{table_name}")'.format(
-                command="table_xinfo" if self._sqlite_table_xinfo_support else "table_info",
-                table_name=table_name,
-            )
-        )
+        if self._sqlite_table_xinfo_support:
+            self._sqlite_cur.execute(f'PRAGMA table_xinfo("{table_name}")')
+        else:
+            self._sqlite_cur.execute(f'PRAGMA table_info("{table_name}")')
 
-        rows = self._sqlite_cur.fetchall()
-        compound_primary_key = len(tuple(True for row in rows if dict(row)["pk"] > 0)) > 1
+        rows: t.List[t.Any] = self._sqlite_cur.fetchall()
+        compound_primary_key: bool = len(tuple(True for row in rows if dict(row)["pk"] > 0)) > 1
 
         for row in rows:
-            column = dict(row)
-            mysql_safe_name = safe_identifier_length(column["name"])
-            column_type = self._translate_type_from_sqlite_to_mysql(column["type"])
+            column: t.Dict[str, t.Any] = dict(row)
+            mysql_safe_name: str = safe_identifier_length(column["name"])
+            column_type: str = self._translate_type_from_sqlite_to_mysql(column["type"])
 
             # The "hidden" value is 0 for visible columns, 1 for "hidden" columns,
             # 2 for computed virtual columns and 3 for computed stored columns.
@@ -344,13 +341,13 @@ class SQLite3toMySQL:
             )
 
             if column["pk"] > 0:
-                primary_key = {
+                primary_key: t.Dict[str, str] = {
                     "column": mysql_safe_name,
                     "length": "",
                 }
                 # In case we have a non-numeric primary key
-                if column_type in MYSQL_TEXT_COLUMN_TYPES_WITH_JSON.union(
-                    MYSQL_BLOB_COLUMN_TYPES
+                if column_type in (
+                    MYSQL_TEXT_COLUMN_TYPES_WITH_JSON + MYSQL_BLOB_COLUMN_TYPES
                 ) or column_type.startswith(("CHAR", "VARCHAR")):
                     primary_key["length"] = self._column_type_length(column_type, 255)
                 primary_keys.append(primary_key)
@@ -363,12 +360,9 @@ class SQLite3toMySQL:
             )
 
         if transfer_rowid:
-            sql += ", CONSTRAINT `{}_rowid` UNIQUE (`rowid`)".format(safe_identifier_length(table_name))
+            sql += f", CONSTRAINT `{safe_identifier_length(table_name)}_rowid` UNIQUE (`rowid`)"
 
-        sql += " ) ENGINE=InnoDB DEFAULT CHARSET={charset} COLLATE={collation}".format(
-            charset=self._mysql_charset,
-            collation=self._mysql_collation,
-        )
+        sql += f" ) ENGINE=InnoDB DEFAULT CHARSET={self._mysql_charset} COLLATE={self._mysql_collation}"
 
         try:
             self._mysql_cur.execute(sql)
@@ -381,7 +375,7 @@ class SQLite3toMySQL:
             )
             raise
 
-    def _truncate_table(self, table_name):
+    def _truncate_table(self, table_name: str) -> None:
         self._mysql_cur.execute(
             """
             SELECT `TABLE_NAME`
@@ -394,30 +388,26 @@ class SQLite3toMySQL:
         )
         if len(self._mysql_cur.fetchall()) > 0:
             self._logger.info("Truncating table %s", safe_identifier_length(table_name))
-            self._mysql_cur.execute(
-                "TRUNCATE TABLE `{}`".format(
-                    safe_identifier_length(table_name),
-                ),
-            )
+            self._mysql_cur.execute(f"TRUNCATE TABLE `{safe_identifier_length(table_name)}`")
 
-    def _add_indices(self, table_name):
-        self._sqlite_cur.execute('PRAGMA table_info("{}")'.format(table_name))
-        table_columns = {}
+    def _add_indices(self, table_name: str) -> None:
+        self._sqlite_cur.execute(f'PRAGMA table_info("{table_name}")')
+        table_columns: t.Dict[str, str] = {}
         for row in self._sqlite_cur.fetchall():
-            column = dict(row)
+            column: t.Dict[str, t.Any] = dict(row)
             table_columns[column["name"]] = column["type"]
 
-        self._sqlite_cur.execute('PRAGMA index_list("{}")'.format(table_name))
-        indices = tuple(dict(row) for row in self._sqlite_cur.fetchall())
+        self._sqlite_cur.execute(f'PRAGMA index_list("{table_name}")')
+        indices: t.Tuple[t.Dict[str, t.Any], ...] = tuple(dict(row) for row in self._sqlite_cur.fetchall())
 
         for index in indices:
             if index["origin"] == "pk":
                 continue
 
-            self._sqlite_cur.execute('PRAGMA index_info("{}")'.format(index["name"]))
-            index_infos = tuple(dict(row) for row in self._sqlite_cur.fetchall())
+            self._sqlite_cur.execute(f'PRAGMA index_info("{index["name"]}")')
+            index_infos: t.Tuple[t.Dict[str, t.Any], ...] = tuple(dict(row) for row in self._sqlite_cur.fetchall())
 
-            index_type = "UNIQUE" if int(index["unique"]) == 1 else "INDEX"
+            index_type: str = "UNIQUE" if int(index["unique"]) == 1 else "INDEX"
 
             if any(
                 table_columns[index_info["name"]].upper() in MYSQL_TEXT_COLUMN_TYPES_WITH_JSON
@@ -426,37 +416,34 @@ class SQLite3toMySQL:
                 if self._use_fulltext and self._mysql_fulltext_support:
                     # Use fulltext if requested and available
                     index_type = "FULLTEXT"
-                    index_columns = ",".join(
-                        "`{}`".format(safe_identifier_length(index_info["name"])) for index_info in index_infos
+                    index_columns: str = ",".join(
+                        f'`{safe_identifier_length(index_info["name"])}`' for index_info in index_infos
                     )
                 else:
                     # Limit the max TEXT field index length to 255
                     index_columns = ", ".join(
                         "`{column}`{length}".format(
                             column=safe_identifier_length(index_info["name"]),
-                            length="({})".format(255)
+                            length="(255)"
                             if table_columns[index_info["name"]].upper() in MYSQL_TEXT_COLUMN_TYPES_WITH_JSON
                             else "",
                         )
                         for index_info in index_infos
                     )
             else:
-                column_list = []
+                column_list: t.List[str] = []
                 for index_info in index_infos:
-                    index_length = ""
+                    index_length: str = ""
                     # Limit the max BLOB field index length to 255
                     if table_columns[index_info["name"]].upper() in MYSQL_BLOB_COLUMN_TYPES:
-                        index_length = "({})".format(255)
+                        index_length = "(255)"
                     else:
-                        suffix = self.COLUMN_LENGTH_PATTERN.search(table_columns[index_info["name"]])
+                        suffix: t.Optional[t.Match[str]] = self.COLUMN_LENGTH_PATTERN.search(
+                            table_columns[index_info["name"]]
+                        )
                         if suffix:
                             index_length = suffix.group(0)
-                    column_list.append(
-                        "`{column}`{length}".format(
-                            column=safe_identifier_length(index_info["name"]),
-                            length=index_length,
-                        )
-                    )
+                    column_list.append(f'`{safe_identifier_length(index_info["name"])}`{index_length}')
                 index_columns = ", ".join(column_list)
 
             try:
@@ -477,7 +464,7 @@ class SQLite3toMySQL:
                         index_columns=", ".join(
                             "`{column}`{length}".format(
                                 column=safe_identifier_length(index_info["name"]),
-                                length="({})".format(255)
+                                length="(255)"
                                 if table_columns[index_info["name"]].upper() in MYSQL_TEXT_COLUMN_TYPES_WITH_JSON
                                 else "",
                             )
@@ -490,14 +477,14 @@ class SQLite3toMySQL:
 
     def _add_index(
         self,
-        table_name,
-        index_type,
-        index,
-        index_columns,
-        index_infos,
-        index_iteration=0,
-    ):
-        sql = """
+        table_name: str,
+        index_type: str,
+        index: t.Dict[str, t.Any],
+        index_columns: str,
+        index_infos: t.Tuple[t.Dict[str, t.Any], ...],
+        index_iteration: int = 0,
+    ) -> None:
+        sql: str = """
             ALTER TABLE `{table}`
             ADD {index_type} `{name}`({columns})
         """.format(
@@ -505,10 +492,7 @@ class SQLite3toMySQL:
             index_type=index_type,
             name=safe_identifier_length(index["name"])
             if index_iteration == 0
-            else "{name}_{index_iteration}".format(
-                name=safe_identifier_length(index["name"], max_length=60),
-                index_iteration=index_iteration,
-            ),
+            else f'{safe_identifier_length(index["name"], max_length=60)}_{index_iteration}',
             columns=index_columns,
         )
 
@@ -523,7 +507,7 @@ class SQLite3toMySQL:
             self._mysql.commit()
         except mysql.connector.Error as err:
             if err.errno == errorcode.ER_DUP_KEYNAME:
-                if not self.ignore_duplicate_keys:
+                if not self._ignore_duplicate_keys:
                     # handle a duplicate key name
                     self._add_index(
                         table_name=table_name,
@@ -563,11 +547,11 @@ class SQLite3toMySQL:
                 )
                 raise
 
-    def _add_foreign_keys(self, table_name):
-        self._sqlite_cur.execute('PRAGMA foreign_key_list("{}")'.format(table_name))
+    def _add_foreign_keys(self, table_name: str) -> None:
+        self._sqlite_cur.execute(f'PRAGMA foreign_key_list("{table_name}")')
 
         for row in self._sqlite_cur.fetchall():
-            foreign_key = dict(row)
+            foreign_key: t.Dict[str, t.Any] = dict(row)
             sql = """
                 ALTER TABLE `{table}`
                 ADD CONSTRAINT `{table}_FK_{id}_{seq}`
@@ -611,17 +595,17 @@ class SQLite3toMySQL:
                 )
                 raise
 
-    def _transfer_table_data(self, sql, total_records=0):
+    def _transfer_table_data(self, sql: str, total_records: int = 0) -> None:
         if self._chunk_size is not None and self._chunk_size > 0:
             for _ in trange(0, int(ceil(total_records / self._chunk_size)), disable=self._quiet):
                 self._mysql_cur.executemany(
                     sql,
-                    (tuple(row) for row in self._sqlite_cur.fetchmany(self._chunk_size)),
+                    (tuple(row) for row in self._sqlite_cur.fetchmany(self._chunk_size)),  # type: ignore
                 )
         else:
             self._mysql_cur.executemany(
                 sql,
-                (
+                (  # type: ignore
                     tuple(row)
                     for row in tqdm(
                         self._sqlite_cur.fetchall(),
@@ -632,19 +616,17 @@ class SQLite3toMySQL:
             )
         self._mysql.commit()
 
-    def transfer(self):
+    def transfer(self) -> None:
         """The primary and only method with which we transfer all the data."""
         if len(self._sqlite_tables) > 0:
             # transfer only specific tables
             self._sqlite_cur.execute(
-                """
+                f"""
                 SELECT name FROM sqlite_master
                 WHERE type='table'
                 AND name NOT LIKE 'sqlite_%'
-                AND name IN({placeholders})
-                """.format(
-                    placeholders=("?, " * len(self._sqlite_tables)).rstrip(" ,")
-                ),
+                AND name IN({("?, " * len(self._sqlite_tables)).rstrip(" ,")})
+                """,
                 self._sqlite_tables,
             )
         else:
@@ -660,10 +642,10 @@ class SQLite3toMySQL:
             self._mysql_cur.execute("SET FOREIGN_KEY_CHECKS=0")
 
             for row in self._sqlite_cur.fetchall():
-                table = dict(row)
+                table: t.Dict[str, t.Any] = dict(row)
 
                 # check if we're transferring rowid
-                transfer_rowid = self._with_rowid and self._sqlite_table_has_rowid(table["name"])
+                transfer_rowid: bool = self._with_rowid and self._sqlite_table_has_rowid(table["name"])
 
                 # create the table
                 self._create_table(table["name"], transfer_rowid=transfer_rowid)
@@ -673,7 +655,7 @@ class SQLite3toMySQL:
                     self._truncate_table(table["name"])
 
                 # get the size of the data
-                self._sqlite_cur.execute('SELECT COUNT(*) AS total_records FROM "{}"'.format(table["name"]))
+                self._sqlite_cur.execute(f'SELECT COUNT(*) AS total_records FROM "{table["name"]}"')
                 total_records = int(dict(self._sqlite_cur.fetchone())["total_records"])
 
                 # only continue if there is anything to transfer
@@ -681,16 +663,16 @@ class SQLite3toMySQL:
                     # populate it
                     self._logger.info("Transferring table %s", table["name"])
                     self._sqlite_cur.execute(
-                        """
-                        SELECT {rowid} * FROM "{table_name}"
-                    """.format(
+                        '''SELECT {rowid} * FROM "{table_name}"'''.format(
                             rowid='rowid as "rowid",' if transfer_rowid else "",
                             table_name=table["name"],
                         )
                     )
-                    columns = [safe_identifier_length(column[0]) for column in self._sqlite_cur.description]
+                    columns: t.List[str] = [
+                        safe_identifier_length(column[0]) for column in self._sqlite_cur.description
+                    ]
                     if self._mysql_insert_method.upper() == "UPDATE":
-                        sql = """
+                        sql: str = """
                             INSERT
                             INTO `{table}` ({fields})
                             VALUES ({placeholders}) AS `__new__`

@@ -13,7 +13,8 @@ from _pytest._py.path import LocalPath
 from _pytest.capture import CaptureFixture
 from _pytest.logging import LogCaptureFixture
 from faker import Faker
-from mysql.connector import MySQLConnection, errorcode
+from mysql.connector import CMySQLConnection, MySQLConnection, errorcode
+from mysql.connector.pooling import PooledMySQLConnection
 from pytest_mock import MockFixture
 from sqlalchemy import MetaData, Table, create_engine, inspect, select, text
 from sqlalchemy.engine import Connection, CursorResult, Engine, Inspector, Row
@@ -31,21 +32,21 @@ class TestSQLite3toMySQL:
     @pytest.mark.parametrize("quiet", [False, True])
     def test_no_sqlite_file_raises_exception(self, quiet: bool) -> None:
         with pytest.raises(ValueError) as excinfo:
-            SQLite3toMySQL(quiet=quiet)
+            SQLite3toMySQL(quiet=quiet)  # type: ignore
         assert "Please provide an SQLite file" in str(excinfo.value)
 
     @pytest.mark.init
     @pytest.mark.parametrize("quiet", [False, True])
     def test_invalid_sqlite_file_raises_exception(self, faker: Faker, quiet: bool) -> None:
         with pytest.raises((FileNotFoundError, IOError)) as excinfo:
-            SQLite3toMySQL(sqlite_file=faker.file_path(depth=1, extension=".sqlite3"), quiet=quiet)
+            SQLite3toMySQL(sqlite_file=faker.file_path(depth=1, extension=".sqlite3"), quiet=quiet)  # type: ignore
         assert "SQLite file does not exist" in str(excinfo.value)
 
     @pytest.mark.init
     @pytest.mark.parametrize("quiet", [False, True])
     def test_missing_mysql_user_raises_exception(self, sqlite_database: str, quiet: bool) -> None:
         with pytest.raises(ValueError) as excinfo:
-            SQLite3toMySQL(sqlite_file=sqlite_database, quiet=quiet)
+            SQLite3toMySQL(sqlite_file=sqlite_database, quiet=quiet)  # type: ignore
         assert "Please provide a MySQL user" in str(excinfo.value)
 
     @pytest.mark.init
@@ -59,7 +60,7 @@ class TestSQLite3toMySQL:
         quiet: bool,
     ):
         with helpers.not_raises(FileNotFoundError):
-            SQLite3toMySQL(
+            SQLite3toMySQL(  # type: ignore
                 sqlite_file=sqlite_database,
                 mysql_user=mysql_credentials.user,
                 mysql_password=mysql_credentials.password,
@@ -81,7 +82,7 @@ class TestSQLite3toMySQL:
         quiet: bool,
     ) -> None:
         with pytest.raises(mysql.connector.Error) as excinfo:
-            SQLite3toMySQL(
+            SQLite3toMySQL(  # type: ignore[call-arg]
                 sqlite_file=sqlite_database,
                 mysql_user=faker.first_name().lower(),
                 mysql_password=faker.password(length=16),
@@ -112,7 +113,7 @@ class TestSQLite3toMySQL:
         )
         caplog.set_level(logging.DEBUG)
         with pytest.raises(mysql.connector.Error) as excinfo:
-            SQLite3toMySQL(
+            SQLite3toMySQL(  # type: ignore[call-arg]
                 sqlite_file=sqlite_database,
                 mysql_user=mysql_credentials.user,
                 mysql_password=mysql_credentials.password,
@@ -163,7 +164,7 @@ class TestSQLite3toMySQL:
         mocker.patch.object(mysql.connector, "connect", return_value=FakeMySQLConnection())
         with pytest.raises(mysql.connector.Error):
             caplog.set_level(logging.DEBUG)
-            SQLite3toMySQL(
+            SQLite3toMySQL(  # type: ignore[call-arg]
                 sqlite_file=sqlite_database,
                 mysql_user=mysql_credentials.user,
                 mysql_password=mysql_credentials.password,
@@ -186,7 +187,7 @@ class TestSQLite3toMySQL:
             return_value=FakeConnector(is_connected=lambda: False),
         )
         with pytest.raises((ConnectionError, IOError)) as excinfo:
-            SQLite3toMySQL(
+            SQLite3toMySQL(  # type: ignore[call-arg]
                 sqlite_file=sqlite_database,
                 mysql_user=mysql_credentials.user,
                 mysql_password=mysql_credentials.password,
@@ -214,7 +215,7 @@ class TestSQLite3toMySQL:
         log_file: LocalPath = tmpdir.join(Path("db.log"))
         with pytest.raises(mysql.connector.Error):
             caplog.set_level(logging.DEBUG)
-            SQLite3toMySQL(
+            SQLite3toMySQL(  # type: ignore[call-arg]
                 sqlite_file=sqlite_database,
                 mysql_user=faker.first_name().lower(),
                 mysql_password=faker.password(length=16),
@@ -276,7 +277,7 @@ class TestSQLite3toMySQL:
         mysql_insert_method: str,
         ignore_duplicate_keys: bool,
     ):
-        proc: SQLite3toMySQL = SQLite3toMySQL(
+        proc: SQLite3toMySQL = SQLite3toMySQL(  # type: ignore[call-arg]
             sqlite_file=sqlite_database,
             mysql_user=mysql_credentials.user,
             mysql_password=mysql_credentials.password,
@@ -317,7 +318,9 @@ class TestSQLite3toMySQL:
         mysql_inspect: Inspector = inspect(mysql_engine)
         mysql_tables: t.List[str] = mysql_inspect.get_table_names()
 
-        mysql_connector_connection: MySQLConnection = mysql.connector.connect(
+        mysql_connector_connection: t.Union[
+            PooledMySQLConnection, MySQLConnection, CMySQLConnection
+        ] = mysql.connector.connect(
             user=mysql_credentials.user,
             password=mysql_credentials.password,
             host=mysql_credentials.host,
@@ -339,7 +342,7 @@ class TestSQLite3toMySQL:
         """ Test if all the tables have the same indices """
         index_keys: t.Tuple[str, ...] = ("name", "column_names", "unique")
         mysql_indices: t.Tuple[ReflectedIndex, ...] = tuple(
-            t.cast(ReflectedIndex, {key: index[key] for key in index_keys})
+            t.cast(ReflectedIndex, {key: index[key] for key in index_keys})  # type: ignore[literal-required]
             for index in (chain.from_iterable(mysql_inspect.get_indexes(table_name) for table_name in mysql_tables))
         )
 
@@ -484,7 +487,7 @@ class TestSQLite3toMySQL:
         random_sqlite_tables: t.List[str] = sample(sqlite_tables, table_number)
         random_sqlite_tables.sort()
 
-        proc: SQLite3toMySQL = SQLite3toMySQL(
+        proc: SQLite3toMySQL = SQLite3toMySQL(  # type: ignore[call-arg]
             sqlite_file=sqlite_database,
             sqlite_tables=random_sqlite_tables,
             mysql_user=mysql_credentials.user,
@@ -531,7 +534,7 @@ class TestSQLite3toMySQL:
         """ Test if all the tables have the same indices """
         index_keys: t.Tuple[str, ...] = ("name", "column_names", "unique")
         mysql_indices: t.Tuple[ReflectedIndex, ...] = tuple(
-            t.cast(ReflectedIndex, {key: index[key] for key in index_keys})
+            t.cast(ReflectedIndex, {key: index[key] for key in index_keys})  # type: ignore[literal-required]
             for index in (chain.from_iterable(mysql_inspect.get_indexes(table_name) for table_name in mysql_tables))
         )
 

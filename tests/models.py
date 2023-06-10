@@ -7,6 +7,7 @@ import sqlalchemy.types as types
 from sqlalchemy import (
     BLOB,
     CHAR,
+    DECIMAL,
     JSON,
     REAL,
     TIMESTAMP,
@@ -23,19 +24,6 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, backref, mapped_column, relationship
 from sqlalchemy.sql.functions import current_timestamp
-
-
-class SQLiteNumeric(types.TypeDecorator):
-    impl: t.Type[String] = types.String
-
-    def load_dialect_impl(self, dialect: Dialect) -> t.Any:
-        return dialect.type_descriptor(types.VARCHAR(100))
-
-    def process_bind_param(self, value: t.Any, dialect: Dialect) -> str:
-        return str(value)
-
-    def process_result_value(self, value: t.Any, dialect: Dialect) -> Decimal:
-        return Decimal(value)
 
 
 class MyCustomType(types.TypeDecorator):
@@ -118,13 +106,13 @@ class Misc(Base):
     char_field: Mapped[str] = mapped_column(CHAR(255), nullable=True)
     date_field: Mapped[date] = mapped_column(nullable=True)
     date_time_field: Mapped[datetime] = mapped_column(nullable=True)
-    decimal_field: Mapped[Decimal] = mapped_column(SQLiteNumeric(10, 2), nullable=True)
-    float_field: Mapped[Decimal] = mapped_column(SQLiteNumeric(12, 4), default=0)
+    decimal_field: Mapped[Decimal] = mapped_column(DECIMAL(10, 2), nullable=True)
+    float_field: Mapped[Decimal] = mapped_column(DECIMAL(12, 4), default=0)
     integer_field: Mapped[int] = mapped_column(default=0)
     if environ.get("LEGACY_DB", "0") == "0":
-        json_field: Mapped[t.Dict[str, t.Any]] = mapped_column(JSON, nullable=True)
-    numeric_field: Mapped[Decimal] = mapped_column(SQLiteNumeric(12, 4), default=0)
-    real_field: Mapped[float] = mapped_column(REAL(12, 4), default=0)
+        json_field: Mapped[t.Mapping[str, t.Any]] = mapped_column(JSON, nullable=True)
+    numeric_field: Mapped[Decimal] = mapped_column(DECIMAL(12, 4), default=0)
+    real_field: Mapped[float] = mapped_column(REAL(12), default=0)
     small_integer_field: Mapped[int] = mapped_column(SmallInteger, default=0)
     string_field: Mapped[str] = mapped_column(String(255), nullable=True)
     text_field: Mapped[str] = mapped_column(Text, nullable=True)

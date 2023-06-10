@@ -19,7 +19,8 @@ from docker import DockerClient
 from docker.errors import NotFound
 from docker.models.containers import Container
 from faker import Faker
-from mysql.connector import MySQLConnection, errorcode
+from mysql.connector import CMySQLConnection, MySQLConnection, errorcode
+from mysql.connector.pooling import PooledMySQLConnection
 from requests import HTTPError
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
@@ -236,7 +237,7 @@ def mysql_credentials(pytestconfig: Config) -> MySQLCredentials:
 @pytest.fixture(scope="session")
 def mysql_instance(mysql_credentials: MySQLCredentials, pytestconfig: Config) -> t.Iterator[MySQLConnection]:
     container: t.Optional[Container] = None
-    mysql_connection: t.Optional[MySQLConnection] = None
+    mysql_connection: t.Optional[t.Union[PooledMySQLConnection, MySQLConnection, CMySQLConnection]] = None
     mysql_available: bool = False
     mysql_connection_retries: int = 15  # failsafe
 
@@ -310,7 +311,7 @@ def mysql_instance(mysql_credentials: MySQLCredentials, pytestconfig: Config) ->
         if not mysql_available and mysql_connection_retries <= 0:
             raise ConnectionAbortedError("Maximum MySQL connection retries exhausted! Are you sure MySQL is running?")
 
-    yield
+    yield  # type: ignore[misc]
 
     if use_docker and container is not None:
         container.kill()
@@ -318,7 +319,7 @@ def mysql_instance(mysql_credentials: MySQLCredentials, pytestconfig: Config) ->
 
 @pytest.fixture()
 def mysql_database(mysql_instance: t.Generator, mysql_credentials: MySQLCredentials) -> t.Iterator[Engine]:
-    yield
+    yield  # type: ignore[misc]
 
     engine: Engine = create_engine(
         "mysql+pymysql://{user}:{password}@{host}:{port}/{database}".format(

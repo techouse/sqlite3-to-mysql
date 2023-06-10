@@ -27,7 +27,7 @@ class TestSQLite3toMySQL:
         mocker: MockerFixture,
         quiet: bool,
     ) -> None:
-        proc: SQLite3toMySQL = SQLite3toMySQL(
+        proc: SQLite3toMySQL = SQLite3toMySQL(  # type: ignore[call-arg]
             sqlite_file=sqlite_database,
             mysql_user=mysql_credentials.user,
             mysql_password=mysql_credentials.password,
@@ -60,7 +60,7 @@ class TestSQLite3toMySQL:
         mysql_string_type: str,
         mysql_text_type: str,
     ) -> None:
-        proc: SQLite3toMySQL = SQLite3toMySQL(
+        proc: SQLite3toMySQL = SQLite3toMySQL(  # type: ignore
             sqlite_file=sqlite_database,
             mysql_user=mysql_credentials.user,
             mysql_password=mysql_credentials.password,
@@ -136,7 +136,7 @@ class TestSQLite3toMySQL:
         caplog: LogCaptureFixture,
         quiet: bool,
     ) -> None:
-        proc: SQLite3toMySQL = SQLite3toMySQL(
+        proc: SQLite3toMySQL = SQLite3toMySQL(  # type: ignore[call-arg]
             sqlite_file=sqlite_database,
             mysql_user=mysql_credentials.user,
             mysql_password=mysql_credentials.password,
@@ -169,7 +169,7 @@ class TestSQLite3toMySQL:
         caplog: LogCaptureFixture,
         quiet: bool,
     ) -> None:
-        proc = SQLite3toMySQL(
+        proc = SQLite3toMySQL(  # type: ignore[call-arg]
             sqlite_file=sqlite_database,
             mysql_user=mysql_credentials.user,
             mysql_password=mysql_credentials.password,
@@ -208,7 +208,7 @@ class TestSQLite3toMySQL:
         caplog: LogCaptureFixture,
         quiet: bool,
     ) -> None:
-        proc = SQLite3toMySQL(
+        proc = SQLite3toMySQL(  # type: ignore[call-arg]
             sqlite_file=sqlite_database,
             mysql_user=mysql_credentials.user,
             mysql_password=mysql_credentials.password,
@@ -240,7 +240,7 @@ class TestSQLite3toMySQL:
         caplog: LogCaptureFixture,
         quiet: bool,
     ) -> None:
-        proc = SQLite3toMySQL(
+        proc = SQLite3toMySQL(  # type: ignore[call-arg]
             sqlite_file=sqlite_database,
             mysql_user=mysql_credentials.user,
             mysql_password=mysql_credentials.password,
@@ -287,7 +287,7 @@ class TestSQLite3toMySQL:
         caplog: LogCaptureFixture,
         quiet: bool,
     ) -> None:
-        proc = SQLite3toMySQL(
+        proc = SQLite3toMySQL(  # type: ignore[call-arg]
             sqlite_file=sqlite_database,
             mysql_user=mysql_credentials.user,
             mysql_password=mysql_credentials.password,

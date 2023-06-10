@@ -121,5 +121,5 @@ warn_return_any = true
 warn_unused_configs = true
 
 [[tool.mypy.overrides]]
-module = "pytimeparse2.*"
+module = "pytimeparse2.*,factory.*,docker.*"
 ignore_missing_imports = true

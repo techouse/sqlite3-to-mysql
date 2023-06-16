@@ -2,47 +2,45 @@ import typing as t
 from os import environ
 
 import factory
-from factory import Faker
 
 from . import models
-from .models import Article, Author, Image, Media, Misc, Tag
 
 
 class AuthorFactory(factory.Factory):
     class Meta:
-        model: t.Type[Author] = models.Author
+        model: t.Type[models.Author] = models.Author
 
-    name: Faker = factory.Faker("name")
+    name: factory.Faker = factory.Faker("name")
 
 
 class ImageFactory(factory.Factory):
     class Meta:
-        model: t.Type[Image] = models.Image
+        model: t.Type[models.Image] = models.Image
 
-    path: Faker = factory.Faker("file_path", depth=3, extension="jpg")
-    description: Faker = factory.Faker("sentence", nb_words=12, variable_nb_words=True)
+    path: factory.Faker = factory.Faker("file_path", depth=3, extension="jpg")
+    description: factory.Faker = factory.Faker("sentence", nb_words=12, variable_nb_words=True)
 
 
 class TagFactory(factory.Factory):
     class Meta:
-        model: t.Type[Tag] = models.Tag
+        model: t.Type[models.Tag] = models.Tag
 
-    name: Faker = factory.Faker("sentence", nb_words=3, variable_nb_words=True)
+    name: factory.Faker = factory.Faker("sentence", nb_words=3, variable_nb_words=True)
 
 
 class MiscFactory(factory.Factory):
     class Meta:
-        model: t.Type[Misc] = models.Misc
+        model: t.Type[models.Misc] = models.Misc
 
-    big_integer_field: Faker = factory.Faker("pyint", max_value=10**9)
-    blob_field: Faker = factory.Faker("binary", length=1024 * 10)
-    boolean_field: Faker = factory.Faker("boolean")
-    char_field: Faker = factory.Faker("text", max_nb_chars=255)
-    date_field: Faker = factory.Faker("date_this_decade")
-    date_time_field: Faker = factory.Faker("date_time_this_century")
-    decimal_field: Faker = factory.Faker("pydecimal", left_digits=8, right_digits=2)
-    float_field: Faker = factory.Faker("pyfloat", left_digits=8, right_digits=4)
-    integer_field: Faker = factory.Faker("pyint", min_value=-(2**31), max_value=2**31 - 1)
+    big_integer_field: factory.Faker = factory.Faker("pyint", max_value=10**9)
+    blob_field: factory.Faker = factory.Faker("binary", length=1024 * 10)
+    boolean_field: factory.Faker = factory.Faker("boolean")
+    char_field: factory.Faker = factory.Faker("text", max_nb_chars=255)
+    date_field: factory.Faker = factory.Faker("date_this_decade")
+    date_time_field: factory.Faker = factory.Faker("date_time_this_century")
+    decimal_field: factory.Faker = factory.Faker("pydecimal", left_digits=8, right_digits=2)
+    float_field: factory.Faker = factory.Faker("pyfloat", left_digits=8, right_digits=4)
+    integer_field: factory.Faker = factory.Faker("pyint", min_value=-(2**31), max_value=2**31 - 1)
     if environ.get("LEGACY_DB", "0") == "0":
         json_field = factory.Faker(
             "pydict",
@@ -50,27 +48,27 @@ class MiscFactory(factory.Factory):
             variable_nb_elements=True,
             value_types=["str", "int", "float", "boolean", "date_time"],
         )
-    numeric_field: Faker = factory.Faker("pyfloat", left_digits=8, right_digits=4)
-    real_field: Faker = factory.Faker("pyfloat", left_digits=8, right_digits=4)
-    small_integer_field: Faker = factory.Faker("pyint", min_value=-(2**15), max_value=2**15 - 1)
-    string_field: Faker = factory.Faker("text", max_nb_chars=255)
-    text_field: Faker = factory.Faker("text", max_nb_chars=1024)
-    time_field: Faker = factory.Faker("time_object")
-    varchar_field: Faker = factory.Faker("text", max_nb_chars=255)
-    timestamp_field: Faker = factory.Faker("date_time_this_century")
-    my_type_field: Faker = factory.Faker("text", max_nb_chars=255)
+    numeric_field: factory.Faker = factory.Faker("pyfloat", left_digits=8, right_digits=4)
+    real_field: factory.Faker = factory.Faker("pyfloat", left_digits=8, right_digits=4)
+    small_integer_field: factory.Faker = factory.Faker("pyint", min_value=-(2**15), max_value=2**15 - 1)
+    string_field: factory.Faker = factory.Faker("text", max_nb_chars=255)
+    text_field: factory.Faker = factory.Faker("text", max_nb_chars=1024)
+    time_field: factory.Faker = factory.Faker("time_object")
+    varchar_field: factory.Faker = factory.Faker("text", max_nb_chars=255)
+    timestamp_field: factory.Faker = factory.Faker("date_time_this_century")
+    my_type_field: factory.Faker = factory.Faker("text", max_nb_chars=255)
 
 
 class ArticleFactory(factory.Factory):
     class Meta:
-        model: t.Type[Article] = models.Article
+        model: t.Type[models.Article] = models.Article
 
-    hash: Faker = factory.Faker("md5")
-    title: Faker = factory.Faker("sentence", nb_words=6)
-    slug: Faker = factory.Faker("slug")
-    content: Faker = factory.Faker("text", max_nb_chars=1024)
-    status: Faker = factory.Faker("pystr", max_chars=1)
-    published: Faker = factory.Faker("date_between", start_date="-1y", end_date="-1d")
+    hash: factory.Faker = factory.Faker("md5")
+    title: factory.Faker = factory.Faker("sentence", nb_words=6)
+    slug: factory.Faker = factory.Faker("slug")
+    content: factory.Faker = factory.Faker("text", max_nb_chars=1024)
+    status: factory.Faker = factory.Faker("pystr", max_chars=1)
+    published: factory.Faker = factory.Faker("date_between", start_date="-1y", end_date="-1d")
 
     @factory.post_generation
     def authors(self, create, extracted, **kwargs):
@@ -119,8 +117,8 @@ class ArticleFactory(factory.Factory):
 
 class MediaFactory(factory.Factory):
     class Meta:
-        model: t.Type[Media] = models.Media
+        model: t.Type[models.Media] = models.Media
 
-    id: Faker = factory.Faker("sha256", raw_output=False)
-    title: Faker = factory.Faker("sentence", nb_words=6)
-    description: Faker = factory.Faker("sentence", nb_words=12, variable_nb_words=True)
+    id: factory.Faker = factory.Faker("sha256", raw_output=False)
+    title: factory.Faker = factory.Faker("sentence", nb_words=6)
+    description: factory.Faker = factory.Faker("sentence", nb_words=12, variable_nb_words=True)

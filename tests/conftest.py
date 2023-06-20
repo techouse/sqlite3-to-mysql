@@ -28,8 +28,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from sqlalchemy_utils import database_exists, drop_database
 
-from .database import Database
-from .factories import ArticleFactory, AuthorFactory, ImageFactory, MediaFactory, MiscFactory, TagFactory
+from . import database, factories
 
 
 def pytest_addoption(parser: "Parser") -> None:
@@ -128,7 +127,7 @@ class Helpers:
 
     @staticmethod
     @contextmanager
-    def session_scope(db: Database) -> t.Generator:
+    def session_scope(db: database.Database) -> t.Generator:
         """Provide a transactional scope around a series of operations."""
         session: Session = db.Session()
         try:
@@ -157,18 +156,18 @@ def sqlite_database(pytestconfig: Config, _session_faker: Faker, tmpdir_factory:
     temp_data_dir: LocalPath = tmpdir_factory.mktemp("data")
     temp_image_dir: LocalPath = tmpdir_factory.mktemp("images")
     db_file = temp_data_dir.join(Path("db.sqlite3"))
-    db: Database = Database(f"sqlite:///{db_file}")
+    db: database.Database = database.Database(f"sqlite:///{db_file}")
 
     with Helpers.session_scope(db) as session:
         for _ in range(_session_faker.pyint(min_value=12, max_value=24)):
-            article = ArticleFactory()
-            article.authors.append(AuthorFactory())
-            article.tags.append(TagFactory())
-            article.misc.append(MiscFactory())
-            article.media.append(MediaFactory())
+            article = factories.ArticleFactory()
+            article.authors.append(factories.AuthorFactory())
+            article.tags.append(factories.TagFactory())
+            article.misc.append(factories.MiscFactory())
+            article.media.append(factories.MediaFactory())
             for _ in range(_session_faker.pyint(min_value=1, max_value=4)):
                 article.images.append(
-                    ImageFactory(
+                    factories.ImageFactory(
                         path=join(
                             str(temp_image_dir),
                             _session_faker.year(),

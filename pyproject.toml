@@ -59,6 +59,7 @@ include = [
     "sqlite3_to_mysql",
     "tests",
     "README.md",
+    "CHANGELOG.md",
     "CODE-OF-CONDUCT.md",
     "LICENSE",
     "requirements_dev.txt",

@@ -19,7 +19,8 @@ from docker import DockerClient
 from docker.errors import NotFound
 from docker.models.containers import Container
 from faker import Faker
-from mysql.connector import CMySQLConnection, MySQLConnection, errorcode
+from mysql.connector import MySQLConnection, errorcode
+from mysql.connector.connection_cext import CMySQLConnection
 from mysql.connector.pooling import PooledMySQLConnection
 from requests import HTTPError
 from sqlalchemy import create_engine

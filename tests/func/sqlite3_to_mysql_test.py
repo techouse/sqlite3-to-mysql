@@ -13,7 +13,8 @@ from _pytest._py.path import LocalPath
 from _pytest.capture import CaptureFixture
 from _pytest.logging import LogCaptureFixture
 from faker import Faker
-from mysql.connector import CMySQLConnection, MySQLConnection, errorcode
+from mysql.connector import MySQLConnection, errorcode
+from mysql.connector.connection_cext import CMySQLConnection
 from mysql.connector.pooling import PooledMySQLConnection
 from pytest_mock import MockFixture
 from sqlalchemy import MetaData, Table, create_engine, inspect, select, text

@@ -547,16 +547,60 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                 )
                 raise
 
+    def _illegal_foreign_key(self, table_info: t.Sequence[t.Any], foreign_key_names: t.Sequence[str]) -> bool:
+        for foreign_key_name in foreign_key_names:
+            for column_info in table_info:
+                if foreign_key_name == column_info["name"]:
+                    if self._translate_type_from_sqlite_to_mysql(column_info["type"]) in (
+                        MYSQL_TEXT_COLUMN_TYPES_WITH_JSON + MYSQL_BLOB_COLUMN_TYPES
+                    ):
+                        return True
+        return False
+
+    @staticmethod
+    def _find_primary_keys(table_info: t.Sequence[t.Any]) -> t.List[str]:
+        primary_keys: t.List[str] = []
+        for column_info in table_info:
+            if int(column_info["pk"]) == 1:
+                primary_keys.append(safe_identifier_length(column_info["name"]))
+        return primary_keys
+
     def _add_foreign_keys(self, table_name: str) -> None:
+        if self._sqlite_table_xinfo_support:
+            self._sqlite_cur.execute(f'PRAGMA table_xinfo("{table_name}")')
+        else:
+            self._sqlite_cur.execute(f'PRAGMA table_info("{table_name}")')
+
+        table_info: t.List[t.Any] = self._sqlite_cur.fetchall()
+
         self._sqlite_cur.execute(f'PRAGMA foreign_key_list("{table_name}")')
 
         for row in self._sqlite_cur.fetchall():
             foreign_key: t.Dict[str, t.Any] = dict(row)
+
+            # check if foreign_key is TEXT or BLOB
+            if self._illegal_foreign_key(table_info, (foreign_key["from"], foreign_key["to"])):
+                self._logger.warning(
+                    """Ignoring foreign key "%s" in table %s! MySQL does not support foreign keys on TEXT or BLOB columns.""",
+                    safe_identifier_length(foreign_key["from"]),
+                    safe_identifier_length(table_name),
+                )
+                continue
+
+            if self._sqlite_table_xinfo_support:
+                self._sqlite_cur.execute(f"""PRAGMA table_xinfo("{foreign_key['table']}")""")
+            else:
+                self._sqlite_cur.execute(f"""PRAGMA table_info("{foreign_key['table']}")""")
+
+            ref_table_info: t.List[t.Any] = self._sqlite_cur.fetchall()
+
+            primary_keys: t.List[str] = self._find_primary_keys(ref_table_info)
+
             sql = """
                 ALTER TABLE `{table}`
                 ADD CONSTRAINT `{table}_FK_{id}_{seq}`
                 FOREIGN KEY (`{column}`)
-                REFERENCES `{ref_table}`(`{ref_column}`)
+                REFERENCES `{ref_table}`({ref_column})
                 ON DELETE {on_delete}
                 ON UPDATE {on_update}
             """.format(
@@ -565,7 +609,9 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                 table=safe_identifier_length(table_name),
                 column=safe_identifier_length(foreign_key["from"]),
                 ref_table=safe_identifier_length(foreign_key["table"]),
-                ref_column=safe_identifier_length(foreign_key["to"]),
+                ref_column=f'`{safe_identifier_length(foreign_key["to"])}`'
+                if foreign_key["to"]
+                else ("`{}`, " * len(primary_keys)).rstrip(" ,").format(*primary_keys),
                 on_delete=foreign_key["on_delete"].upper()
                 if foreign_key["on_delete"].upper() != "SET DEFAULT"
                 else "NO ACTION",
@@ -580,7 +626,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                     safe_identifier_length(table_name),
                     safe_identifier_length(foreign_key["from"]),
                     safe_identifier_length(foreign_key["table"]),
-                    safe_identifier_length(foreign_key["to"]),
+                    safe_identifier_length(foreign_key["to"]) if foreign_key["to"] else ",".join(primary_keys),
                 )
                 self._mysql_cur.execute(sql)
                 self._mysql.commit()
@@ -590,7 +636,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                     safe_identifier_length(table_name),
                     safe_identifier_length(foreign_key["from"]),
                     safe_identifier_length(foreign_key["table"]),
-                    safe_identifier_length(foreign_key["to"]),
+                    safe_identifier_length(foreign_key["to"] if foreign_key["to"] else ",".join(primary_keys)),
                     err,
                 )
                 raise

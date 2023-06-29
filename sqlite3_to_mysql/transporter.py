@@ -29,7 +29,6 @@ from sqlite3_to_mysql.sqlite_utils import (
     convert_timedelta,
     unicase_compare,
 )
-
 from .mysql_utils import (
     MYSQL_BLOB_COLUMN_TYPES,
     MYSQL_COLUMN_TYPES,
@@ -326,15 +325,17 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
             if "hidden" in column and column["hidden"] == 1:
                 continue
 
+            auto_increment: bool = (
+                column["pk"] > 0 and column_type.startswith(("INT", "BIGINT")) and not compound_primary_key
+            )
+
             sql += " `{name}` {type} {notnull} {default} {auto_increment}, ".format(
                 name=mysql_safe_name,
                 type=column_type,
                 notnull="NOT NULL" if column["notnull"] or column["pk"] else "NULL",
-                auto_increment="AUTO_INCREMENT"
-                if column["pk"] > 0 and column_type.startswith(("INT", "BIGINT")) and not compound_primary_key
-                else "",
+                auto_increment="AUTO_INCREMENT" if auto_increment else "",
                 default="DEFAULT " + column["dflt_value"]
-                if column["dflt_value"] and column_type not in MYSQL_COLUMN_TYPES_WITHOUT_DEFAULT
+                if column["dflt_value"] and column_type not in MYSQL_COLUMN_TYPES_WITHOUT_DEFAULT and not auto_increment
                 else "",
             )
 

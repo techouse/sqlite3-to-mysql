@@ -1,3 +1,7 @@
+# 2.0.3
+
+* [FIX] prevent AUTO_INCREMENT-ing fields from having a DEFAULT value
+
 # 2.0.2
 
 * [FIX] properly import CMySQLConnection

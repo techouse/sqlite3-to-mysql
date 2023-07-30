@@ -516,5 +516,3 @@ jobs:
         if: ${{ always() }}
         run: |
           rm -rf tests/db_credentials.json
-          docker stop mysqld
-          docker rm mysqld

@@ -37,11 +37,14 @@ jobs:
       - name: Install build dependencies
         id: install_build_dependencies
         run: |
+          set -e
           python3 -m pip install --upgrade pip
           pip install build setuptools wheel
       - name: Build a binary wheel and a source tarball
         id: build
-        run: python3 -m build --sdist --wheel --outdir dist/ .
+        run: |
+          set -e
+          python3 -m build --sdist --wheel --outdir dist/ .
       - name: Publish distribution package to Test PyPI
         id: publish_test
         uses: pypa/gh-action-pypi-publish@release/v1

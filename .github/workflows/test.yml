@@ -18,7 +18,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
         with:
           python-version: "3.x"
       - name: Install dependencies
@@ -30,6 +30,7 @@ jobs:
   test:
     needs: analyze
     runs-on: ubuntu-latest
+    environment: test
     strategy:
       matrix:
         include:
@@ -422,9 +423,7 @@ jobs:
             legacy_db: 0
             experimental: false
             py: "3.11"
-
     continue-on-error: ${{ matrix.experimental }}
-
     services:
       mysql:
         image: "${{ matrix.db }}"
@@ -433,68 +432,89 @@ jobs:
         env:
           MYSQL_ALLOW_EMPTY_PASSWORD: yes
         options: "--name=mysqld"
-
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.py }}
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.py }}
-
       - uses: actions/cache@v3
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-1
           restore-keys: |
             ${{ runner.os }}-pip-
-
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           python -m pip install -U codecov tox-gh-actions
           pip install -r requirements_dev.txt
-
       - name: Set up MySQL
         env:
           DB: ${{ matrix.db }}
+          MYSQL_USER: ${{ secrets.MYSQL_USER }}
+          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+          MYSQL_DATABASE: ${{ vars.MYSQL_DATABASE }}
+          MYSQL_HOST: ${{ vars.MYSQL_HOST }}
+          MYSQL_PORT: ${{ vars.MYSQL_PORT }}
         run: |
+          set -e
           while :
           do
-              sleep 1
-              mysql -h127.0.0.1 -uroot -e 'select version()' && break
+            sleep 1
+            mysql -h127.0.0.1 -uroot -e 'select version()' && break
           done
-          if [ $DB == 'mysql:8.0' ]; then
-              WITH_PLUGIN='with mysql_native_password'
-              mysql -h127.0.0.1 -uroot -e "SET GLOBAL local_infile=on"
-              docker cp mysqld:/var/lib/mysql/public_key.pem "${HOME}"
-              docker cp mysqld:/var/lib/mysql/ca.pem "${HOME}"
-              docker cp mysqld:/var/lib/mysql/server-cert.pem "${HOME}"
-              docker cp mysqld:/var/lib/mysql/client-key.pem "${HOME}"
-              docker cp mysqld:/var/lib/mysql/client-cert.pem "${HOME}"
-              mysql -uroot -h127.0.0.1 -e '
-                  CREATE USER
-                      user_sha256   IDENTIFIED WITH "sha256_password" BY "pass_sha256",
-                      nopass_sha256 IDENTIFIED WITH "sha256_password",
-                      user_caching_sha2   IDENTIFIED WITH "caching_sha2_password" BY "pass_caching_sha2",
-                      nopass_caching_sha2 IDENTIFIED WITH "caching_sha2_password"
-                      PASSWORD EXPIRE NEVER;'
-              mysql -uroot -h127.0.0.1 -e 'GRANT RELOAD ON *.* TO user_caching_sha2;'
+          if [ "$DB" == 'mysql:8.0' ]; then
+            WITH_PLUGIN='with mysql_native_password'
+            mysql -h127.0.0.1 -uroot -e "SET GLOBAL local_infile=on"
+            docker cp mysqld:/var/lib/mysql/public_key.pem "${HOME}"
+            docker cp mysqld:/var/lib/mysql/ca.pem "${HOME}"
+            docker cp mysqld:/var/lib/mysql/server-cert.pem "${HOME}"
+            docker cp mysqld:/var/lib/mysql/client-key.pem "${HOME}"
+            docker cp mysqld:/var/lib/mysql/client-cert.pem "${HOME}"
+            mysql -uroot -h127.0.0.1 -e '
+              CREATE USER
+              user_sha256 IDENTIFIED WITH "sha256_password" BY "pass_sha256",
+              nopass_sha256 IDENTIFIED WITH "sha256_password",
+              user_caching_sha2 IDENTIFIED WITH "caching_sha2_password" BY "pass_caching_sha2",
+              nopass_caching_sha2 IDENTIFIED WITH "caching_sha2_password"
+              PASSWORD EXPIRE NEVER;'
+            mysql -uroot -h127.0.0.1 -e 'GRANT RELOAD ON *.* TO user_caching_sha2;'
           else
-              WITH_PLUGIN=''
+            WITH_PLUGIN=''
           fi
-          mysql -h127.0.0.1 -uroot -e 'create database test_db DEFAULT CHARACTER SET utf8mb4'
-          mysql -h127.0.0.1 -uroot -e "create user tester           identified ${WITH_PLUGIN} by 'testpass'; grant all on test_db.* to tester;"
-          mysql -h127.0.0.1 -uroot -e "create user tester@localhost identified ${WITH_PLUGIN} by 'testpass'; grant all on test_db.* to tester@localhost;"
-          cp ci/db_credentials.json tests/db_credentials.json
-
+          mysql -h127.0.0.1 -uroot -e "create database $MYSQL_DATABASE DEFAULT CHARACTER SET utf8mb4"
+          mysql -h127.0.0.1 -uroot -e "create user $MYSQL_USER identified $WITH_PLUGIN by '${MYSQL_PASSWORD}'; grant all on ${MYSQL_DATABASE}.* to ${MYSQL_USER};"
+          mysql -h127.0.0.1 -uroot -e "create user ${MYSQL_USER}@localhost identified $WITH_PLUGIN by '${MYSQL_PASSWORD}'; grant all on ${MYSQL_DATABASE}.* to ${MYSQL_USER}@localhost;"
+      - name: Create db_credentials.json
+        env:
+          MYSQL_USER: ${{ secrets.MYSQL_USER }}
+          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+          MYSQL_DATABASE: ${{ vars.MYSQL_DATABASE }}
+          MYSQL_HOST: ${{ vars.MYSQL_HOST }}
+          MYSQL_PORT: ${{ vars.MYSQL_PORT }}
+        run: |
+          set -e
+          jq -n \
+            --arg mysql_user "$MYSQL_USER" \
+            --arg mysql_password "$MYSQL_PASSWORD" \
+            --arg mysql_database "$MYSQL_DATABASE" \
+            --arg mysql_host "$MYSQL_HOST" \
+            --arg mysql_port $MYSQL_PORT \
+            '$ARGS.named' > tests/db_credentials.json
       - name: Test with tox
-        run: tox
         env:
           LEGACY_DB: ${{ matrix.legacy_db }}
-
+        run: tox
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
           files: ./coverage.xml
           env_vars: OS,PYTHON
           verbose: true
+      - name: Cleanup
+        if: ${{ always() }}
+        run: |
+          rm -rf tests/db_credentials.json
+          docker stop mysqld
+          docker rm mysqld

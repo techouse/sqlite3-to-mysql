@@ -29,6 +29,7 @@ jobs:
             echo "Version in sqlite3_to_mysql/__version__.py ($VERSION) does not match tag ($TAG)"
             exit 1
           fi
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
       - name: Set up Python
         id: setup_python
         uses: actions/setup-python@v4
@@ -54,3 +55,37 @@ jobs:
         id: publish
         if: startsWith(github.ref, 'refs/tags')
         uses: pypa/gh-action-pypi-publish@release/v1
+      - name: Install pyproject-parser
+        id: install_pyproject_parser
+        run: |
+          set -e
+          pip install pyproject-parser[cli]
+      - name: Read project name from pyproject.toml
+        id: read_project_name
+        run: |
+          set -e
+          NAME=$(pyproject-parser info project.name -r | tr -d '"')
+          echo "NAME=$NAME" >> $GITHUB_ENV
+      - name: Create tag-specific CHANGELOG
+        id: create_changelog
+        run: |
+          set -e
+          CHANGELOG_PATH=$RUNNER_TEMP/CHANGELOG.md
+          awk '/^#[[:space:]].*/ { if (count == 1) exit; count++; print } count == 1 && !/^#[[:space:]].*/ { print }' CHANGELOG.md | sed -e :a -e '/^\n*$/{$d;N;ba' -e '}' > $CHANGELOG_PATH
+          echo -en "\n[https://pypi.org/project/$NAME/$VERSION/](https://pypi.org/project/$NAME/$VERSION/)" >> $CHANGELOG_PATH
+          echo "CHANGELOG_PATH=$CHANGELOG_PATH" >> $GITHUB_ENV
+      - name: Github Release
+        id: github_release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: ${{ env.VERSION }}
+          tag_name: ${{ github.ref }}
+          body: ${{ env.CHANGELOG_PATH }}
+          files: |
+            dist/*.whl
+            dist/*.tar.gz
+      - name: Cleanup
+        if: ${{ always() }}
+        run: |
+          rm -rf dist
+          rm -rf $CHANGELOG_PATH

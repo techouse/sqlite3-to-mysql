@@ -109,6 +109,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
             self._mysql_collation = "utf8mb4_general_ci"
 
         self._ignore_duplicate_keys = kwargs.get("ignore_duplicate_keys") or False
+        self._ignore_error = kwargs.get("ignore_error") or False
 
         self._use_fulltext = kwargs.get("use_fulltext") or False
 
@@ -537,7 +538,8 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                     ", ".join(safe_identifier_length(index_info["name"]) for index_info in index_infos),
                     safe_identifier_length(table_name),
                 )
-                raise
+                if not self._ignore_error:
+                    raise
             else:
                 self._logger.error(
                     """MySQL failed adding index to column "%s" in table %s: %s""",
@@ -545,7 +547,8 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                     safe_identifier_length(table_name),
                     err,
                 )
-                raise
+                if not self._ignore_error:
+                    raise
 
     def _add_foreign_keys(self, table_name: str) -> None:
         self._sqlite_cur.execute(f'PRAGMA foreign_key_list("{table_name}")')
@@ -593,7 +596,8 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                     safe_identifier_length(foreign_key["to"]),
                     err,
                 )
-                raise
+                if not self._ignore_error:
+                    raise
 
     def _transfer_table_data(self, sql: str, total_records: int = 0) -> None:
         if self._chunk_size is not None and self._chunk_size > 0:
@@ -704,7 +708,8 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                             safe_identifier_length(table["name"]),
                             err,
                         )
-                        raise
+                        if not self._ignore_error:
+                            raise
 
                 # add indices
                 self._add_indices(table["name"])

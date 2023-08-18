@@ -38,6 +38,11 @@ from .mysql_utils import MYSQL_INSERT_METHOD, MYSQL_TEXT_COLUMN_TYPES, mysql_sup
     help="Ignore duplicate keys. The default behavior is to create new ones with a numerical suffix, e.g. "
     "'exising_key' -> 'existing_key_1'",
 )
+@click.option(
+    "--ignore-error",
+    is_flag=True,
+    help="Ignores any SQL errors. This might lead to data loss.",
+)
 @click.option("-d", "--mysql-database", default=None, help="MySQL database name", required=True)
 @click.option("-u", "--mysql-user", default=None, help="MySQL user", required=True)
 @click.option(
@@ -118,6 +123,7 @@ def cli(
     sqlite_tables: t.Optional[t.Sequence[str]],
     without_foreign_keys: bool,
     ignore_duplicate_keys: bool,
+    ignore_error: bool,
     mysql_user: str,
     prompt_mysql_password: bool,
     mysql_password: str,
@@ -168,6 +174,7 @@ def cli(
             mysql_charset=mysql_charset.lower() if mysql_charset else "utf8mb4",
             mysql_collation=mysql_collation.lower() if mysql_collation else None,
             ignore_duplicate_keys=ignore_duplicate_keys,
+            ignore_error=ignore_error,
             use_fulltext=use_fulltext,
             with_rowid=with_rowid,
             chunk=chunk,

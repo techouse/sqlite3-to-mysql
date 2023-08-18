@@ -40,6 +40,8 @@ Options:
                                   is to create new ones with a numerical
                                   suffix, e.g. 'exising_key' ->
                                   'existing_key_1'
+  --ignore-erros                  Ignores any errors. This might lead to
+                                  data loss and need manual fixing.
   -d, --mysql-database TEXT       MySQL database name  [required]
   -u, --mysql-user TEXT           MySQL user  [required]
   -p, --prompt-mysql-password     Prompt for MySQL password

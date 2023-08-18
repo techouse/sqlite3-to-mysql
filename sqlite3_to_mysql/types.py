@@ -29,6 +29,7 @@ class SQLite3toMySQLParams(tx.TypedDict):
     mysql_charset: t.Optional[str]
     mysql_collation: t.Optional[str]
     ignore_duplicate_keys: t.Optional[bool]
+    ignore_error: t.Optional[bool]
     use_fulltext: t.Optional[bool]
     with_rowid: t.Optional[bool]
     mysql_insert_method: t.Optional[str]
@@ -60,6 +61,7 @@ class SQLite3toMySQLAttributes:
     _mysql_charset: str
     _mysql_collation: str
     _ignore_duplicate_keys: bool
+    _ignore_error: bool
     _use_fulltext: bool
     _with_rowid: bool
     _sqlite: Connection

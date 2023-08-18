@@ -339,11 +339,16 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
             auto_increment: bool = (
                 column["pk"] > 0 and column_type.startswith(("INT", "BIGINT")) and not compound_primary_key
             )
+            
+            # If the column is not null, we need to check if it has a default value
+            not_null: bool = column["notnull"] or column["pk"]
+            if column["dflt_value"] and column_type not in MYSQL_COLUMN_TYPES_WITHOUT_DEFAULT:
+                not_null = True
 
             sql += " `{name}` {type} {notnull} {default} {auto_increment}, ".format(
                 name=mysql_safe_name,
                 type=column_type,
-                notnull="NOT NULL" if column["notnull"] or column["pk"] else "NULL",
+                notnull="NOT NULL" if not_null else "NULL",
                 auto_increment="AUTO_INCREMENT" if auto_increment else "",
                 default="DEFAULT " + column["dflt_value"]
                 if column["dflt_value"] and column_type not in MYSQL_COLUMN_TYPES_WITHOUT_DEFAULT and not auto_increment

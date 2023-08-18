@@ -252,7 +252,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
         full_column_type: str = column_type.upper()
         match: t.Optional[t.Match[str]] = self._valid_column_type(column_type)
         if not match:
-            raise ValueError("Invalid column_type!")
+            raise ValueError("Invalid column_type: " + column_type)
 
         data_type: str = match.group(0).upper()
         if data_type in {"TEXT", "CLOB", "STRING"}:

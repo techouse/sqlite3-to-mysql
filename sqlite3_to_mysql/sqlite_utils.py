@@ -41,7 +41,8 @@ def unicase_compare(string_1: str, string_2: str) -> int:
 def convert_date(value) -> date:
     """Handle SQLite date conversion."""
     try:
-        return date.fromisoformat(value.decode())
+        decoded_value: str = value.decode().replace(" ", "T")
+        return date.fromisoformat(decoded_value)
     except ValueError as err:
         raise ValueError(f"DATE field contains {err}")  # pylint: disable=W0707
 

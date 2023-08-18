@@ -345,9 +345,9 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
             # set a standard default value for non-nullable columns            
             if not_null and not column["dflt_value"]:
                 if column_type == "DATE":
-                    column["dflt_value"] = "0000-00-00"
+                    column["dflt_value"] = "'0000-00-00'"
                 elif column_type == "DATETIME":
-                    column["dflt_value"] = "0000-00-00 00:00:00"
+                    column["dflt_value"] = "'0000-00-00 00:00:00'"
                 
             sql += " `{name}` {type} {notnull} {default} {auto_increment}, ".format(
                 name=mysql_safe_name,

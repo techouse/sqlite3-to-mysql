@@ -109,7 +109,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
             self._mysql_collation = "utf8mb4_general_ci"
 
         self._ignore_duplicate_keys = kwargs.get("ignore_duplicate_keys") or False
-        self._ignore_error = kwargs.get("ignore_error") or False
+        self._ignore_errors = kwargs.get("ignore_errors") or False
 
         self._use_fulltext = kwargs.get("use_fulltext") or False
 
@@ -374,7 +374,8 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                 safe_identifier_length(table_name),
                 err,
             )
-            raise
+            if not self._ignore_errors:
+                raise
 
     def _truncate_table(self, table_name: str) -> None:
         self._mysql_cur.execute(
@@ -538,7 +539,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                     ", ".join(safe_identifier_length(index_info["name"]) for index_info in index_infos),
                     safe_identifier_length(table_name),
                 )
-                if not self._ignore_error:
+                if not self._ignore_errors:
                     raise
             else:
                 self._logger.error(
@@ -547,7 +548,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                     safe_identifier_length(table_name),
                     err,
                 )
-                if not self._ignore_error:
+                if not self._ignore_errors:
                     raise
 
     def _add_foreign_keys(self, table_name: str) -> None:
@@ -596,7 +597,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                     safe_identifier_length(foreign_key["to"]),
                     err,
                 )
-                if not self._ignore_error:
+                if not self._ignore_errors:
                     raise
 
     def _transfer_table_data(self, sql: str, total_records: int = 0) -> None:
@@ -708,7 +709,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                             safe_identifier_length(table["name"]),
                             err,
                         )
-                        if not self._ignore_error:
+                        if not self._ignore_errors:
                             raise
 
                 # add indices

@@ -319,7 +319,16 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
         for row in rows:
             column: t.Dict[str, t.Any] = dict(row)
             mysql_safe_name: str = safe_identifier_length(column["name"])
-            column_type: str = self._translate_type_from_sqlite_to_mysql(column["type"])
+            try:
+                column_type: str = self._translate_type_from_sqlite_to_mysql(column["type"])
+            except ValueError:
+                self._logger.error(
+                    "Invalid column type %s in table %s",
+                    column["type"],
+                    safe_identifier_length(table_name),
+                )
+                if not self._ignore_errors:
+                    raise
 
             # The "hidden" value is 0 for visible columns, 1 for "hidden" columns,
             # 2 for computed virtual columns and 3 for computed stored columns.

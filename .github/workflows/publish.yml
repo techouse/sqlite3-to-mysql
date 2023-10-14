@@ -81,7 +81,7 @@ jobs:
         with:
           name: ${{ env.VERSION }}
           tag_name: ${{ github.ref }}
-          body: ${{ env.CHANGELOG_PATH }}
+          body_path: ${{ env.CHANGELOG_PATH }}
           files: |
             dist/*.whl
             dist/*.tar.gz

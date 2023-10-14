@@ -17,6 +17,7 @@ jobs:
       url: https://pypi.org/p/sqlite3-to-mysql
     permissions:
       id-token: write
+      contents: write
     steps:
       - uses: actions/checkout@v3
       - name: Compare package version with ref/tag

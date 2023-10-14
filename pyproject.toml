@@ -7,7 +7,7 @@ name = "sqlite3-to-mysql"
 description = "A simple Python tool to transfer data from SQLite 3 to MySQL"
 readme = "README.md"
 license = { text = "MIT" }
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 authors = [
     { name = "Klemen Tusar", email = "techouse@gmail.com" },
 ]
@@ -30,7 +30,6 @@ classifiers = [
     "Operating System :: OS Independent",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
@@ -70,7 +69,7 @@ sqlite3mysql = "sqlite3_to_mysql.cli:cli"
 
 [tool.black]
 line-length = 120
-target-version = ["py37", "py38", "py39", "py310", "py311"]
+target-version = ["py38", "py39", "py310", "py311"]
 include = '\.pyi?$'
 exclude = '''
 (
@@ -110,7 +109,7 @@ markers = [
 ]
 
 [tool.mypy]
-python_version = "3.7"
+python_version = "3.8"
 exclude = [
     "tests",
     "build",

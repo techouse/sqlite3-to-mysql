@@ -1,3 +1,7 @@
+# 2.1.0
+
+* [CHORE] drop support for Python 3.7
+
 # 2.0.3
 
 * [FIX] prevent AUTO_INCREMENT-ing fields from having a DEFAULT value

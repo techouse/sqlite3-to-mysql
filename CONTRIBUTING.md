@@ -13,7 +13,7 @@ interactions related to the project.
 
 Ensuring backward compatibility is an imperative requirement.
 
-Currently, the tool supports Python versions 3.8, 3.9, 3.10 and 3.11.
+Currently, the tool supports Python versions 3.8, 3.9, 3.10, 3.11, and 3.12.
 
 ## MySQL version support
 

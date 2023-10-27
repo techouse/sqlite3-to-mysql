@@ -85,7 +85,7 @@ from .mysql_utils import MYSQL_INSERT_METHOD, MYSQL_TEXT_COLUMN_TYPES, mysql_sup
 @click.option(
     "--mysql-charset",
     metavar="TEXT",
-    type=click.Choice(list(CharacterSet.get_supported()), case_sensitive=False),
+    type=click.Choice(list(CharacterSet().get_supported()), case_sensitive=False),
     default="utf8mb4",
     show_default=True,
     help="MySQL database and table character set",

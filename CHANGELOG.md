@@ -1,3 +1,8 @@
+# 2.1.1
+
+* [CHORE] add support for Python 3.12
+* [CHORE] bump minimum version of MySQL Connector/Python to 8.2.0
+
 # 2.1.0
 
 * [CHORE] drop support for Python 3.7

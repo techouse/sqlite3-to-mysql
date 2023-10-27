@@ -7,7 +7,7 @@ import platform
 import sqlite3
 import sys
 import typing as t
-from distutils.spawn import find_executable  # pylint: disable=W0402
+from shutil import which
 from subprocess import check_output
 
 import click
@@ -55,7 +55,7 @@ def _implementation() -> str:
 
 
 def _mysql_version() -> str:
-    if find_executable("mysql"):
+    if which("mysql") is not None:
         try:
             mysql_version: t.Union[str, bytes] = check_output(["mysql", "-V"])
             try:

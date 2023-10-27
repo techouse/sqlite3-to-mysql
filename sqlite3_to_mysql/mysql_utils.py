@@ -95,7 +95,7 @@ def mysql_supported_character_sets(charset: t.Optional[str] = None) -> t.Iterato
                 except KeyError:
                     continue
     else:
-        for charset in CharacterSet.get_supported():
+        for charset in CharacterSet().get_supported():
             for index, info in enumerate(MYSQL_CHARACTER_SETS):
                 if info is not None:
                     try:

@@ -34,16 +34,17 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: Implementation :: CPython",
     "Topic :: Database",
 ]
 dependencies = [
     "Click>=8.1.3",
-    "mysql-connector-python>=8.0.33",
+    "mysql-connector-python>=8.2.0",
     "pytimeparse2",
     "simplejson>=3.19.1",
     "tqdm>=4.65.0",
-    "packaging>=23.1",
+    "packaging",
     "tabulate",
     "Unidecode>=1.3.6",
     "typing_extensions",
@@ -69,7 +70,7 @@ sqlite3mysql = "sqlite3_to_mysql.cli:cli"
 
 [tool.black]
 line-length = 120
-target-version = ["py38", "py39", "py310", "py311"]
+target-version = ["py38", "py39", "py310", "py311", "py312"]
 include = '\.pyi?$'
 exclude = '''
 (

@@ -103,7 +103,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
         self._mysql_charset = kwargs.get("mysql_charset") or "utf8mb4"
 
         self._mysql_collation = (
-            kwargs.get("mysql_collation") or CharacterSet.get_default_collation(self._mysql_charset.lower())[0]
+            kwargs.get("mysql_collation") or CharacterSet().get_default_collation(self._mysql_charset.lower())[0]
         )
         if not kwargs.get("mysql_collation") and self._mysql_collation == "utf8mb4_0900_ai_ci":
             self._mysql_collation = "utf8mb4_general_ci"

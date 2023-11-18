@@ -16,7 +16,7 @@ jobs:
   analyze:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -432,7 +432,7 @@ jobs:
           MYSQL_ALLOW_EMPTY_PASSWORD: yes
         options: "--name=mysqld"
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.py }}
         uses: actions/setup-python@v4
         with:

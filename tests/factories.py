@@ -3,7 +3,10 @@ from os import environ
 
 import factory
 
-from . import models
+from . import faker_providers, models
+
+
+factory.Faker.add_provider(faker_providers.DateTimeProviders)
 
 
 class AuthorFactory(factory.Factory):
@@ -37,7 +40,7 @@ class MiscFactory(factory.Factory):
     boolean_field: factory.Faker = factory.Faker("boolean")
     char_field: factory.Faker = factory.Faker("text", max_nb_chars=255)
     date_field: factory.Faker = factory.Faker("date_this_decade")
-    date_time_field: factory.Faker = factory.Faker("date_time_this_century")
+    date_time_field: factory.Faker = factory.Faker("date_time_this_century_without_microseconds")
     decimal_field: factory.Faker = factory.Faker("pydecimal", left_digits=8, right_digits=2)
     float_field: factory.Faker = factory.Faker("pyfloat", left_digits=8, right_digits=4)
     integer_field: factory.Faker = factory.Faker("pyint", min_value=-(2**31), max_value=2**31 - 1)
@@ -53,9 +56,9 @@ class MiscFactory(factory.Factory):
     small_integer_field: factory.Faker = factory.Faker("pyint", min_value=-(2**15), max_value=2**15 - 1)
     string_field: factory.Faker = factory.Faker("text", max_nb_chars=255)
     text_field: factory.Faker = factory.Faker("text", max_nb_chars=1024)
-    time_field: factory.Faker = factory.Faker("time_object")
+    time_field: factory.Faker = factory.Faker("time_object_without_microseconds")
     varchar_field: factory.Faker = factory.Faker("text", max_nb_chars=255)
-    timestamp_field: factory.Faker = factory.Faker("date_time_this_century")
+    timestamp_field: factory.Faker = factory.Faker("date_time_this_century_without_microseconds")
     my_type_field: factory.Faker = factory.Faker("text", max_nb_chars=255)
 
 

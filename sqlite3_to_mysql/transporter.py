@@ -109,6 +109,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
             self._mysql_collation = "utf8mb4_general_ci"
 
         self._ignore_duplicate_keys = kwargs.get("ignore_duplicate_keys") or False
+        self._ignore_errors = kwargs.get("ignore_errors") or False
 
         self._use_fulltext = kwargs.get("use_fulltext") or False
 
@@ -251,7 +252,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
         full_column_type: str = column_type.upper()
         match: t.Optional[t.Match[str]] = self._valid_column_type(column_type)
         if not match:
-            raise ValueError("Invalid column_type!")
+            raise ValueError("Invalid column_type: " + column_type)
 
         data_type: str = match.group(0).upper()
         if data_type in {"TEXT", "CLOB", "STRING"}:
@@ -318,7 +319,16 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
         for row in rows:
             column: t.Dict[str, t.Any] = dict(row)
             mysql_safe_name: str = safe_identifier_length(column["name"])
-            column_type: str = self._translate_type_from_sqlite_to_mysql(column["type"])
+            try:
+                column_type: str = self._translate_type_from_sqlite_to_mysql(column["type"])
+            except ValueError:
+                self._logger.error(
+                    "Invalid column type %s in table %s",
+                    column["type"],
+                    safe_identifier_length(table_name),
+                )
+                if not self._ignore_errors:
+                    raise
 
             # The "hidden" value is 0 for visible columns, 1 for "hidden" columns,
             # 2 for computed virtual columns and 3 for computed stored columns.
@@ -330,13 +340,15 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                 column["pk"] > 0 and column_type.startswith(("INT", "BIGINT")) and not compound_primary_key
             )
 
+            not_null: bool = column["notnull"] or column["pk"]
+
             sql += " `{name}` {type} {notnull} {default} {auto_increment}, ".format(
                 name=mysql_safe_name,
                 type=column_type,
-                notnull="NOT NULL" if column["notnull"] or column["pk"] else "NULL",
+                notnull="NOT NULL" if not_null else "NULL",
                 auto_increment="AUTO_INCREMENT" if auto_increment else "",
-                default="DEFAULT " + column["dflt_value"]
-                if column["dflt_value"] and column_type not in MYSQL_COLUMN_TYPES_WITHOUT_DEFAULT and not auto_increment
+                default="DEFAULT " + column["dflt_value"] 
+                if not_null and column["dflt_value"] and not auto_increment
                 else "",
             )
 
@@ -373,7 +385,8 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                 safe_identifier_length(table_name),
                 err,
             )
-            raise
+            if not self._ignore_errors:
+                raise
 
     def _truncate_table(self, table_name: str) -> None:
         self._mysql_cur.execute(
@@ -537,7 +550,8 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                     ", ".join(safe_identifier_length(index_info["name"]) for index_info in index_infos),
                     safe_identifier_length(table_name),
                 )
-                raise
+                if not self._ignore_errors:
+                    raise
             else:
                 self._logger.error(
                     """MySQL failed adding index to column "%s" in table %s: %s""",
@@ -545,7 +559,8 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                     safe_identifier_length(table_name),
                     err,
                 )
-                raise
+                if not self._ignore_errors:
+                    raise
 
     def _add_foreign_keys(self, table_name: str) -> None:
         self._sqlite_cur.execute(f'PRAGMA foreign_key_list("{table_name}")')
@@ -593,7 +608,8 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                     safe_identifier_length(foreign_key["to"]),
                     err,
                 )
-                raise
+                if not self._ignore_errors:
+                    raise
 
     def _transfer_table_data(self, sql: str, total_records: int = 0) -> None:
         if self._chunk_size is not None and self._chunk_size > 0:
@@ -704,7 +720,8 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                             safe_identifier_length(table["name"]),
                             err,
                         )
-                        raise
+                        if not self._ignore_errors:
+                            raise
 
                 # add indices
                 self._add_indices(table["name"])

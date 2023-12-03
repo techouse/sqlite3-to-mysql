@@ -1,3 +1,7 @@
+# 2.1.2
+
+* [FIX] throw more comprehensive error messages when translating column types
+
 # 2.1.1
 
 * [CHORE] add support for Python 3.12

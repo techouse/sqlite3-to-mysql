@@ -39,7 +39,7 @@ class TestSQLite3toMySQL:
         with pytest.raises(ValueError) as excinfo:
             mocker.patch.object(proc, "_valid_column_type", return_value=False)
             proc._translate_type_from_sqlite_to_mysql("text")
-        assert "Invalid column_type!" in str(excinfo.value)
+        assert "is not a valid column_type!" in str(excinfo.value)
 
     @pytest.mark.parametrize(
         "mysql_integer_type, mysql_string_type, mysql_text_type",

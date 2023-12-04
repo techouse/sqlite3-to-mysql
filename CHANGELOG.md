@@ -1,3 +1,7 @@
+# 2.1.3
+
+* [FIX] add packaging as a dependency
+
 # 2.1.2
 
 * [FIX] throw more comprehensive error messages when translating column types

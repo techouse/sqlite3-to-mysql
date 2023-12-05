@@ -1,12 +1,11 @@
 name: Publish Docker image
 
 on:
-  workflow_dispatch:
-    branches:
-      - master
+  workflow_call:
 defaults:
   run:
     shell: bash
+permissions: read-all
 
 jobs:
   push_to_registry:
@@ -14,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: docker
-      url: https://pypi.org/p/sqlite3-to-mysql
+      url: https://hub.docker.com/r/klement/sqlite3-to-mysql
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
@@ -25,6 +24,11 @@ jobs:
           images: |
             klement/sqlite3-to-mysql
             ghcr.io/${{ github.repository }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}.{{patch}}
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
@@ -40,6 +44,5 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

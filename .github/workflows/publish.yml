@@ -90,3 +90,7 @@ jobs:
         run: |
           rm -rf dist
           rm -rf $CHANGELOG_PATH
+  docker:
+    needs: build-and-publish
+    uses: ./.github/workflows/docker.yml
+    secrets: inherit

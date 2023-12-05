@@ -1,3 +1,7 @@
+# 2.1.4
+
+* [CHORE] maintenance release to publish first containerized release
+
 # 2.1.3
 
 * [FIX] add packaging as a dependency

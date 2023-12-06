@@ -29,7 +29,6 @@ from sqlite3_to_mysql.sqlite_utils import (
     convert_timedelta,
     unicase_compare,
 )
-
 from .mysql_utils import (
     MYSQL_BLOB_COLUMN_TYPES,
     MYSQL_COLUMN_TYPES,
@@ -48,7 +47,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
     """Use this class to transfer an SQLite 3 database to MySQL."""
 
     COLUMN_PATTERN: t.Pattern[str] = re.compile(r"^[^(]+")
-    COLUMN_LENGTH_PATTERN: t.Pattern[str] = re.compile(r"\(\d+\)$")
+    COLUMN_LENGTH_PATTERN: t.Pattern[str] = re.compile(r"\(\d+\)")
 
     MYSQL_CONNECTOR_VERSION: version.Version = version.parse(mysql_connector_version_string)
 
@@ -249,11 +248,13 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
     def _translate_type_from_sqlite_to_mysql(self, column_type: str) -> str:
         """This could be optimized even further, however is seems adequate."""
         full_column_type: str = column_type.upper()
+        unsigned: bool = "UNSIGNED" in full_column_type
         match: t.Optional[t.Match[str]] = self._valid_column_type(column_type)
         if not match:
             raise ValueError(f'"{column_type}" is not a valid column_type!')
 
         data_type: str = match.group(0).upper()
+
         if data_type in {"TEXT", "CLOB", "STRING"}:
             return self._mysql_text_type
         if data_type in {"CHARACTER", "NCHAR", "NATIVE CHARACTER"}:
@@ -267,25 +268,36 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
             match = self._valid_column_type(self._mysql_string_type)
             if match:
                 return match.group(0).upper() + length
-        if data_type == "DOUBLE PRECISION":
-            return "DOUBLE"
         if data_type == "UNSIGNED BIG INT":
-            return "BIGINT" + self._column_type_length(column_type) + " UNSIGNED"
-        if data_type in {"INT1", "INT2"}:
-            return self._mysql_integer_type
-        if data_type in {"INTEGER", "INT"}:
+            return f"BIGINT{self._column_type_length(column_type)} UNSIGNED"
+        if data_type.startswith(("TINYINT", "INT1")):
+            print("length", self._column_type_length(column_type))
+            return f"TINYINT{self._column_type_length(column_type)}{' UNSIGNED' if unsigned else ''}"
+        if data_type.startswith(("SMALLINT", "INT2")):
+            return f"SMALLINT{self._column_type_length(column_type)}{' UNSIGNED' if unsigned else ''}"
+        if data_type.startswith(("MEDIUMINT", "INT3")):
+            return f"MEDIUMINT{self._column_type_length(column_type)}{' UNSIGNED' if unsigned else ''}"
+        if data_type.startswith("INT4"):
+            return f"INT{self._column_type_length(column_type)}{' UNSIGNED' if unsigned else ''}"
+        if data_type.startswith(("BIGINT", "INT8")):
+            return f"BIGINT{self._column_type_length(column_type)}{' UNSIGNED' if unsigned else ''}"
+        if data_type.startswith(("INT64", "NUMERIC")):
+            return f"BIGINT{self._column_type_length(column_type, 19)}{' UNSIGNED' if unsigned else ''}"
+        if data_type.startswith(("INTEGER", "INT")):
             length = self._column_type_length(column_type)
             if not length:
-                return self._mysql_integer_type
+                if "UNSIGNED" in self._mysql_integer_type:
+                    return self._mysql_integer_type
+                return f"{self._mysql_integer_type}{' UNSIGNED' if unsigned else ''}"
             match = self._valid_column_type(self._mysql_integer_type)
             if match:
-                if self._mysql_integer_type.endswith("UNSIGNED"):
-                    return match.group(0).upper() + length + " UNSIGNED"
-                return match.group(0).upper() + length
-        if data_type in {"INT64", "NUMERIC"}:
-            return "BIGINT" + self._column_type_length(column_type, 19)
+                if "UNSIGNED" in self._mysql_integer_type:
+                    return f"{match.group(0).upper()}{length} UNSIGNED"
+                return f"{match.group(0).upper()}{length}{' UNSIGNED' if unsigned else ''}"
         if data_type == "BOOLEAN":
             return "TINYINT(1)"
+        if data_type.startswith(("REAL", "DOUBLE", "FLOAT", "DECIMAL", "DEC", "FIXED")):
+            return full_column_type
         if data_type not in MYSQL_COLUMN_TYPES:
             return self._mysql_string_type
         return full_column_type

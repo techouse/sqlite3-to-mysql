@@ -103,12 +103,15 @@ class TestSQLite3toMySQL:
         assert proc._translate_type_from_sqlite_to_mysql(f"VARCHAR({length})") == re.sub(
             r"\d+", str(length), proc._mysql_string_type
         )
-        assert proc._translate_type_from_sqlite_to_mysql("DOUBLE PRECISION") == "DOUBLE"
+        assert proc._translate_type_from_sqlite_to_mysql("DOUBLE PRECISION") == "DOUBLE PRECISION"
         assert proc._translate_type_from_sqlite_to_mysql("UNSIGNED BIG INT") == "BIGINT UNSIGNED"
         length = faker.pyint(min_value=1000000000, max_value=99999999999999999999)
         assert proc._translate_type_from_sqlite_to_mysql(f"UNSIGNED BIG INT({length})") == f"BIGINT({length}) UNSIGNED"
-        assert proc._translate_type_from_sqlite_to_mysql("INT1") == proc._mysql_integer_type
-        assert proc._translate_type_from_sqlite_to_mysql("INT2") == proc._mysql_integer_type
+        assert proc._translate_type_from_sqlite_to_mysql("INT1") == "TINYINT"
+        assert proc._translate_type_from_sqlite_to_mysql("INT2") == "SMALLINT"
+        assert proc._translate_type_from_sqlite_to_mysql("INT3") == "MEDIUMINT"
+        assert proc._translate_type_from_sqlite_to_mysql("INT4") == "INT"
+        assert proc._translate_type_from_sqlite_to_mysql("INT8") == "BIGINT"
         length = faker.pyint(min_value=1, max_value=11)
         assert proc._translate_type_from_sqlite_to_mysql(f"INT({length})") == re.sub(
             r"\d+", str(length), proc._mysql_integer_type
@@ -121,6 +124,102 @@ class TestSQLite3toMySQL:
             proc._translate_type_from_sqlite_to_mysql(f"DECIMAL({precision},{scale})")
             == f"DECIMAL({precision},{scale})"
         )
+
+    @pytest.mark.parametrize(
+        "sqlite_data_type, mysql_data_type",
+        [
+            ("INT", "INT(11)"),
+            ("INT(5)", "INT(5)"),
+            ("INT UNSIGNED", "INT(11) UNSIGNED"),
+            ("INT(5) UNSIGNED", "INT(5) UNSIGNED"),
+            ("INTEGER", "INT(11)"),
+            ("TINYINT", "TINYINT"),
+            ("TINYINT UNSIGNED", "TINYINT UNSIGNED"),
+            ("TINYINT(4)", "TINYINT(4)"),
+            ("TINYINT(4) UNSIGNED", "TINYINT(4) UNSIGNED"),
+            ("SMALLINT", "SMALLINT"),
+            ("SMALLINT UNSIGNED", "SMALLINT UNSIGNED"),
+            ("SMALLINT(6)", "SMALLINT(6)"),
+            ("SMALLINT(6) UNSIGNED", "SMALLINT(6) UNSIGNED"),
+            ("MEDIUMINT", "MEDIUMINT"),
+            ("MEDIUMINT UNSIGNED", "MEDIUMINT UNSIGNED"),
+            ("MEDIUMINT(9)", "MEDIUMINT(9)"),
+            ("MEDIUMINT(9) UNSIGNED", "MEDIUMINT(9) UNSIGNED"),
+            ("BIGINT", "BIGINT"),
+            ("BIGINT UNSIGNED", "BIGINT UNSIGNED"),
+            ("BIGINT(20)", "BIGINT(20)"),
+            ("BIGINT(20) UNSIGNED", "BIGINT(20) UNSIGNED"),
+            ("UNSIGNED BIG INT", "BIGINT UNSIGNED"),
+            ("INT1", "TINYINT"),
+            ("INT1 UNSIGNED", "TINYINT UNSIGNED"),
+            ("INT1(3)", "TINYINT(3)"),
+            ("INT1(3) UNSIGNED", "TINYINT(3) UNSIGNED"),
+            ("INT2", "SMALLINT"),
+            ("INT2 UNSIGNED", "SMALLINT UNSIGNED"),
+            ("INT2(6)", "SMALLINT(6)"),
+            ("INT2(6) UNSIGNED", "SMALLINT(6) UNSIGNED"),
+            ("INT3", "MEDIUMINT"),
+            ("INT3 UNSIGNED", "MEDIUMINT UNSIGNED"),
+            ("INT3(9)", "MEDIUMINT(9)"),
+            ("INT3(9) UNSIGNED", "MEDIUMINT(9) UNSIGNED"),
+            ("INT4", "INT"),
+            ("INT4 UNSIGNED", "INT UNSIGNED"),
+            ("INT4(11)", "INT(11)"),
+            ("INT4(11) UNSIGNED", "INT(11) UNSIGNED"),
+            ("INT8", "BIGINT"),
+            ("INT8 UNSIGNED", "BIGINT UNSIGNED"),
+            ("INT8(19)", "BIGINT(19)"),
+            ("INT8(19) UNSIGNED", "BIGINT(19) UNSIGNED"),
+            ("NUMERIC", "BIGINT(19)"),
+            ("DOUBLE", "DOUBLE"),
+            ("DOUBLE UNSIGNED", "DOUBLE UNSIGNED"),
+            ("DOUBLE(10,5)", "DOUBLE(10,5)"),
+            ("DOUBLE(10,5) UNSIGNED", "DOUBLE(10,5) UNSIGNED"),
+            ("DOUBLE PRECISION", "DOUBLE PRECISION"),
+            ("DOUBLE PRECISION UNSIGNED", "DOUBLE PRECISION UNSIGNED"),
+            ("DOUBLE PRECISION(10,5)", "DOUBLE PRECISION(10,5)"),
+            ("DOUBLE PRECISION(10,5) UNSIGNED", "DOUBLE PRECISION(10,5) UNSIGNED"),
+            ("DECIMAL", "DECIMAL"),
+            ("DECIMAL UNSIGNED", "DECIMAL UNSIGNED"),
+            ("DECIMAL(10,5)", "DECIMAL(10,5)"),
+            ("DECIMAL(10,5) UNSIGNED", "DECIMAL(10,5) UNSIGNED"),
+            ("REAL", "REAL"),
+            ("REAL UNSIGNED", "REAL UNSIGNED"),
+            ("REAL(10,5)", "REAL(10,5)"),
+            ("REAL(10,5) UNSIGNED", "REAL(10,5) UNSIGNED"),
+            ("FLOAT", "FLOAT"),
+            ("FLOAT UNSIGNED", "FLOAT UNSIGNED"),
+            ("FLOAT(10,5)", "FLOAT(10,5)"),
+            ("FLOAT(10,5) UNSIGNED", "FLOAT(10,5) UNSIGNED"),
+            ("DEC", "DEC"),
+            ("DEC UNSIGNED", "DEC UNSIGNED"),
+            ("DEC(10,5)", "DEC(10,5)"),
+            ("DEC(10,5) UNSIGNED", "DEC(10,5) UNSIGNED"),
+            ("FIXED", "FIXED"),
+            ("FIXED UNSIGNED", "FIXED UNSIGNED"),
+            ("FIXED(10,5)", "FIXED(10,5)"),
+            ("FIXED(10,5) UNSIGNED", "FIXED(10,5) UNSIGNED"),
+            ("BOOLEAN", "TINYINT(1)"),
+            ("INT64", "BIGINT(19)"),
+        ],
+    )
+    def test_translate_type_from_sqlite_to_mysql_all_valid_numeric_columns_signed_unsigned(
+        self,
+        sqlite_database: str,
+        mysql_database: Engine,
+        mysql_credentials: MySQLCredentials,
+        sqlite_data_type: str,
+        mysql_data_type: str,
+    ) -> None:
+        proc: SQLite3toMySQL = SQLite3toMySQL(  # type: ignore
+            sqlite_file=sqlite_database,
+            mysql_user=mysql_credentials.user,
+            mysql_password=mysql_credentials.password,
+            mysql_host=mysql_credentials.host,
+            mysql_port=mysql_credentials.port,
+            mysql_database=mysql_credentials.database,
+        )
+        assert proc._translate_type_from_sqlite_to_mysql(sqlite_data_type) == mysql_data_type
 
     @pytest.mark.parametrize("quiet", [False, True])
     def test_create_database_connection_error(

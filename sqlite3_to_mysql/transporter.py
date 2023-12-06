@@ -29,6 +29,7 @@ from sqlite3_to_mysql.sqlite_utils import (
     convert_timedelta,
     unicase_compare,
 )
+
 from .mysql_utils import (
     MYSQL_BLOB_COLUMN_TYPES,
     MYSQL_COLUMN_TYPES,

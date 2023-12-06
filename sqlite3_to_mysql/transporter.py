@@ -48,6 +48,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
 
     COLUMN_PATTERN: t.Pattern[str] = re.compile(r"^[^(]+")
     COLUMN_LENGTH_PATTERN: t.Pattern[str] = re.compile(r"\(\d+\)")
+    COLUMN_UNSIGNED_PATTERN: t.Pattern[str] = re.compile(r"\bUNSIGNED\b", re.IGNORECASE)
 
     MYSQL_CONNECTOR_VERSION: version.Version = version.parse(mysql_connector_version_string)
 
@@ -248,7 +249,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
     def _translate_type_from_sqlite_to_mysql(self, column_type: str) -> str:
         """This could be optimized even further, however is seems adequate."""
         full_column_type: str = column_type.upper()
-        unsigned: bool = "UNSIGNED" in full_column_type
+        unsigned: bool = self.COLUMN_UNSIGNED_PATTERN.search(full_column_type) is not None
         match: t.Optional[t.Match[str]] = self._valid_column_type(column_type)
         if not match:
             raise ValueError(f'"{column_type}" is not a valid column_type!')

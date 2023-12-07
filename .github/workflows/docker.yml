@@ -11,6 +11,9 @@ jobs:
   push_to_registry:
     name: Push Docker image to Docker Hub
     runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
     environment:
       name: docker
       url: https://hub.docker.com/r/klement/sqlite3-to-mysql

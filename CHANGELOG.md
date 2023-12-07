@@ -1,6 +1,7 @@
 # 2.1.5
 
-* [FIX] maintenance release to publish first containerized release again
+* [FEAT] add support for UNSIGNED numeric data type conversion
+* [FIX] fix invalid column_type error message
 
 # 2.1.4
 

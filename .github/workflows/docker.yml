@@ -5,6 +5,7 @@ on:
 defaults:
   run:
     shell: bash
+permissions: read-all
 
 jobs:
   push_to_registry:

@@ -1,3 +1,7 @@
+# 2.1.6
+
+* [FEAT] build both linux/amd64 and linux/arm64 Docker images
+
 # 2.1.5
 
 * [FEAT] add support for UNSIGNED numeric data type conversion

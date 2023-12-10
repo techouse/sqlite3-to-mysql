@@ -15,7 +15,7 @@ jobs:
       contents: read
     environment:
       name: docker
-      url: https://hub.docker.com/r/klement/sqlite3-to-mysql
+      url: https://hub.docker.com/r/${{ vars.DOCKERHUB_REPOSITORY }}
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
@@ -28,7 +28,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            klement/sqlite3-to-mysql
+            ${{ vars.DOCKERHUB_REPOSITORY }}
             ghcr.io/${{ github.repository }}
           tags: |
             type=ref,event=branch

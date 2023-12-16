@@ -78,7 +78,7 @@ Options:
   --help                          Show this message and exit.
 ```
 
-#### Docker image usage
+#### Docker
 
 If you don't want to install the tool on your system, you can use the Docker image instead.
 
@@ -99,3 +99,13 @@ Any files Docker would write to the current working directory are written to the
 run. Note that you have to also use a
 [special hostname](https://docs.docker.com/desktop/networking/#use-cases-and-workarounds-for-all-platforms) `host.docker.internal`
 to access your host machine from inside the Docker container.
+
+#### Homebrew
+
+If you're on macOS, you can install the tool using [Homebrew](https://brew.sh/).
+
+```bash
+brew tap techouse/sqlite3-to-mysql
+brew install sqlite3-to-mysql
+sqlite3mysql --help
+```

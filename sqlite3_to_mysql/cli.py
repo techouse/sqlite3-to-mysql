@@ -2,18 +2,28 @@
 import os
 import sys
 import typing as t
+from datetime import datetime
 
 import click
 from mysql.connector import CharacterSet
 from tabulate import tabulate
 
 from . import SQLite3toMySQL
+from . import __version__ as package_version
 from .click_utils import OptionEatAll, prompt_password
 from .debug_info import info
 from .mysql_utils import MYSQL_INSERT_METHOD, MYSQL_TEXT_COLUMN_TYPES, mysql_supported_character_sets
 
 
-@click.command()
+_copyright_header: str = f"sqlite3mysql version {package_version} Copyright (c) 2018-{datetime.now().year} Klemen Tusar"
+
+
+@click.command(
+    name="sqlite3mysql",
+    help=_copyright_header,
+    no_args_is_help=True,
+    epilog="For more information, visit https://github.com/techouse/sqlite3-to-mysql",
+)
 @click.option(
     "-f",
     "--sqlite-file",
@@ -140,6 +150,7 @@ def cli(
     debug: bool,
 ) -> None:
     """Transfer SQLite to MySQL using the provided CLI options."""
+    click.echo(_copyright_header)
     try:
         if mysql_collation:
             charset_collations: t.Tuple[str, ...] = tuple(

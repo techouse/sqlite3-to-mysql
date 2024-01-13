@@ -1,4 +1,5 @@
 import typing as t
+from datetime import datetime
 from random import choice, sample
 
 import pytest
@@ -10,6 +11,7 @@ from sqlalchemy import create_engine, inspect
 from sqlalchemy.engine import Engine, Inspector
 
 from sqlite3_to_mysql import SQLite3toMySQL
+from sqlite3_to_mysql import __version__ as package_version
 from sqlite3_to_mysql.cli import cli as sqlite3mysql
 from tests.conftest import MySQLCredentials
 
@@ -19,12 +21,12 @@ from tests.conftest import MySQLCredentials
 class TestSQLite3toMySQL:
     def test_no_arguments(self, cli_runner: CliRunner, mysql_database: Engine) -> None:
         result: Result = cli_runner.invoke(sqlite3mysql)
-        assert result.exit_code > 0
-        assert any(
+        assert result.exit_code == 0
+        assert all(
             message in result.output
             for message in {
-                'Error: Missing option "-f" / "--sqlite-file"',
-                "Error: Missing option '-f' / '--sqlite-file'",
+                f"Usage: {sqlite3mysql.name} [OPTIONS]",
+                f"{sqlite3mysql.name} version {package_version} Copyright (c) 2018-{datetime.now().year} Klemen Tusar",
             }
         )
 
@@ -538,5 +540,9 @@ class TestSQLite3toMySQL:
             sqlite3mysql,
             arguments,
         )
+        print(result.output)
         assert result.exit_code == 0
-        assert result.output == ""
+        assert (
+            f"{sqlite3mysql.name} version {package_version} Copyright (c) 2018-{datetime.now().year} Klemen Tusar"
+            in result.output
+        )

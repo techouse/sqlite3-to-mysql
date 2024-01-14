@@ -1,3 +1,7 @@
+# 2.1.7
+
+* [FEAT] add copyright header
+
 # 2.1.6
 
 * [FEAT] build both linux/amd64 and linux/arm64 Docker images

@@ -31,6 +31,14 @@ jobs:
             exit 1
           fi
           echo "VERSION=$VERSION" >> $GITHUB_ENV
+      - name: Check CHANGELOG.md
+        id: check_changelog
+        run: |
+          set -e
+          if ! grep -q "# $VERSION" CHANGELOG.md; then
+            echo "CHANGELOG.md does not contain a section for $VERSION"
+            exit 1
+          fi
       - name: Set up Python
         id: setup_python
         uses: actions/setup-python@v4

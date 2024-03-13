@@ -26,6 +26,7 @@ from sqlite3_to_mysql.sqlite_utils import (
     check_sqlite_table_xinfo_support,
     convert_date,
     convert_decimal,
+    convert_epoch,
     convert_timedelta,
     unicase_compare,
 )
@@ -119,6 +120,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
         sqlite3.register_converter("DECIMAL", convert_decimal)
         sqlite3.register_adapter(timedelta, adapt_timedelta)
         sqlite3.register_converter("DATE", convert_date)
+        sqlite3.register_converter("DATETIME", convert_epoch)
         sqlite3.register_converter("TIME", convert_timedelta)
 
         self._sqlite = sqlite3.connect(realpath(self._sqlite_file), detect_types=sqlite3.PARSE_DECLTYPES)

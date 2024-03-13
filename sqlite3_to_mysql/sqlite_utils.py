@@ -1,6 +1,6 @@
 """SQLite adapters and converters for unsupported data types."""
 
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 
 from packaging import version
@@ -45,6 +45,12 @@ def convert_date(value) -> date:
     except ValueError as err:
         raise ValueError(f"DATE field contains {err}")  # pylint: disable=W0707
 
+def convert_epoch(value):
+  """Convert unix epoch time to datetime."""
+  _intval = int(value)
+  if _intval >= pow(2,31):  #convert 64 bit epoch date to 32 bit
+      return datetime.fromtimestamp(int(_intval / 1000), timezone.utc)
+  return datetime.fromtimestamp(_intval, timezone.utc)
 
 def check_sqlite_table_xinfo_support(version_string: str) -> bool:
     """Check for SQLite table_xinfo support."""

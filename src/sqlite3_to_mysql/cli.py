@@ -1,4 +1,5 @@
 """The command line interface of SQLite3toMySQL."""
+
 import os
 import sys
 import typing as t

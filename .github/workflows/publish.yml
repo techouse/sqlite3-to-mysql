@@ -24,10 +24,10 @@ jobs:
         id: compare
         run: |
           set -e
-          VERSION=$(awk -F'"' '/__version__/ {print $2}' sqlite3_to_mysql/__init__.py)
+          VERSION=$(awk -F'"' '/__version__/ {print $2}' src/sqlite3_to_mysql/__init__.py)
           TAG=${GITHUB_REF_NAME#v}
           if [[ "$VERSION" != "$TAG" ]]; then
-            echo "Version in sqlite3_to_mysql/__version__.py ($VERSION) does not match tag ($TAG)"
+            echo "Version in src/sqlite3_to_mysql/__version__.py ($VERSION) does not match tag ($TAG)"
             exit 1
           fi
           echo "VERSION=$VERSION" >> $GITHUB_ENV

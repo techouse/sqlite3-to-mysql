@@ -313,14 +313,14 @@ class TestSQLite3toMySQL:
         mysql_inspect: Inspector = inspect(mysql_engine)
         mysql_tables: t.List[str] = mysql_inspect.get_table_names()
 
-        mysql_connector_connection: t.Union[
-            PooledMySQLConnection, MySQLConnection, CMySQLConnection
-        ] = mysql.connector.connect(
-            user=mysql_credentials.user,
-            password=mysql_credentials.password,
-            host=mysql_credentials.host,
-            port=mysql_credentials.port,
-            database=mysql_credentials.database,
+        mysql_connector_connection: t.Union[PooledMySQLConnection, MySQLConnection, CMySQLConnection] = (
+            mysql.connector.connect(
+                user=mysql_credentials.user,
+                password=mysql_credentials.password,
+                host=mysql_credentials.host,
+                port=mysql_credentials.port,
+                database=mysql_credentials.database,
+            )
         )
         server_version: t.Tuple[int, ...] = mysql_connector_connection.get_server_version()
 
@@ -370,9 +370,7 @@ class TestSQLite3toMySQL:
                 AND i.CONSTRAINT_TYPE = :constraint_type
             """.format(
                     # MySQL 8.0.19 still works with "LEFT JOIN" everything above requires "JOIN"
-                    JOIN="JOIN"
-                    if (server_version[0] == 8 and server_version[2] > 19)
-                    else "LEFT JOIN"
+                    JOIN="JOIN" if (server_version[0] == 8 and server_version[2] > 19) else "LEFT JOIN"
                 )
             ).bindparams(
                 table_schema=mysql_credentials.database,

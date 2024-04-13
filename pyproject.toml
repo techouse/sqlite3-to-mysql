@@ -57,11 +57,11 @@ Sponsor = "https://github.com/sponsors/techouse"
 PayPal = "https://paypal.me/ktusar"
 
 [tool.hatch.version]
-path = "sqlite3_to_mysql/__init__.py"
+path = "src/sqlite3_to_mysql/__init__.py"
 
 [tool.hatch.build.targets.sdist]
 include = [
-    "sqlite3_to_mysql",
+    "src",
     "tests",
     "README.md",
     "CHANGELOG.md",
@@ -103,6 +103,7 @@ known_first_party = "sqlite3_to_mysql"
 skip_gitignore = true
 
 [tool.pytest.ini_options]
+pythonpath = ["src"]
 testpaths = ["tests"]
 norecursedirs = [".*", "venv", "env", "*.egg", "dist", "build"]
 minversion = "7.3.1"
@@ -115,6 +116,7 @@ markers = [
 ]
 
 [tool.mypy]
+mypy_path = "src"
 python_version = "3.8"
 exclude = [
     "tests",

@@ -1,3 +1,7 @@
+# 2.1.8
+
+* [CHORE] migrate package from flat layout to src layout
+
 # 2.1.7
 
 * [FEAT] add copyright header

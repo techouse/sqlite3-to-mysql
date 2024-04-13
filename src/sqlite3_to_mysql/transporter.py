@@ -273,7 +273,6 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
         if data_type == "UNSIGNED BIG INT":
             return f"BIGINT{self._column_type_length(column_type)} UNSIGNED"
         if data_type.startswith(("TINYINT", "INT1")):
-            print("length", self._column_type_length(column_type))
             return f"TINYINT{self._column_type_length(column_type)}{' UNSIGNED' if unsigned else ''}"
         if data_type.startswith(("SMALLINT", "INT2")):
             return f"SMALLINT{self._column_type_length(column_type)}{' UNSIGNED' if unsigned else ''}"
@@ -349,9 +348,13 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                 type=column_type,
                 notnull="NOT NULL" if column["notnull"] or column["pk"] else "NULL",
                 auto_increment="AUTO_INCREMENT" if auto_increment else "",
-                default="DEFAULT " + column["dflt_value"]
-                if column["dflt_value"] and column_type not in MYSQL_COLUMN_TYPES_WITHOUT_DEFAULT and not auto_increment
-                else "",
+                default=(
+                    "DEFAULT " + column["dflt_value"]
+                    if column["dflt_value"]
+                    and column_type not in MYSQL_COLUMN_TYPES_WITHOUT_DEFAULT
+                    and not auto_increment
+                    else ""
+                ),
             )
 
             if column["pk"] > 0:
@@ -438,9 +441,11 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                     index_columns = ", ".join(
                         "`{column}`{length}".format(
                             column=safe_identifier_length(index_info["name"]),
-                            length="(255)"
-                            if table_columns[index_info["name"]].upper() in MYSQL_TEXT_COLUMN_TYPES_WITH_JSON
-                            else "",
+                            length=(
+                                "(255)"
+                                if table_columns[index_info["name"]].upper() in MYSQL_TEXT_COLUMN_TYPES_WITH_JSON
+                                else ""
+                            ),
                         )
                         for index_info in index_infos
                     )
@@ -478,9 +483,11 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                         index_columns=", ".join(
                             "`{column}`{length}".format(
                                 column=safe_identifier_length(index_info["name"]),
-                                length="(255)"
-                                if table_columns[index_info["name"]].upper() in MYSQL_TEXT_COLUMN_TYPES_WITH_JSON
-                                else "",
+                                length=(
+                                    "(255)"
+                                    if table_columns[index_info["name"]].upper() in MYSQL_TEXT_COLUMN_TYPES_WITH_JSON
+                                    else ""
+                                ),
                             )
                             for index_info in index_infos
                         ),
@@ -498,16 +505,20 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
         index_infos: t.Tuple[t.Dict[str, t.Any], ...],
         index_iteration: int = 0,
     ) -> None:
-        sql: str = """
+        sql: str = (
+            """
             ALTER TABLE `{table}`
             ADD {index_type} `{name}`({columns})
         """.format(
-            table=safe_identifier_length(table_name),
-            index_type=index_type,
-            name=safe_identifier_length(index["name"])
-            if index_iteration == 0
-            else f'{safe_identifier_length(index["name"], max_length=60)}_{index_iteration}',
-            columns=index_columns,
+                table=safe_identifier_length(table_name),
+                index_type=index_type,
+                name=(
+                    safe_identifier_length(index["name"])
+                    if index_iteration == 0
+                    else f'{safe_identifier_length(index["name"], max_length=60)}_{index_iteration}'
+                ),
+                columns=index_columns,
+            )
         )
 
         try:
@@ -580,12 +591,16 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                 column=safe_identifier_length(foreign_key["from"]),
                 ref_table=safe_identifier_length(foreign_key["table"]),
                 ref_column=safe_identifier_length(foreign_key["to"]),
-                on_delete=foreign_key["on_delete"].upper()
-                if foreign_key["on_delete"].upper() != "SET DEFAULT"
-                else "NO ACTION",
-                on_update=foreign_key["on_update"].upper()
-                if foreign_key["on_update"].upper() != "SET DEFAULT"
-                else "NO ACTION",
+                on_delete=(
+                    foreign_key["on_delete"].upper()
+                    if foreign_key["on_delete"].upper() != "SET DEFAULT"
+                    else "NO ACTION"
+                ),
+                on_update=(
+                    foreign_key["on_update"].upper()
+                    if foreign_key["on_update"].upper() != "SET DEFAULT"
+                    else "NO ACTION"
+                ),
             )
 
             try:
@@ -686,18 +701,20 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                         safe_identifier_length(column[0]) for column in self._sqlite_cur.description
                     ]
                     if self._mysql_insert_method.upper() == "UPDATE":
-                        sql: str = """
+                        sql: str = (
+                            """
                             INSERT
                             INTO `{table}` ({fields})
                             VALUES ({placeholders}) AS `__new__`
                             ON DUPLICATE KEY UPDATE {field_updates}
                         """.format(
-                            table=safe_identifier_length(table["name"]),
-                            fields=("`{}`, " * len(columns)).rstrip(" ,").format(*columns),
-                            placeholders=("%s, " * len(columns)).rstrip(" ,"),
-                            field_updates=("`{}`=`__new__`.`{}`, " * len(columns))
-                            .rstrip(" ,")
-                            .format(*list(chain.from_iterable((column, column) for column in columns))),
+                                table=safe_identifier_length(table["name"]),
+                                fields=("`{}`, " * len(columns)).rstrip(" ,").format(*columns),
+                                placeholders=("%s, " * len(columns)).rstrip(" ,"),
+                                field_updates=("`{}`=`__new__`.`{}`, " * len(columns))
+                                .rstrip(" ,")
+                                .format(*list(chain.from_iterable((column, column) for column in columns))),
+                            )
                         )
                     else:
                         sql = """

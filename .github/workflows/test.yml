@@ -508,6 +508,8 @@ jobs:
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: techouse/sqlite3-to-mysql
           files: ./coverage.xml
           env_vars: OS,PYTHON
           verbose: true

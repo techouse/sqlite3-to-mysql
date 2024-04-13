@@ -1,4 +1,5 @@
 """Types for sqlite3-to-mysql."""
+
 import os
 import typing as t
 from logging import Logger

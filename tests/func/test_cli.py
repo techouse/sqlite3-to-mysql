@@ -540,7 +540,6 @@ class TestSQLite3toMySQL:
             sqlite3mysql,
             arguments,
         )
-        print(result.output)
         assert result.exit_code == 0
         assert (
             f"{sqlite3mysql.name} version {package_version} Copyright (c) 2018-{datetime.now().year} Klemen Tusar"

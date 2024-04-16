@@ -295,7 +295,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                 if "UNSIGNED" in self._mysql_integer_type:
                     return f"{match.group(0).upper()}{length} UNSIGNED"
                 return f"{match.group(0).upper()}{length}{' UNSIGNED' if unsigned else ''}"
-        if data_type == "BOOLEAN":
+        if data_type in {"BOOL", "BOOLEAN"}:
             return "TINYINT(1)"
         if data_type.startswith(("REAL", "DOUBLE", "FLOAT", "DECIMAL", "DEC", "FIXED")):
             return full_column_type

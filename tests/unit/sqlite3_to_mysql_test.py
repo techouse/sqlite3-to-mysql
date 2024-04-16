@@ -72,7 +72,7 @@ class TestSQLite3toMySQL:
             mysql_text_type=mysql_text_type,
         )
 
-        for column in sqlite_column_types + ("INT64",):
+        for column in sqlite_column_types + ("INT64", "BOOL",):
             if column in {"Insert", "insert", "dialect"}:
                 continue
             elif column == "VARCHAR":
@@ -83,7 +83,7 @@ class TestSQLite3toMySQL:
                 assert proc._translate_type_from_sqlite_to_mysql(column) == "BIGINT(19)"
             elif column in {"TINYTEXT", "TEXT", "MEDIUMTEXT", "LONGTEXT"}:
                 assert proc._translate_type_from_sqlite_to_mysql(column) == proc._mysql_text_type
-            elif column == "BOOLEAN":
+            elif column in {"BOOL", "BOOLEAN"}:
                 assert proc._translate_type_from_sqlite_to_mysql(column) == "TINYINT(1)"
             else:
                 assert proc._translate_type_from_sqlite_to_mysql(column) == column

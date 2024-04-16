@@ -451,11 +451,11 @@ jobs:
       - name: Set up MySQL
         env:
           DB: ${{ matrix.db }}
-          MYSQL_USER: ${{ secrets.MYSQL_USER }}
-          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
-          MYSQL_DATABASE: ${{ vars.MYSQL_DATABASE }}
-          MYSQL_HOST: ${{ vars.MYSQL_HOST }}
-          MYSQL_PORT: ${{ vars.MYSQL_PORT }}
+          MYSQL_USER: tester
+          MYSQL_PASSWORD: testpass
+          MYSQL_DATABASE: test_db
+          MYSQL_HOST: 0.0.0.0
+          MYSQL_PORT: 3306
         run: |
           set -e
           while :
@@ -487,11 +487,11 @@ jobs:
           mysql -h127.0.0.1 -uroot -e "create user ${MYSQL_USER}@localhost identified $WITH_PLUGIN by '${MYSQL_PASSWORD}'; grant all on ${MYSQL_DATABASE}.* to ${MYSQL_USER}@localhost;"
       - name: Create db_credentials.json
         env:
-          MYSQL_USER: ${{ secrets.MYSQL_USER }}
-          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
-          MYSQL_DATABASE: ${{ vars.MYSQL_DATABASE }}
-          MYSQL_HOST: ${{ vars.MYSQL_HOST }}
-          MYSQL_PORT: ${{ vars.MYSQL_PORT }}
+          MYSQL_USER: tester
+          MYSQL_PASSWORD: testpass
+          MYSQL_DATABASE: test_db
+          MYSQL_HOST: 0.0.0.0
+          MYSQL_PORT: 3306
         run: |
           set -e
           jq -n \
@@ -507,6 +507,7 @@ jobs:
         run: tox
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
+        continue-on-error: true
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: techouse/sqlite3-to-mysql

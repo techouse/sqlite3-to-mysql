@@ -199,6 +199,7 @@ class TestSQLite3toMySQL:
             ("FIXED UNSIGNED", "FIXED UNSIGNED"),
             ("FIXED(10,5)", "FIXED(10,5)"),
             ("FIXED(10,5) UNSIGNED", "FIXED(10,5) UNSIGNED"),
+            ("BOOL", "TINYINT(1)"),
             ("BOOLEAN", "TINYINT(1)"),
             ("INT64", "BIGINT(19)"),
         ],

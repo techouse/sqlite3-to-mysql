@@ -1,3 +1,7 @@
+# 2.1.9
+
+* [FEAT] add conversion of SQLite custom `BOOL` data type to MySQL `TINYINT(1)`
+
 # 2.1.8
 
 * [CHORE] migrate package from flat layout to src layout

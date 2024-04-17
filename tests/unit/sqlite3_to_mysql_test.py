@@ -72,7 +72,7 @@ class TestSQLite3toMySQL:
             mysql_text_type=mysql_text_type,
         )
 
-        for column in sqlite_column_types + ("INT64", "BOOL",):
+        for column in sqlite_column_types + ("INT64", "BOOL"):
             if column in {"Insert", "insert", "dialect"}:
                 continue
             elif column == "VARCHAR":

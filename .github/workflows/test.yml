@@ -7,6 +7,7 @@ on:
   pull_request:
     branches:
       - master
+  workflow_call:
 defaults:
   run:
     shell: bash
@@ -14,6 +15,7 @@ permissions: read-all
 
 jobs:
   analyze:
+    name: "Analyze"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -29,6 +31,7 @@ jobs:
         run: tox -e linters
   test:
     needs: analyze
+    name: "Test"
     runs-on: ubuntu-latest
     strategy:
       matrix:

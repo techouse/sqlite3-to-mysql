@@ -23,7 +23,7 @@ Basic Usage
    sqlite3mysql -f path/to/foo.sqlite -d foo_db -u foo_user -p
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 2
    :caption: Contents:
 
    README

@@ -10,7 +10,12 @@ defaults:
 permissions: read-all
 
 jobs:
-  build-and-publish:
+  test:
+    uses: ./.github/workflows/test.yml
+    secrets: inherit
+  publish:
+    needs: test
+    name: "Publish"
     runs-on: ubuntu-latest
     environment:
       name: pypi
@@ -99,9 +104,15 @@ jobs:
           rm -rf dist
           rm -rf $CHANGELOG_PATH
   docker:
-    needs: build-and-publish
+    needs: [ test, publish ]
     permissions:
       packages: write
       contents: read
     uses: ./.github/workflows/docker.yml
+    secrets: inherit
+  docs:
+    uses: ./.github/workflows/docs.yml
+    needs: [ test, publish ]
+    permissions:
+      contents: write
     secrets: inherit

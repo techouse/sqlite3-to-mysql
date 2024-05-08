@@ -1,8 +1,7 @@
 SQLite3 to MySQL
 ================
 
-A simple Python tool to transfer data from SQLite 3 to MySQL.
--------------------------------------------------------------
+A simple Python tool to transfer data from SQLite 3 to MySQL
 
 |PyPI| |PyPI - Downloads| |PyPI - Python Version| |MySQL Support| |MariaDB Support|
 |GitHub license| |Contributor Covenant| |PyPI - Format| |Code style: black|

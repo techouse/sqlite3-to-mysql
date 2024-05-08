@@ -1,14 +1,14 @@
 Usage
 -----
 
+Options
+^^^^^^^
+
 The command line options for the ``sqlite3mysql`` tool are as follows:
 
 .. code-block:: bash
 
    sqlite3mysql [OPTIONS]
-
-Options
-^^^^^^^
 
 Required Options
 """"""""""""""""

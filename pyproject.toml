@@ -51,6 +51,8 @@ dependencies = [
 dynamic = ["version"]
 
 [project.urls]
+Homepage = "https://techouse.github.io/sqlite3-to-mysql/"
+Documentation = "https://techouse.github.io/sqlite3-to-mysql/"
 Source = "https://github.com/techouse/sqlite3-to-mysql"
 Changelog = "https://github.com/techouse/sqlite3-to-mysql/blob/master/CHANGELOG.md"
 Sponsor = "https://github.com/sponsors/techouse"

@@ -1,3 +1,7 @@
+# 2.1.10
+
+* [CHORE] add Sphinx documentation
+
 # 2.1.9
 
 * [FEAT] add conversion of SQLite custom `BOOL` data type to MySQL `TINYINT(1)`

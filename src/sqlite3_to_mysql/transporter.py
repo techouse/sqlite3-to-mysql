@@ -130,6 +130,9 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
         self._sqlite_version = self._get_sqlite_version()
         self._sqlite_table_xinfo_support = check_sqlite_table_xinfo_support(self._sqlite_version)
 
+        self._mysql_create_tables = kwargs.get("mysql_create_tables") or True
+        self._mysql_transfer_data = kwargs.get("mysql_transfer_data") or True
+
         try:
             _mysql_connection = mysql.connector.connect(
                 user=self._mysql_user,
@@ -677,15 +680,19 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                 transfer_rowid: bool = self._with_rowid and self._sqlite_table_has_rowid(table["name"])
 
                 # create the table
-                self._create_table(table["name"], transfer_rowid=transfer_rowid)
+                if self._mysql_create_tables:
+                    self._create_table(table["name"], transfer_rowid=transfer_rowid)
 
                 # truncate the table on request
                 if self._mysql_truncate_tables:
                     self._truncate_table(table["name"])
 
                 # get the size of the data
-                self._sqlite_cur.execute(f'SELECT COUNT(*) AS total_records FROM "{table["name"]}"')
-                total_records = int(dict(self._sqlite_cur.fetchone())["total_records"])
+                if self._mysql_transfer_data:
+                    self._sqlite_cur.execute(f'SELECT COUNT(*) AS total_records FROM "{table["name"]}"')
+                    total_records = int(dict(self._sqlite_cur.fetchone())["total_records"])
+                else:
+                    total_records = 0
 
                 # only continue if there is anything to transfer
                 if total_records > 0:

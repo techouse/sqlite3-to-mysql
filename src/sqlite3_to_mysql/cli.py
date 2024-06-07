@@ -120,6 +120,8 @@ _copyright_header: str = f"sqlite3mysql version {package_version} Copyright (c) 
 )
 @click.option("--with-rowid", is_flag=True, help="Transfer rowid columns.")
 @click.option("-c", "--chunk", type=int, default=None, help="Chunk reading/writing SQL records")
+@click.option("-K", "--mysql-skip-create-table", is_flag=True, help="Skip creating tables in MySQL.")
+@click.option("-J", "--mysql-skip-transfer-data", is_flag=True, help="Skip transferring data to MySQL.")
 @click.option("-l", "--log-file", type=click.Path(), help="Log file")
 @click.option("-q", "--quiet", is_flag=True, help="Quiet. Display only errors.")
 @click.option("--debug", is_flag=True, help="Debug mode. Will throw exceptions.")
@@ -146,6 +148,8 @@ def cli(
     use_fulltext: bool,
     with_rowid: bool,
     chunk: int,
+    mysql_skip_create_table: bool,
+    mysql_skip_transfer_data: bool,
     log_file: t.Union[str, "os.PathLike[t.Any]"],
     quiet: bool,
     debug: bool,
@@ -159,8 +163,16 @@ def cli(
             )
             if mysql_collation not in set(charset_collations):
                 raise click.ClickException(
-                    f"""Error: Invalid value for '--collation' of charset '{mysql_charset}': '{mysql_collation}' is not one of {"'" + "', '".join(charset_collations) + "'"}."""
+                    f"Error: Invalid value for '--collation' of charset '{mysql_charset}': '{mysql_collation}' "
+                    f"""is not one of {"'" + "', '".join(charset_collations) + "'"}."""
                 )
+
+        # check if both mysql_skip_create_table and mysql_skip_transfer_data are True
+        if mysql_skip_create_table and mysql_skip_transfer_data:
+            raise click.ClickException(
+                "Error: Both -K/--mysql-skip-create-table and -J/--mysql-skip-transfer-data are set. "
+                "There is nothing to do. Exiting..."
+            )
 
         SQLite3toMySQL(
             sqlite_file=sqlite_file,
@@ -183,6 +195,8 @@ def cli(
             use_fulltext=use_fulltext,
             with_rowid=with_rowid,
             chunk=chunk,
+            mysql_create_tables=not mysql_skip_create_table,
+            mysql_transfer_data=not mysql_skip_transfer_data,
             log_file=log_file,
             quiet=quiet,
         ).transfer()

@@ -69,39 +69,39 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
 
         self._mysql_password = str(kwargs.get("mysql_password")) or None
 
-        self._mysql_host = kwargs.get("mysql_host") or "localhost"
+        self._mysql_host = kwargs.get("mysql_host", "localhost")
 
-        self._mysql_port = kwargs.get("mysql_port") or 3306
+        self._mysql_port = kwargs.get("mysql_port", 3306)
 
-        self._sqlite_tables = kwargs.get("sqlite_tables") or tuple()
+        self._sqlite_tables = kwargs.get("sqlite_tables", tuple())
 
-        self._without_foreign_keys = len(self._sqlite_tables) > 0 or kwargs.get("without_foreign_keys") or False
+        self._without_foreign_keys = len(self._sqlite_tables) > 0 or kwargs.get("without_foreign_keys", False)
 
-        self._mysql_ssl_disabled = kwargs.get("mysql_ssl_disabled") or False
+        self._mysql_ssl_disabled = kwargs.get("mysql_ssl_disabled", False)
 
-        self._chunk_size = kwargs.get("chunk") or None
+        self._chunk_size = kwargs.get("chunk", None)
 
-        self._quiet = kwargs.get("quiet") or False
+        self._quiet = kwargs.get("quiet", False)
 
-        self._logger = self._setup_logger(log_file=kwargs.get("log_file") or None, quiet=self._quiet)
+        self._logger = self._setup_logger(log_file=kwargs.get("log_file", None), quiet=self._quiet)
 
-        self._mysql_database = kwargs.get("mysql_database") or "transfer"
+        self._mysql_database = kwargs.get("mysql_database", "transfer")
 
-        self._mysql_insert_method = str(kwargs.get("mysql_integer_type") or "IGNORE").upper()
+        self._mysql_insert_method = str(kwargs.get("mysql_integer_type", "IGNORE")).upper()
         if self._mysql_insert_method not in MYSQL_INSERT_METHOD:
             self._mysql_insert_method = "IGNORE"
 
-        self._mysql_truncate_tables = kwargs.get("mysql_truncate_tables") or False
+        self._mysql_truncate_tables = kwargs.get("mysql_truncate_tables", False)
 
-        self._mysql_integer_type = str(kwargs.get("mysql_integer_type") or "INT(11)").upper()
+        self._mysql_integer_type = str(kwargs.get("mysql_integer_type", "INT(11)")).upper()
 
-        self._mysql_string_type = str(kwargs.get("mysql_string_type") or "VARCHAR(255)").upper()
+        self._mysql_string_type = str(kwargs.get("mysql_string_type", "VARCHAR(255)")).upper()
 
-        self._mysql_text_type = str(kwargs.get("mysql_text_type") or "TEXT").upper()
+        self._mysql_text_type = str(kwargs.get("mysql_text_type", "TEXT")).upper()
         if self._mysql_text_type not in MYSQL_TEXT_COLUMN_TYPES:
             self._mysql_text_type = "TEXT"
 
-        self._mysql_charset = kwargs.get("mysql_charset") or "utf8mb4"
+        self._mysql_charset = kwargs.get("mysql_charset", "utf8mb4")
 
         self._mysql_collation = (
             kwargs.get("mysql_collation") or CharacterSet().get_default_collation(self._mysql_charset.lower())[0]
@@ -109,11 +109,11 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
         if not kwargs.get("mysql_collation") and self._mysql_collation == "utf8mb4_0900_ai_ci":
             self._mysql_collation = "utf8mb4_general_ci"
 
-        self._ignore_duplicate_keys = kwargs.get("ignore_duplicate_keys") or False
+        self._ignore_duplicate_keys = kwargs.get("ignore_duplicate_keys", False)
 
-        self._use_fulltext = kwargs.get("use_fulltext") or False
+        self._use_fulltext = kwargs.get("use_fulltext", False)
 
-        self._with_rowid = kwargs.get("with_rowid") or False
+        self._with_rowid = kwargs.get("with_rowid", False)
 
         sqlite3.register_adapter(Decimal, adapt_decimal)
         sqlite3.register_converter("DECIMAL", convert_decimal)

@@ -211,29 +211,6 @@ class TestSQLite3toMySQL:
             }
         )
 
-    def test_mysql_skip_create_tables(
-        self,
-        cli_runner: CliRunner,
-        sqlite_database: str,
-        mysql_credentials: MySQLCredentials,
-        mysql_database: Engine,
-    ) -> None:
-        result: Result = cli_runner.invoke(
-            sqlite3mysql,
-            [
-                "-f",
-                sqlite_database,
-                "-d",
-                mysql_credentials.database,
-                "-u",
-                mysql_credentials.user,
-                "--mysql-password",
-                mysql_credentials.password,
-                "--mysql-skip-create-tables",
-            ],
-        )
-        assert result.exit_code == 0
-
     def test_mysql_skip_transfer_data(
         self,
         cli_runner: CliRunner,
@@ -256,6 +233,46 @@ class TestSQLite3toMySQL:
             ],
         )
         assert result.exit_code == 0
+
+    def test_mysql_skip_create_tables(
+        self,
+        cli_runner: CliRunner,
+        sqlite_database: str,
+        mysql_credentials: MySQLCredentials,
+        mysql_database: Engine,
+    ) -> None:
+        # First we need to create the tables in the MySQL database
+        result1: Result = cli_runner.invoke(
+            sqlite3mysql,
+            [
+                "-f",
+                sqlite_database,
+                "-d",
+                mysql_credentials.database,
+                "-u",
+                mysql_credentials.user,
+                "--mysql-password",
+                mysql_credentials.password,
+                "--mysql-skip-transfer-data",
+            ],
+        )
+        assert result1.exit_code == 0
+
+        result2: Result = cli_runner.invoke(
+            sqlite3mysql,
+            [
+                "-f",
+                sqlite_database,
+                "-d",
+                mysql_credentials.database,
+                "-u",
+                mysql_credentials.user,
+                "--mysql-password",
+                mysql_credentials.password,
+                "--mysql-skip-create-tables",
+            ],
+        )
+        assert result2.exit_code == 0
 
     def test_mysql_skip_create_tables_and_transfer_data(
         self,

@@ -748,10 +748,11 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                         raise
 
                 # add indices
-                self._add_indices(table["name"])
+                if self._mysql_create_tables:
+                    self._add_indices(table["name"])
 
                 # add foreign keys
-                if not self._without_foreign_keys:
+                if self._mysql_create_tables and not self._without_foreign_keys:
                     self._add_foreign_keys(table["name"])
         except Exception:  # pylint: disable=W0706
             raise

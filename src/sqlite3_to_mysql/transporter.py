@@ -29,7 +29,6 @@ from sqlite3_to_mysql.sqlite_utils import (
     convert_timedelta,
     unicase_compare,
 )
-
 from .mysql_utils import (
     MYSQL_BLOB_COLUMN_TYPES,
     MYSQL_COLUMN_TYPES,
@@ -132,6 +131,9 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
 
         self._mysql_create_tables = kwargs.get("mysql_create_tables") or True
         self._mysql_transfer_data = kwargs.get("mysql_transfer_data") or True
+
+        if not self._mysql_transfer_data and not self._mysql_create_tables:
+            raise ValueError("Unable to continue without transferring data or creating tables!")
 
         try:
             _mysql_connection = mysql.connector.connect(

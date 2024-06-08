@@ -32,7 +32,7 @@ sqlite3mysql --help
 ```
 Usage: sqlite3mysql [OPTIONS]
 
-  Transfer SQLite to MySQL using the provided CLI options.
+  sqlite3mysql version 2.1.10 Copyright (c) 2018-2024 Klemen Tusar
 
 Options:
   -f, --sqlite-file PATH          SQLite3 database file  [required]
@@ -52,7 +52,7 @@ Options:
   -h, --mysql-host TEXT           MySQL host. Defaults to localhost.
   -P, --mysql-port INTEGER        MySQL port. Defaults to 3306.
   -S, --skip-ssl                  Disable MySQL connection encryption.
-  -i, --mysql-insert-method [UPDATE|IGNORE|DEFAULT]
+  -i, --mysql-insert-method [DEFAULT|IGNORE|UPDATE]
                                   MySQL insert method. DEFAULT will throw
                                   errors when encountering duplicate records;
                                   UPDATE will update existing rows; IGNORE
@@ -64,7 +64,7 @@ Options:
                                   to INT(11).
   --mysql-string-type TEXT        MySQL default string field type. Defaults to
                                   VARCHAR(255).
-  --mysql-text-type [MEDIUMTEXT|TEXT|TINYTEXT|LONGTEXT]
+  --mysql-text-type [LONGTEXT|MEDIUMTEXT|TEXT|TINYTEXT]
                                   MySQL default text field type. Defaults to
                                   TEXT.
   --mysql-charset TEXT            MySQL database and table character set
@@ -75,6 +75,8 @@ Options:
                                   not support InnoDB FULLTEXT indexes!
   --with-rowid                    Transfer rowid columns.
   -c, --chunk INTEGER             Chunk reading/writing SQL records
+  -K, --mysql-skip-create-tables  Skip creating tables in MySQL.
+  -J, --mysql-skip-transfer-data  Skip transferring data to MySQL.
   -l, --log-file PATH             Log file
   -q, --quiet                     Quiet. Display only errors.
   --debug                         Debug mode. Will throw exceptions.

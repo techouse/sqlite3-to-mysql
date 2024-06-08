@@ -200,6 +200,34 @@ class TestSQLite3toMySQL:
             )
         assert "Unable to connect to MySQL" in str(excinfo.value)
 
+    @pytest.mark.init
+    @pytest.mark.parametrize("quiet", [False, True])
+    def test_mysql_skip_create_tables_and_transfer_data(
+        self,
+        sqlite_database: str,
+        mysql_credentials: MySQLCredentials,
+        mocker: MockFixture,
+        quiet: bool,
+    ) -> None:
+        mocker.patch.object(
+            SQLite3toMySQL,
+            "transfer",
+            return_value=None,
+        )
+        with pytest.raises(ValueError) as excinfo:
+            SQLite3toMySQL(  # type: ignore[call-arg]
+                sqlite_file=sqlite_database,
+                mysql_user=mysql_credentials.user,
+                mysql_password=mysql_credentials.password,
+                mysql_host=mysql_credentials.host,
+                mysql_port=mysql_credentials.port,
+                mysql_database=mysql_credentials.database,
+                mysql_create_tables=False,
+                mysql_transfer_data=False,
+                quiet=quiet,
+            )
+        assert "Unable to continue without transferring data or creating tables!" in str(excinfo.value)
+
     @pytest.mark.xfail
     @pytest.mark.init
     @pytest.mark.parametrize("quiet", [False, True])

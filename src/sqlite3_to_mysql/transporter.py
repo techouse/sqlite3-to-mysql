@@ -130,8 +130,8 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
         self._sqlite_version = self._get_sqlite_version()
         self._sqlite_table_xinfo_support = check_sqlite_table_xinfo_support(self._sqlite_version)
 
-        self._mysql_create_tables = kwargs.get("mysql_create_tables") or True
-        self._mysql_transfer_data = kwargs.get("mysql_transfer_data") or True
+        self._mysql_create_tables = kwargs.get("mysql_create_tables", True)
+        self._mysql_transfer_data = kwargs.get("mysql_transfer_data", True)
 
         if not self._mysql_transfer_data and not self._mysql_create_tables:
             raise ValueError("Unable to continue without transferring data or creating tables!")

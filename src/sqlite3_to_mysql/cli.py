@@ -120,7 +120,7 @@ _copyright_header: str = f"sqlite3mysql version {package_version} Copyright (c) 
 )
 @click.option("--with-rowid", is_flag=True, help="Transfer rowid columns.")
 @click.option("-c", "--chunk", type=int, default=None, help="Chunk reading/writing SQL records")
-@click.option("-K", "--mysql-skip-create-table", is_flag=True, help="Skip creating tables in MySQL.")
+@click.option("-K", "--mysql-skip-create-tables", is_flag=True, help="Skip creating tables in MySQL.")
 @click.option("-J", "--mysql-skip-transfer-data", is_flag=True, help="Skip transferring data to MySQL.")
 @click.option("-l", "--log-file", type=click.Path(), help="Log file")
 @click.option("-q", "--quiet", is_flag=True, help="Quiet. Display only errors.")
@@ -148,7 +148,7 @@ def cli(
     use_fulltext: bool,
     with_rowid: bool,
     chunk: int,
-    mysql_skip_create_table: bool,
+    mysql_skip_create_tables: bool,
     mysql_skip_transfer_data: bool,
     log_file: t.Union[str, "os.PathLike[t.Any]"],
     quiet: bool,
@@ -168,9 +168,9 @@ def cli(
                 )
 
         # check if both mysql_skip_create_table and mysql_skip_transfer_data are True
-        if mysql_skip_create_table and mysql_skip_transfer_data:
+        if mysql_skip_create_tables and mysql_skip_transfer_data:
             raise click.ClickException(
-                "Error: Both -K/--mysql-skip-create-table and -J/--mysql-skip-transfer-data are set. "
+                "Error: Both -K/--mysql-skip-create-tables and -J/--mysql-skip-transfer-data are set. "
                 "There is nothing to do. Exiting..."
             )
 
@@ -195,7 +195,7 @@ def cli(
             use_fulltext=use_fulltext,
             with_rowid=with_rowid,
             chunk=chunk,
-            mysql_create_tables=not mysql_skip_create_table,
+            mysql_create_tables=not mysql_skip_create_tables,
             mysql_transfer_data=not mysql_skip_transfer_data,
             log_file=log_file,
             quiet=quiet,

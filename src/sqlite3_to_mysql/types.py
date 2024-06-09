@@ -26,7 +26,9 @@ class SQLite3toMySQLParams(tx.TypedDict):
     log_file: t.Optional[t.Union[str, "os.PathLike[t.Any]"]]
     mysql_database: t.Optional[str]
     mysql_integer_type: t.Optional[str]
+    mysql_create_tables: t.Optional[bool]
     mysql_truncate_tables: t.Optional[bool]
+    mysql_transfer_data: t.Optional[bool]
     mysql_charset: t.Optional[str]
     mysql_collation: t.Optional[str]
     ignore_duplicate_keys: t.Optional[bool]
@@ -54,7 +56,9 @@ class SQLite3toMySQLAttributes:
     _log_file: t.Union[str, "os.PathLike[t.Any]"]
     _mysql_database: str
     _mysql_insert_method: str
+    _mysql_create_tables: bool
     _mysql_truncate_tables: bool
+    _mysql_transfer_data: bool
     _mysql_integer_type: str
     _mysql_string_type: str
     _mysql_text_type: str

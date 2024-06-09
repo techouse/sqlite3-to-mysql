@@ -1,3 +1,9 @@
+# 2.2.0
+
+* [FEAT] add `--mysql-skip-create-tables` and `--mysql-skip-transfer-data` options
+* [FIX] fix default parameter parsing
+* [CHORE] update Sphinx documentation
+
 # 2.1.10
 
 * [CHORE] add Sphinx documentation

@@ -1,6 +1,7 @@
 """SQLite adapters and converters for unsupported data types."""
 
 from datetime import date, timedelta
+from dateutil.parser import parse as dateutil_parse
 from decimal import Decimal
 
 from packaging import version
@@ -41,7 +42,7 @@ def unicase_compare(string_1: str, string_2: str) -> int:
 def convert_date(value) -> date:
     """Handle SQLite date conversion."""
     try:
-        return date.fromisoformat(value.decode())
+        return dateutil_parse(value.decode()).date()
     except ValueError as err:
         raise ValueError(f"DATE field contains {err}")  # pylint: disable=W0707
 

@@ -40,10 +40,10 @@ def unicase_compare(string_1: str, string_2: str) -> int:
     return 1 if _string_1 > _string_2 else -1 if _string_1 < _string_2 else 0
 
 
-def convert_date(value: t.AnyStr) -> date:
+def convert_date(value: t.Union[str, bytes]) -> date:
     """Handle SQLite date conversion."""
     try:
-        return dateutil_parse(value.decode()).date()
+        return dateutil_parse(value.decode() if isinstance(value, bytes) else value).date()
     except ValueError as err:
         raise ValueError(f"DATE field contains {err}")  # pylint: disable=W0707
 

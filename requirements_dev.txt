@@ -10,6 +10,7 @@ pytest-mock
 pytest-timeout
 pytimeparse2
 python-dateutil>=2.9.0.post0
+types_python_dateutil
 simplejson>=3.19.1
 types-simplejson
 sqlalchemy>=2.0.0

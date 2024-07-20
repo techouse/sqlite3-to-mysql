@@ -41,6 +41,8 @@ dependencies = [
     "Click>=8.1.3",
     "mysql-connector-python>=8.2.0",
     "pytimeparse2",
+    "python-dateutil>=2.9.0.post0",
+    "types_python_dateutil",
     "simplejson>=3.19.1",
     "tqdm>=4.65.0",
     "tabulate",

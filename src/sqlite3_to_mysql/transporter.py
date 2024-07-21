@@ -144,6 +144,8 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                 port=self._mysql_port,
                 ssl_disabled=self._mysql_ssl_disabled,
                 use_pure=True,
+                charset=self._mysql_charset,
+                collation=self._mysql_collation,
             )
             if isinstance(_mysql_connection, mysql.connector.MySQLConnection):
                 self._mysql = _mysql_connection

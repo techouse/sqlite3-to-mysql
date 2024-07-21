@@ -293,6 +293,8 @@ def mysql_instance(mysql_credentials: MySQLCredentials, pytestconfig: Config) ->
                 password=mysql_credentials.password,
                 host=mysql_credentials.host,
                 port=mysql_credentials.port,
+                charset="utf8mb4",
+                collation="utf8mb4_unicode_520_ci",
             )
         except mysql.connector.Error as err:
             if err.errno == errorcode.CR_SERVER_LOST:

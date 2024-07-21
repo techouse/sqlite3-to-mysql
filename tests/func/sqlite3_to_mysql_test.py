@@ -348,6 +348,8 @@ class TestSQLite3toMySQL:
                 host=mysql_credentials.host,
                 port=mysql_credentials.port,
                 database=mysql_credentials.database,
+                charset="utf8mb4",
+                collation="utf8mb4_unicode_520_ci",
             )
         )
         server_version: t.Tuple[int, ...] = mysql_connector_connection.get_server_version()

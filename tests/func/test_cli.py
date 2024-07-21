@@ -77,6 +77,10 @@ class TestSQLite3toMySQL:
                 "_".join(faker.words(nb=3)),
                 "-u",
                 faker.first_name().lower(),
+                "-h",
+                mysql_credentials.host,
+                "-P",
+                str(mysql_credentials.port),
             ],
         )
         assert result.exit_code > 0
@@ -99,6 +103,10 @@ class TestSQLite3toMySQL:
                 mysql_credentials.database,
                 "-u",
                 faker.first_name().lower(),
+                "-h",
+                mysql_credentials.host,
+                "-P",
+                str(mysql_credentials.port),
             ],
         )
         assert result.exit_code > 0
@@ -123,6 +131,10 @@ class TestSQLite3toMySQL:
                 mysql_credentials.user,
                 "--mysql-password",
                 faker.password(length=16),
+                "-h",
+                mysql_credentials.host,
+                "-P",
+                str(mysql_credentials.port),
             ],
         )
         assert result.exit_code > 0
@@ -145,6 +157,10 @@ class TestSQLite3toMySQL:
                 "-u",
                 mysql_credentials.user,
                 "-p",
+                "-h",
+                mysql_credentials.host,
+                "-P",
+                str(mysql_credentials.port),
             ],
             input=mysql_credentials.password,
         )
@@ -168,6 +184,10 @@ class TestSQLite3toMySQL:
                 "-u",
                 mysql_credentials.user,
                 "-p",
+                "-h",
+                mysql_credentials.host,
+                "-P",
+                str(mysql_credentials.port),
             ],
             input=faker.password(length=16),
         )
@@ -230,6 +250,10 @@ class TestSQLite3toMySQL:
                 "--mysql-password",
                 mysql_credentials.password,
                 "--mysql-skip-transfer-data",
+                "-h",
+                mysql_credentials.host,
+                "-P",
+                str(mysql_credentials.port),
             ],
         )
         assert result.exit_code == 0
@@ -254,6 +278,10 @@ class TestSQLite3toMySQL:
                 "--mysql-password",
                 mysql_credentials.password,
                 "--mysql-skip-transfer-data",
+                "-h",
+                mysql_credentials.host,
+                "-P",
+                str(mysql_credentials.port),
             ],
         )
         assert result1.exit_code == 0
@@ -270,6 +298,10 @@ class TestSQLite3toMySQL:
                 "--mysql-password",
                 mysql_credentials.password,
                 "--mysql-skip-create-tables",
+                "-h",
+                mysql_credentials.host,
+                "-P",
+                str(mysql_credentials.port),
             ],
         )
         assert result2.exit_code == 0
@@ -294,6 +326,10 @@ class TestSQLite3toMySQL:
                 mysql_credentials.password,
                 "--mysql-skip-create-tables",
                 "--mysql-skip-transfer-data",
+                "-h",
+                mysql_credentials.host,
+                "-P",
+                str(mysql_credentials.port),
             ],
         )
         assert result.exit_code > 0

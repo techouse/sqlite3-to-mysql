@@ -280,7 +280,7 @@ def mysql_instance(mysql_credentials: MySQLCredentials, pytestconfig: Config) ->
             },
             command=[
                 "--character-set-server=utf8mb4",
-                "--collation-server=utf8mb4_unicode_520_ci",
+                "--collation-server=utf8mb4_unicode_ci",
             ],
             detach=True,
             auto_remove=True,
@@ -294,7 +294,7 @@ def mysql_instance(mysql_credentials: MySQLCredentials, pytestconfig: Config) ->
                 host=mysql_credentials.host,
                 port=mysql_credentials.port,
                 charset="utf8mb4",
-                collation="utf8mb4_unicode_520_ci",
+                collation="utf8mb4_unicode_ci",
             )
         except mysql.connector.Error as err:
             if err.errno == errorcode.CR_SERVER_LOST:

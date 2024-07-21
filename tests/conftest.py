@@ -280,7 +280,7 @@ def mysql_instance(mysql_credentials: MySQLCredentials, pytestconfig: Config) ->
             },
             command=[
                 "--character-set-server=utf8mb4",
-                "--collation-server=utf8mb4_unicode_ci",
+                "--collation-server=utf8mb4_unicode_520_ci",
             ],
             detach=True,
             auto_remove=True,

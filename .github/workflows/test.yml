@@ -455,6 +455,36 @@ jobs:
             legacy_db: 0
             experimental: false
             py: "3.12"
+
+          - toxenv: "python3.8"
+            db: "mysql:8.4"
+            legacy_db: 0
+            experimental: false
+            py: "3.8"
+
+          - toxenv: "python3.9"
+            db: "mysql:8.4"
+            legacy_db: 0
+            experimental: false
+            py: "3.9"
+
+          - toxenv: "python3.10"
+            db: "mysql:8.4"
+            legacy_db: 0
+            experimental: false
+            py: "3.10"
+
+          - toxenv: "python3.11"
+            db: "mysql:8.4"
+            legacy_db: 0
+            experimental: false
+            py: "3.11"
+
+          - toxenv: "python3.12"
+            db: "mysql:8.4"
+            legacy_db: 0
+            experimental: false
+            py: "3.12"
     continue-on-error: ${{ matrix.experimental }}
     services:
       mysql:
@@ -496,7 +526,7 @@ jobs:
             sleep 1
             mysql -h127.0.0.1 -uroot -e 'select version()' && break
           done
-          if [ "$DB" == 'mysql:8.0' ]; then
+          if [ "$DB" == 'mysql:8.0' ] || [ "$DB" == 'mysql:8.4' ]; then
             WITH_PLUGIN='with mysql_native_password'
             mysql -h127.0.0.1 -uroot -e "SET GLOBAL local_infile=on"
             docker cp mysqld:/var/lib/mysql/public_key.pem "${HOME}"

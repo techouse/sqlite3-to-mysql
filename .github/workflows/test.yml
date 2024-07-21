@@ -535,8 +535,8 @@ jobs:
             docker cp mysqld:/var/lib/mysql/client-cert.pem "${HOME}"
             mysql -uroot -h127.0.0.1 -e '
               CREATE USER
-              user_caching_sha2 IDENTIFIED WITH caching_sha2_password BY 'pass_caching_sha2',
-              nopass_caching_sha2 IDENTIFIED WITH caching_sha2_password BY ''
+              user_caching_sha2 IDENTIFIED WITH "caching_sha2_password" BY "pass_caching_sha2",
+              nopass_caching_sha2 IDENTIFIED WITH "caching_sha2_password"
               PASSWORD EXPIRE NEVER;'
             mysql -uroot -h127.0.0.1 -e 'GRANT RELOAD ON *.* TO user_caching_sha2;'
           fi

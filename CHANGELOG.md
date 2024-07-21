@@ -1,3 +1,7 @@
+# 2.2.1
+
+* [FIX] use `dateutil.parse` to parse SQLite dates
+
 # 2.2.0
 
 * [FEAT] add `--mysql-skip-create-tables` and `--mysql-skip-transfer-data` options

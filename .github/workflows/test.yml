@@ -41,450 +41,525 @@ jobs:
             legacy_db: 1
             experimental: false
             py: "3.8"
+            options: ""
 
           - toxenv: "python3.9"
             db: "mariadb:5.5"
             legacy_db: 1
             experimental: false
             py: "3.9"
+            options: ""
 
           - toxenv: "python3.10"
             db: "mariadb:5.5"
             legacy_db: 1
             experimental: false
             py: "3.10"
+            options: ""
 
           - toxenv: "python3.11"
             db: "mariadb:5.5"
             legacy_db: 1
             experimental: false
             py: "3.11"
+            options: ""
 
           - toxenv: "python3.12"
             db: "mariadb:5.5"
             legacy_db: 1
             experimental: false
             py: "3.12"
+            options: ""
 
           - toxenv: "python3.8"
             db: "mariadb:10.0"
             legacy_db: 1
             experimental: false
             py: "3.8"
+            options: ""
 
           - toxenv: "python3.9"
             db: "mariadb:10.0"
             legacy_db: 1
             experimental: false
             py: "3.9"
+            options: ""
 
           - toxenv: "python3.10"
             db: "mariadb:10.0"
             legacy_db: 1
             experimental: false
             py: "3.10"
+            options: ""
 
           - toxenv: "python3.11"
             db: "mariadb:10.0"
             legacy_db: 1
             experimental: false
             py: "3.11"
+            options: ""
 
           - toxenv: "python3.12"
             db: "mariadb:10.0"
             legacy_db: 1
             experimental: false
             py: "3.12"
+            options: ""
 
           - toxenv: "python3.8"
             db: "mariadb:10.1"
             legacy_db: 1
             experimental: false
             py: "3.8"
+            options: ""
 
           - toxenv: "python3.9"
             db: "mariadb:10.1"
             legacy_db: 1
             experimental: false
             py: "3.9"
+            options: ""
 
           - toxenv: "python3.10"
             db: "mariadb:10.1"
             legacy_db: 1
             experimental: false
             py: "3.10"
+            options: ""
 
           - toxenv: "python3.11"
             db: "mariadb:10.1"
             legacy_db: 1
             experimental: false
             py: "3.11"
+            options: ""
 
           - toxenv: "python3.12"
             db: "mariadb:10.1"
             legacy_db: 1
             experimental: false
             py: "3.12"
+            options: ""
 
           - toxenv: "python3.8"
             db: "mariadb:10.2"
             legacy_db: 0
             experimental: false
             py: "3.8"
+            options: ""
 
           - toxenv: "python3.9"
             db: "mariadb:10.2"
             legacy_db: 0
             experimental: false
             py: "3.9"
+            options: ""
 
           - toxenv: "python3.10"
             db: "mariadb:10.2"
             legacy_db: 0
             experimental: false
             py: "3.10"
+            options: ""
 
           - toxenv: "python3.11"
             db: "mariadb:10.2"
             legacy_db: 0
             experimental: false
             py: "3.11"
+            options: ""
 
           - toxenv: "python3.12"
             db: "mariadb:10.2"
             legacy_db: 0
             experimental: false
             py: "3.12"
+            options: ""
 
           - toxenv: "python3.8"
             db: "mariadb:10.3"
             legacy_db: 0
             experimental: false
             py: "3.8"
+            options: ""
 
           - toxenv: "python3.9"
             db: "mariadb:10.3"
             legacy_db: 0
             experimental: false
             py: "3.9"
+            options: ""
 
           - toxenv: "python3.10"
             db: "mariadb:10.3"
             legacy_db: 0
             experimental: false
             py: "3.10"
+            options: ""
 
           - toxenv: "python3.11"
             db: "mariadb:10.3"
             legacy_db: 0
             experimental: false
             py: "3.11"
+            options: ""
 
           - toxenv: "python3.12"
             db: "mariadb:10.3"
             legacy_db: 0
             experimental: false
             py: "3.12"
+            options: ""
 
           - toxenv: "python3.8"
             db: "mariadb:10.4"
             legacy_db: 0
             experimental: false
             py: "3.8"
+            options: ""
 
           - toxenv: "python3.9"
             db: "mariadb:10.4"
             legacy_db: 0
             experimental: false
             py: "3.9"
+            options: ""
 
           - toxenv: "python3.10"
             db: "mariadb:10.4"
             legacy_db: 0
             experimental: false
             py: "3.10"
+            options: ""
 
           - toxenv: "python3.11"
             db: "mariadb:10.4"
             legacy_db: 0
             experimental: false
             py: "3.11"
+            options: ""
 
           - toxenv: "python3.12"
             db: "mariadb:10.4"
             legacy_db: 0
             experimental: false
             py: "3.12"
+            options: ""
 
           - toxenv: "python3.8"
             db: "mariadb:10.5"
             legacy_db: 0
             experimental: false
             py: "3.8"
+            options: ""
 
           - toxenv: "python3.9"
             db: "mariadb:10.5"
             legacy_db: 0
             experimental: false
             py: "3.9"
+            options: ""
 
           - toxenv: "python3.10"
             db: "mariadb:10.5"
             legacy_db: 0
             experimental: false
             py: "3.10"
+            options: ""
 
           - toxenv: "python3.11"
             db: "mariadb:10.5"
             legacy_db: 0
             experimental: false
             py: "3.11"
+            options: ""
 
           - toxenv: "python3.12"
             db: "mariadb:10.5"
             legacy_db: 0
             experimental: false
             py: "3.12"
+            options: ""
 
           - toxenv: "python3.8"
             db: "mariadb:10.6"
             legacy_db: 0
             experimental: false
             py: "3.8"
+            options: ""
 
           - toxenv: "python3.9"
             db: "mariadb:10.6"
             legacy_db: 0
             experimental: false
             py: "3.9"
+            options: ""
 
           - toxenv: "python3.10"
             db: "mariadb:10.6"
             legacy_db: 0
             experimental: false
             py: "3.10"
+            options: ""
 
           - toxenv: "python3.11"
             db: "mariadb:10.6"
             legacy_db: 0
             experimental: false
             py: "3.11"
+            options: ""
 
           - toxenv: "python3.12"
             db: "mariadb:10.6"
             legacy_db: 0
             experimental: false
             py: "3.12"
+            options: ""
 
           - toxenv: "python3.8"
             db: "mariadb:10.11"
             legacy_db: 0
             experimental: false
             py: "3.8"
+            options: ""
 
           - toxenv: "python3.9"
             db: "mariadb:10.11"
             legacy_db: 0
             experimental: false
             py: "3.9"
+            options: ""
 
           - toxenv: "python3.10"
             db: "mariadb:10.11"
             legacy_db: 0
             experimental: false
             py: "3.10"
+            options: ""
 
           - toxenv: "python3.11"
             db: "mariadb:10.11"
             legacy_db: 0
             experimental: false
             py: "3.11"
+            options: ""
 
           - toxenv: "python3.12"
             db: "mariadb:10.11"
             legacy_db: 0
             experimental: false
             py: "3.12"
+            options: ""
 
           - toxenv: "python3.8"
             db: "mariadb:11.4"
             legacy_db: 0
             experimental: false
             py: "3.8"
+            options: ""
 
           - toxenv: "python3.9"
             db: "mariadb:11.4"
             legacy_db: 0
             experimental: false
             py: "3.9"
+            options: ""
 
           - toxenv: "python3.10"
             db: "mariadb:11.4"
             legacy_db: 0
             experimental: false
             py: "3.10"
+            options: ""
 
           - toxenv: "python3.11"
             db: "mariadb:11.4"
             legacy_db: 0
             experimental: false
             py: "3.11"
+            options: ""
 
           - toxenv: "python3.12"
             db: "mariadb:11.4"
             legacy_db: 0
             experimental: false
             py: "3.12"
+            options: ""
 
           - toxenv: "python3.8"
             db: "mysql:5.5"
             legacy_db: 1
             experimental: false
             py: "3.8"
+            options: ""
 
           - toxenv: "python3.9"
             db: "mysql:5.5"
             legacy_db: 1
             experimental: false
             py: "3.9"
+            options: ""
 
           - toxenv: "python3.10"
             db: "mysql:5.5"
             legacy_db: 1
             experimental: false
             py: "3.10"
+            options: ""
 
           - toxenv: "python3.11"
             db: "mysql:5.5"
             legacy_db: 1
             experimental: false
             py: "3.11"
+            options: ""
 
           - toxenv: "python3.12"
             db: "mysql:5.5"
             legacy_db: 1
             experimental: false
             py: "3.12"
+            options: ""
 
           - toxenv: "python3.8"
             db: "mysql:5.6"
             legacy_db: 1
             experimental: false
             py: "3.8"
+            options: ""
 
           - toxenv: "python3.9"
             db: "mysql:5.6"
             legacy_db: 1
             experimental: false
             py: "3.9"
+            options: ""
 
           - toxenv: "python3.10"
             db: "mysql:5.6"
             legacy_db: 1
             experimental: false
             py: "3.10"
+            options: ""
 
           - toxenv: "python3.11"
             db: "mysql:5.6"
             legacy_db: 1
             experimental: false
             py: "3.11"
+            options: ""
 
           - toxenv: "python3.12"
             db: "mysql:5.6"
             legacy_db: 1
             experimental: false
             py: "3.12"
+            options: ""
 
           - toxenv: "python3.8"
             db: "mysql:5.7"
             legacy_db: 0
             experimental: false
             py: "3.8"
+            options: ""
 
           - toxenv: "python3.9"
             db: "mysql:5.7"
             legacy_db: 0
             experimental: false
             py: "3.9"
+            options: ""
 
           - toxenv: "python3.10"
             db: "mysql:5.7"
             legacy_db: 0
             experimental: false
             py: "3.10"
+            options: ""
 
           - toxenv: "python3.11"
             db: "mysql:5.7"
             legacy_db: 0
             experimental: false
             py: "3.11"
+            options: ""
 
           - toxenv: "python3.12"
             db: "mysql:5.7"
             legacy_db: 0
             experimental: false
             py: "3.12"
+            options: ""
 
           - toxenv: "python3.8"
             db: "mysql:8.0"
             legacy_db: 0
             experimental: false
             py: "3.8"
+            options: ""
 
           - toxenv: "python3.9"
             db: "mysql:8.0"
             legacy_db: 0
             experimental: false
             py: "3.9"
+            options: ""
 
           - toxenv: "python3.10"
             db: "mysql:8.0"
             legacy_db: 0
             experimental: false
             py: "3.10"
+            options: ""
 
           - toxenv: "python3.11"
             db: "mysql:8.0"
             legacy_db: 0
             experimental: false
             py: "3.11"
+            options: ""
 
           - toxenv: "python3.12"
             db: "mysql:8.0"
             legacy_db: 0
             experimental: false
             py: "3.12"
+            options: ""
 
           - toxenv: "python3.8"
             db: "mysql:8.4"
             legacy_db: 0
             experimental: false
             py: "3.8"
+            options: "--mysql-native-password=ON"
 
           - toxenv: "python3.9"
             db: "mysql:8.4"
             legacy_db: 0
             experimental: false
             py: "3.9"
+            options: "--mysql-native-password=ON"
 
           - toxenv: "python3.10"
             db: "mysql:8.4"
             legacy_db: 0
             experimental: false
             py: "3.10"
+            options: "--mysql-native-password=ON"
 
           - toxenv: "python3.11"
             db: "mysql:8.4"
             legacy_db: 0
             experimental: false
             py: "3.11"
+            options: "--mysql-native-password=ON"
 
           - toxenv: "python3.12"
             db: "mysql:8.4"
             legacy_db: 0
             experimental: false
             py: "3.12"
+            options: "--mysql-native-password=ON"
     continue-on-error: ${{ matrix.experimental }}
     services:
       mysql:
@@ -493,7 +568,7 @@ jobs:
           - 3306:3306
         env:
           MYSQL_ALLOW_EMPTY_PASSWORD: yes
-        options: "--name=mysqld"
+        options: "--name=mysqld ${{ matrix.options }}"
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.py }}

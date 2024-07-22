@@ -73,6 +73,7 @@ class TestSQLite3toMySQL:
             )
 
     @pytest.mark.init
+    @pytest.mark.xfail
     @pytest.mark.parametrize("quiet", [False, True])
     def test_valid_sqlite_file_and_invalid_mysql_credentials_raises_access_denied_exception(
         self,

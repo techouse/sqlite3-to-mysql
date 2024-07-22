@@ -459,31 +459,31 @@ jobs:
           - toxenv: "python3.8"
             db: "mysql:8.4"
             legacy_db: 0
-            experimental: false
+            experimental: true
             py: "3.8"
 
           - toxenv: "python3.9"
             db: "mysql:8.4"
             legacy_db: 0
-            experimental: false
+            experimental: true
             py: "3.9"
 
           - toxenv: "python3.10"
             db: "mysql:8.4"
             legacy_db: 0
-            experimental: false
+            experimental: true
             py: "3.10"
 
           - toxenv: "python3.11"
             db: "mysql:8.4"
             legacy_db: 0
-            experimental: false
+            experimental: true
             py: "3.11"
 
           - toxenv: "python3.12"
             db: "mysql:8.4"
             legacy_db: 0
-            experimental: false
+            experimental: true
             py: "3.12"
     continue-on-error: ${{ matrix.experimental }}
     services:

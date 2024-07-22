@@ -526,7 +526,7 @@ jobs:
             sleep 1
             mysql -h127.0.0.1 -uroot -e 'select version()' && break
           done
-          if [ "$DB" == 'mysql:8.0' ] || [ "$DB" == 'mysql:8.4' ] ; then
+          if [ "$DB" == 'mysql:8.0' ] ; then
             mysql -h127.0.0.1 -uroot -e "SET GLOBAL local_infile=on"
             docker cp mysqld:/var/lib/mysql/public_key.pem "${HOME}"
             docker cp mysqld:/var/lib/mysql/ca.pem "${HOME}"

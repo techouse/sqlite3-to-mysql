@@ -307,6 +307,36 @@ jobs:
             py: "3.12"
 
           - toxenv: "python3.8"
+            db: "mariadb:11.4"
+            legacy_db: 0
+            experimental: false
+            py: "3.8"
+
+          - toxenv: "python3.9"
+            db: "mariadb:11.4"
+            legacy_db: 0
+            experimental: false
+            py: "3.9"
+
+          - toxenv: "python3.10"
+            db: "mariadb:11.4"
+            legacy_db: 0
+            experimental: false
+            py: "3.10"
+
+          - toxenv: "python3.11"
+            db: "mariadb:11.4"
+            legacy_db: 0
+            experimental: false
+            py: "3.11"
+
+          - toxenv: "python3.12"
+            db: "mariadb:11.4"
+            legacy_db: 0
+            experimental: false
+            py: "3.12"
+
+          - toxenv: "python3.8"
             db: "mysql:5.5"
             legacy_db: 1
             experimental: false
@@ -424,16 +454,47 @@ jobs:
             db: "mysql:8.0"
             legacy_db: 0
             experimental: false
+            py: "3.12"
+
+          - toxenv: "python3.8"
+            db: "mysql:8.4"
+            legacy_db: 0
+            experimental: true
+            py: "3.8"
+
+          - toxenv: "python3.9"
+            db: "mysql:8.4"
+            legacy_db: 0
+            experimental: true
+            py: "3.9"
+
+          - toxenv: "python3.10"
+            db: "mysql:8.4"
+            legacy_db: 0
+            experimental: true
+            py: "3.10"
+
+          - toxenv: "python3.11"
+            db: "mysql:8.4"
+            legacy_db: 0
+            experimental: true
+            py: "3.11"
+
+          - toxenv: "python3.12"
+            db: "mysql:8.4"
+            legacy_db: 0
+            experimental: true
             py: "3.12"
     continue-on-error: ${{ matrix.experimental }}
     services:
       mysql:
-        image: "${{ matrix.db }}"
+        image: ${{ matrix.db }}
         ports:
           - 3306:3306
         env:
           MYSQL_ALLOW_EMPTY_PASSWORD: yes
-        options: "--name=mysqld"
+        options: >-
+          --name=mysqld
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.py }}
@@ -461,31 +522,52 @@ jobs:
           MYSQL_PORT: 3306
         run: |
           set -e
+          
           while :
           do
             sleep 1
             mysql -h127.0.0.1 -uroot -e 'select version()' && break
           done
+          
+          case "$DB" in
+            'mysql:8.0'|'mysql:8.4')
+              mysql -h127.0.0.1 -uroot -e "SET GLOBAL local_infile=on"
+              docker cp mysqld:/var/lib/mysql/public_key.pem "${HOME}"
+              docker cp mysqld:/var/lib/mysql/ca.pem "${HOME}"
+              docker cp mysqld:/var/lib/mysql/server-cert.pem "${HOME}"
+              docker cp mysqld:/var/lib/mysql/client-key.pem "${HOME}"
+              docker cp mysqld:/var/lib/mysql/client-cert.pem "${HOME}"
+              ;;
+          esac
+          
+          USER_CREATION_COMMANDS=''
+          WITH_PLUGIN=''
+
           if [ "$DB" == 'mysql:8.0' ]; then
             WITH_PLUGIN='with mysql_native_password'
-            mysql -h127.0.0.1 -uroot -e "SET GLOBAL local_infile=on"
-            docker cp mysqld:/var/lib/mysql/public_key.pem "${HOME}"
-            docker cp mysqld:/var/lib/mysql/ca.pem "${HOME}"
-            docker cp mysqld:/var/lib/mysql/server-cert.pem "${HOME}"
-            docker cp mysqld:/var/lib/mysql/client-key.pem "${HOME}"
-            docker cp mysqld:/var/lib/mysql/client-cert.pem "${HOME}"
-            mysql -uroot -h127.0.0.1 -e '
+            USER_CREATION_COMMANDS='
               CREATE USER
               user_sha256 IDENTIFIED WITH "sha256_password" BY "pass_sha256",
               nopass_sha256 IDENTIFIED WITH "sha256_password",
               user_caching_sha2 IDENTIFIED WITH "caching_sha2_password" BY "pass_caching_sha2",
               nopass_caching_sha2 IDENTIFIED WITH "caching_sha2_password"
-              PASSWORD EXPIRE NEVER;'
-            mysql -uroot -h127.0.0.1 -e 'GRANT RELOAD ON *.* TO user_caching_sha2;'
-          else
-            WITH_PLUGIN=''
+              PASSWORD EXPIRE NEVER;
+              GRANT RELOAD ON *.* TO user_caching_sha2;'
+          elif [ "$DB" == 'mysql:8.4' ]; then
+            WITH_PLUGIN='with caching_sha2_password'
+            USER_CREATION_COMMANDS='
+              CREATE USER
+              user_caching_sha2 IDENTIFIED WITH "caching_sha2_password" BY "pass_caching_sha2",
+              nopass_caching_sha2 IDENTIFIED WITH "caching_sha2_password"
+              PASSWORD EXPIRE NEVER;
+              GRANT RELOAD ON *.* TO user_caching_sha2;'
           fi
-          mysql -h127.0.0.1 -uroot -e "create database $MYSQL_DATABASE DEFAULT CHARACTER SET utf8mb4"
+          
+          if [ ! -z "$USER_CREATION_COMMANDS" ]; then
+            mysql -uroot -h127.0.0.1 -e "$USER_CREATION_COMMANDS"
+          fi
+          
+          mysql -h127.0.0.1 -uroot -e "create database $MYSQL_DATABASE DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
           mysql -h127.0.0.1 -uroot -e "create user $MYSQL_USER identified $WITH_PLUGIN by '${MYSQL_PASSWORD}'; grant all on ${MYSQL_DATABASE}.* to ${MYSQL_USER};"
           mysql -h127.0.0.1 -uroot -e "create user ${MYSQL_USER}@localhost identified $WITH_PLUGIN by '${MYSQL_PASSWORD}'; grant all on ${MYSQL_DATABASE}.* to ${MYSQL_USER}@localhost;"
       - name: Create db_credentials.json

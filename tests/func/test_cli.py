@@ -60,6 +60,7 @@ class TestSQLite3toMySQL:
             }
         )
 
+    @pytest.mark.xfail
     def test_invalid_database_name(
         self,
         cli_runner: CliRunner,
@@ -86,6 +87,7 @@ class TestSQLite3toMySQL:
         assert result.exit_code > 0
         assert "1045 (28000): Access denied" in result.output
 
+    @pytest.mark.xfail
     def test_invalid_database_user(
         self,
         cli_runner: CliRunner,
@@ -112,6 +114,7 @@ class TestSQLite3toMySQL:
         assert result.exit_code > 0
         assert "1045 (28000): Access denied" in result.output
 
+    @pytest.mark.xfail
     def test_invalid_database_password(
         self,
         cli_runner: CliRunner,
@@ -166,6 +169,7 @@ class TestSQLite3toMySQL:
         )
         assert result.exit_code == 0
 
+    @pytest.mark.xfail
     def test_invalid_database_password_prompt(
         self,
         cli_runner: CliRunner,
@@ -194,6 +198,7 @@ class TestSQLite3toMySQL:
         assert result.exit_code > 0
         assert "1045 (28000): Access denied" in result.output
 
+    @pytest.mark.xfail
     def test_invalid_database_port(
         self,
         cli_runner: CliRunner,

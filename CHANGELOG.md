@@ -1,3 +1,7 @@
+# 2.3.0
+
+* [FEAT] add MySQL 8.4 and MariaDB 11.4 support
+
 # 2.2.1
 
 * [FIX] use `dateutil.parse` to parse SQLite dates

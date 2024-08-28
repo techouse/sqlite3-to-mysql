@@ -1,3 +1,8 @@
+# 2.3.1
+
+* [FIX] fix conversion of SQLite `NUMERIC` data type with precision and scale to MySQL `DECIMAL` with precision and
+  scale
+
 # 2.3.0
 
 * [FEAT] add MySQL 8.4 and MariaDB 11.4 support

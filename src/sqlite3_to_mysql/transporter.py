@@ -49,6 +49,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
 
     COLUMN_PATTERN: t.Pattern[str] = re.compile(r"^[^(]+")
     COLUMN_LENGTH_PATTERN: t.Pattern[str] = re.compile(r"\(\d+\)")
+    COLUMN_PRECISION_AND_SCALE_PATTERN: t.Pattern[str] = re.compile(r"\(\d+,\d+\)")
     COLUMN_UNSIGNED_PATTERN: t.Pattern[str] = re.compile(r"\bUNSIGNED\b", re.IGNORECASE)
 
     MYSQL_CONNECTOR_VERSION: version.Version = version.parse(mysql_connector_version_string)
@@ -291,6 +292,8 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
         if data_type.startswith(("BIGINT", "INT8")):
             return f"BIGINT{self._column_type_length(column_type)}{' UNSIGNED' if unsigned else ''}"
         if data_type.startswith(("INT64", "NUMERIC")):
+            if data_type == "NUMERIC" and self._column_type_precision_and_scale(full_column_type) != "":
+                return f"DECIMAL{self._column_type_precision_and_scale(column_type)}{' UNSIGNED' if unsigned else ''}"
             return f"BIGINT{self._column_type_length(column_type, 19)}{' UNSIGNED' if unsigned else ''}"
         if data_type.startswith(("INTEGER", "INT")):
             length = self._column_type_length(column_type)
@@ -318,6 +321,13 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
             return suffix.group(0)
         if default:
             return f"({default})"
+        return ""
+
+    @classmethod
+    def _column_type_precision_and_scale(cls, column_type: str) -> str:
+        suffix: t.Optional[t.Match[str]] = cls.COLUMN_PRECISION_AND_SCALE_PATTERN.search(column_type)
+        if suffix:
+            return suffix.group(0)
         return ""
 
     def _create_table(self, table_name: str, transfer_rowid: bool = False) -> None:

@@ -171,6 +171,7 @@ class TestSQLite3toMySQL:
             ("INT8(19)", "BIGINT(19)"),
             ("INT8(19) UNSIGNED", "BIGINT(19) UNSIGNED"),
             ("NUMERIC", "BIGINT(19)"),
+            ("NUMERIC(10,5)", "DECIMAL(10,5)"),
             ("DOUBLE", "DOUBLE"),
             ("DOUBLE UNSIGNED", "DOUBLE UNSIGNED"),
             ("DOUBLE(10,5)", "DOUBLE(10,5)"),

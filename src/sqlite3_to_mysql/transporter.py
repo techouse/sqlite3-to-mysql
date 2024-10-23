@@ -74,6 +74,8 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
 
         self._mysql_port = kwargs.get("mysql_port", 3306) or 3306
 
+        self._mysql_socket = str(kwargs.get("mysql_socket")) if kwargs.get("mysql_socket") else None
+
         self._sqlite_tables = kwargs.get("sqlite_tables") or tuple()
 
         self._without_foreign_keys = bool(self._sqlite_tables) or bool(kwargs.get("without_foreign_keys", False))
@@ -143,6 +145,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                 password=self._mysql_password,
                 host=self._mysql_host,
                 port=self._mysql_port,
+                unix_socket=self._mysql_socket,
                 ssl_disabled=self._mysql_ssl_disabled,
                 use_pure=True,
                 charset=self._mysql_charset,

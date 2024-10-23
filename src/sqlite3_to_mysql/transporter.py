@@ -88,7 +88,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
 
         self._mysql_database = kwargs.get("mysql_database", "transfer") or "transfer"
 
-        self._mysql_insert_method = str(kwargs.get("mysql_integer_type", "IGNORE")).upper()
+        self._mysql_insert_method = str(kwargs.get("mysql_insert_method", "IGNORE")).upper()
         if self._mysql_insert_method not in MYSQL_INSERT_METHOD:
             self._mysql_insert_method = "IGNORE"
 

@@ -68,7 +68,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
         else:
             raise ValueError("Please provide a MySQL user")
 
-        self._mysql_password = str(kwargs.get("mysql_password")) or None
+        self._mysql_password = str(kwargs.get("mysql_password")) if kwargs.get("mysql_password") else None
 
         self._mysql_host = str(kwargs.get("mysql_host", "localhost"))
 

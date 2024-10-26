@@ -29,6 +29,7 @@ from sqlite3_to_mysql.sqlite_utils import (
     convert_timedelta,
     unicase_compare,
 )
+
 from .mysql_utils import (
     MYSQL_BLOB_COLUMN_TYPES,
     MYSQL_COLUMN_TYPES,
@@ -38,8 +39,8 @@ from .mysql_utils import (
     MYSQL_TEXT_COLUMN_TYPES_WITH_JSON,
     check_mysql_fulltext_support,
     check_mysql_json_support,
-    safe_identifier_length,
     check_mysql_values_alias_support,
+    safe_identifier_length,
 )
 from .types import SQLite3toMySQLAttributes, SQLite3toMySQLParams
 

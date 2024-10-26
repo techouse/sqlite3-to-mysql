@@ -6,7 +6,6 @@ import typing as t
 from mysql.connector import CharacterSet
 from mysql.connector.charsets import MYSQL_CHARACTER_SETS
 from packaging import version
-from packaging.version import Version
 
 
 # Shamelessly copied from SQLAlchemy's dialects/mysql/__init__.py
@@ -112,18 +111,10 @@ def get_mysql_version(version_string: str) -> version.Version:
 
 def check_mysql_json_support(version_string: str) -> bool:
     """Check for MySQL JSON support."""
-    mysql_version: Version = get_mysql_version(version_string)
-    if "mariadb" in version_string.lower():
-        if mysql_version.major > 10:
-            return True
-        if mysql_version.major == 10:
-            return mysql_version.minor > 2 or (mysql_version.minor >= 2 and mysql_version.micro >= 7)
-    else:
-        if mysql_version.major >= 8:
-            return True
-        if mysql_version.minor >= 7 and mysql_version.micro >= 8:
-            return True
-    return False
+    mysql_version: version.Version = get_mysql_version(version_string)
+    if "-mariadb" in version_string.lower():
+        return mysql_version >= version.parse("10.2.7")
+    return mysql_version >= version.parse("5.7.8")
 
 
 def check_mysql_values_alias_support(version_string: str) -> bool:
@@ -133,31 +124,19 @@ def check_mysql_values_alias_support(version_string: str) -> bool:
         bool: True if VALUES alias is supported (MySQL 8.0.19+), False for MariaDB
         or older MySQL versions.
     """
-    mysql_version: Version = get_mysql_version(version_string)
-    if "mariadb" in version_string.lower():
+    mysql_version: version.Version = get_mysql_version(version_string)
+    if "-mariadb" in version_string.lower():
         return False
     # Only MySQL 8.0.19 and later support VALUES alias
-    if mysql_version.major > 8:
-        return True
-    if mysql_version.major == 8:
-        return mysql_version.minor > 0 or mysql_version.micro >= 19
-    return False
+    return mysql_version >= version.parse("8.0.19")
 
 
 def check_mysql_fulltext_support(version_string: str) -> bool:
     """Check for FULLTEXT indexing support."""
-    mysql_version: Version = get_mysql_version(version_string)
-    if "mariadb" in version_string.lower():
-        if mysql_version.major > 10:
-            return True
-        if mysql_version.major == 10:
-            return mysql_version.minor > 0 or (mysql_version.minor >= 0 and mysql_version.micro >= 5)
-    else:
-        if mysql_version.major >= 8:
-            return True
-        if mysql_version.minor >= 6:
-            return True
-    return False
+    mysql_version: version.Version = get_mysql_version(version_string)
+    if "-mariadb" in version_string.lower():
+        return mysql_version >= version.parse("10.0.5")
+    return mysql_version >= version.parse("5.6.0")
 
 
 def safe_identifier_length(identifier_name: str, max_length: int = 64) -> str:

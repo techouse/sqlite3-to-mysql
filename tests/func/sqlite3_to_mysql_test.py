@@ -59,7 +59,7 @@ class TestSQLite3toMySQL:
         mysql_credentials: MySQLCredentials,
         helpers: Helpers,
         quiet: bool,
-    ):
+    ) -> None:
         with helpers.not_raises(FileNotFoundError):
             SQLite3toMySQL(  # type: ignore
                 sqlite_file=sqlite_database,

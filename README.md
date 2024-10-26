@@ -32,8 +32,6 @@ sqlite3mysql --help
 ```
 Usage: sqlite3mysql [OPTIONS]
 
-  sqlite3mysql version 2.1.10 Copyright (c) 2018-2024 Klemen Tusar
-
 Options:
   -f, --sqlite-file PATH          SQLite3 database file  [required]
   -t, --sqlite-tables TUPLE       Transfer only these specific tables (space
@@ -103,7 +101,8 @@ docker run -it \
 This will mount your host current working directory (pwd) inside the Docker container as the current working directory.
 Any files Docker would write to the current working directory are written to the host directory where you did docker
 run. Note that you have to also use a
-[special hostname](https://docs.docker.com/desktop/networking/#use-cases-and-workarounds-for-all-platforms) `host.docker.internal`
+[special hostname](https://docs.docker.com/desktop/networking/#use-cases-and-workarounds-for-all-platforms)
+`host.docker.internal`
 to access your host machine from inside the Docker container.
 
 #### Homebrew

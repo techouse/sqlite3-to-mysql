@@ -114,8 +114,10 @@ def check_mysql_json_support(version_string: str) -> bool:
     """Check for MySQL JSON support."""
     mysql_version: Version = get_mysql_version(version_string)
     if "mariadb" in version_string.lower():
-        if mysql_version.major >= 10 and mysql_version.minor >= 2 and mysql_version.micro >= 7:
+        if mysql_version.major > 10:
             return True
+        if mysql_version.major == 10:
+            return mysql_version.minor > 2 or (mysql_version.minor >= 2 and mysql_version.micro >= 7)
     else:
         if mysql_version.major >= 8:
             return True
@@ -145,9 +147,11 @@ def check_mysql_values_alias_support(version_string: str) -> bool:
 def check_mysql_fulltext_support(version_string: str) -> bool:
     """Check for FULLTEXT indexing support."""
     mysql_version: Version = get_mysql_version(version_string)
-    if version_string.lower().endswith("-mariadb"):
-        if mysql_version.major >= 10 and mysql_version.minor >= 0 and mysql_version.micro >= 5:
+    if "mariadb" in version_string.lower():
+        if mysql_version.major > 10:
             return True
+        if mysql_version.major == 10:
+            return mysql_version.minor > 0 or (mysql_version.minor >= 0 and mysql_version.micro >= 5)
     else:
         if mysql_version.major >= 8:
             return True

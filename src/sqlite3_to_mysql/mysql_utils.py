@@ -125,19 +125,20 @@ def check_mysql_json_support(version_string: str) -> bool:
 
 
 def check_mysql_values_alias_support(version_string: str) -> bool:
-    """Check for VALUES alias support."""
+    """Check for VALUES alias support.
+
+    Returns:
+        bool: True if VALUES alias is supported (MySQL 8.0.19+), False for MariaDB
+        or older MySQL versions.
+    """
     mysql_version: Version = get_mysql_version(version_string)
     if "mariadb" in version_string.lower():
         return False
     # Only MySQL 8.0.19 and later support VALUES alias
-    if mysql_version.major >= 8:
-        if mysql_version.major > 8:
-            return True
-        if mysql_version.minor > 0:
-            return True
-        if mysql_version.micro >= 19:
-            return True
-        return False
+    if mysql_version.major > 8:
+        return True
+    if mysql_version.major == 8:
+        return mysql_version.minor > 0 or mysql_version.micro >= 19
     return False
 
 

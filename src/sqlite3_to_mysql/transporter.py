@@ -723,37 +723,27 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                     columns: t.List[str] = [
                         safe_identifier_length(column[0]) for column in self._sqlite_cur.description
                     ]
+                    sql: str
                     if self._mysql_insert_method.upper() == "UPDATE":
-                        sql: str
-                        if check_mysql_values_alias_support(self._mysql_version):
-                            sql = """
-                                INSERT
-                                INTO `{table}` ({fields})
-                                VALUES ({placeholders}) AS `__new__`
-                                ON DUPLICATE KEY UPDATE {field_updates}
-                            """.format(
-                                table=safe_identifier_length(table["name"]),
-                                fields=("`{}`, " * len(columns)).rstrip(" ,").format(*columns),
-                                placeholders=("%s, " * len(columns)).rstrip(" ,"),
-                                field_updates=("`{}`=`__new__`.`{}`, " * len(columns))
-                                .rstrip(" ,")
-                                .format(*list(chain.from_iterable((column, column) for column in columns))),
-                            )
-                        else:
-                            sql = """
-                                INSERT
-                                INTO `{table}` ({fields})
-                                VALUES ({placeholders})
-                                ON DUPLICATE KEY UPDATE {field_updates}
-                            """.format(
-                                table=safe_identifier_length(table["name"]),
-                                fields=("`{}`, " * len(columns)).rstrip(" ,").format(*columns),
-                                placeholders=("%s, " * len(columns)).rstrip(" ,"),
-                                field_updates=("`{}`=`{}`, " * len(columns))
-                                .rstrip(" ,")
-                                .format(*list(chain.from_iterable((column, column) for column in columns))),
-                            )
-                        print(sql)
+                        sql = """
+                            INSERT
+                            INTO `{table}` ({fields})
+                            {values_clause}
+                            ON DUPLICATE KEY UPDATE {field_updates}
+                        """.format(
+                            table=safe_identifier_length(table["name"]),
+                            fields=("`{}`, " * len(columns)).rstrip(" ,").format(*columns),
+                            values_clause=(
+                                "VALUES ({placeholders}) AS `__new__`"
+                                if check_mysql_values_alias_support(self._mysql_version)
+                                else "VALUES ({placeholders})"
+                            ).format(placeholders=("%s, " * len(columns)).rstrip(" ,")),
+                            field_updates=(
+                                ("`{}`=`__new__`.`{}`, " * len(columns)).rstrip(" ,")
+                                if check_mysql_values_alias_support(self._mysql_version)
+                                else ("`{}`=`{}`, " * len(columns)).rstrip(" ,")
+                            ).format(*list(chain.from_iterable((column, column) for column in columns))),
+                        )
                     else:
                         sql = """
                             INSERT {ignore}

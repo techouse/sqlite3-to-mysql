@@ -29,7 +29,6 @@ from sqlite3_to_mysql.sqlite_utils import (
     convert_timedelta,
     unicase_compare,
 )
-
 from .mysql_utils import (
     MYSQL_BLOB_COLUMN_TYPES,
     MYSQL_COLUMN_TYPES,
@@ -40,6 +39,7 @@ from .mysql_utils import (
     check_mysql_fulltext_support,
     check_mysql_json_support,
     safe_identifier_length,
+    check_mysql_values_alias_support,
 )
 from .types import SQLite3toMySQLAttributes, SQLite3toMySQLParams
 
@@ -723,21 +723,39 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                         safe_identifier_length(column[0]) for column in self._sqlite_cur.description
                     ]
                     if self._mysql_insert_method.upper() == "UPDATE":
-                        sql: str = (
-                            """
-                            INSERT
-                            INTO `{table}` ({fields})
-                            VALUES ({placeholders}) AS `__new__`
-                            ON DUPLICATE KEY UPDATE {field_updates}
-                        """.format(
-                                table=safe_identifier_length(table["name"]),
-                                fields=("`{}`, " * len(columns)).rstrip(" ,").format(*columns),
-                                placeholders=("%s, " * len(columns)).rstrip(" ,"),
-                                field_updates=("`{}`=`__new__`.`{}`, " * len(columns))
-                                .rstrip(" ,")
-                                .format(*list(chain.from_iterable((column, column) for column in columns))),
+                        if check_mysql_values_alias_support(self._mysql_version):
+                            sql: str = (
+                                """
+                                INSERT
+                                INTO `{table}` ({fields})
+                                VALUES ({placeholders}) AS `__new__`
+                                ON DUPLICATE KEY UPDATE {field_updates}
+                            """.format(
+                                    table=safe_identifier_length(table["name"]),
+                                    fields=("`{}`, " * len(columns)).rstrip(" ,").format(*columns),
+                                    placeholders=("%s, " * len(columns)).rstrip(" ,"),
+                                    field_updates=("`{}`=`__new__`.`{}`, " * len(columns))
+                                    .rstrip(" ,")
+                                    .format(*list(chain.from_iterable((column, column) for column in columns))),
+                                )
                             )
-                        )
+                        else:
+                            sql: str = (
+                                """
+                                INSERT
+                                INTO `{table}` ({fields})
+                                VALUES ({placeholders})
+                                ON DUPLICATE KEY UPDATE {field_updates}
+                            """.format(
+                                    table=safe_identifier_length(table["name"]),
+                                    fields=("`{}`, " * len(columns)).rstrip(" ,").format(*columns),
+                                    placeholders=("%s, " * len(columns)).rstrip(" ,"),
+                                    field_updates=("`{}`=`{}`, " * len(columns))
+                                    .rstrip(" ,")
+                                    .format(*list(chain.from_iterable((column, column) for column in columns))),
+                                )
+                            )
+                        print(sql)
                     else:
                         sql = """
                             INSERT {ignore}

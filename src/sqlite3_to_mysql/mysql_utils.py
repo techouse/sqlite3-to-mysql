@@ -8,7 +8,6 @@ from mysql.connector.charsets import MYSQL_CHARACTER_SETS
 from packaging import version
 from packaging.version import Version
 
-
 # Shamelessly copied from SQLAlchemy's dialects/mysql/__init__.py
 MYSQL_COLUMN_TYPES: t.Tuple[str, ...] = (
     "BIGINT",
@@ -113,7 +112,7 @@ def get_mysql_version(version_string: str) -> version.Version:
 def check_mysql_json_support(version_string: str) -> bool:
     """Check for MySQL JSON support."""
     mysql_version: Version = get_mysql_version(version_string)
-    if version_string.lower().endswith("-mariadb"):
+    if "mariadb" in version_string.lower():
         if mysql_version.major >= 10 and mysql_version.minor >= 2 and mysql_version.micro >= 7:
             return True
     else:
@@ -121,6 +120,23 @@ def check_mysql_json_support(version_string: str) -> bool:
             return True
         if mysql_version.minor >= 7 and mysql_version.micro >= 8:
             return True
+    return False
+
+
+def check_mysql_values_alias_support(version_string: str) -> bool:
+    """Check for VALUES alias support."""
+    mysql_version: Version = get_mysql_version(version_string)
+    if "mariadb" in version_string.lower():
+        return False
+    ## Only MySQL 8.0.19 and later support VALUES alias
+    if mysql_version.major >= 8:
+        if mysql_version.major > 8:
+            return True
+        if mysql_version.minor > 0:
+            return True
+        if mysql_version.micro >= 19:
+            return True
+        return False
     return False
 
 

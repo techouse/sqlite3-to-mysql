@@ -129,7 +129,7 @@ def check_mysql_values_alias_support(version_string: str) -> bool:
     mysql_version: Version = get_mysql_version(version_string)
     if "mariadb" in version_string.lower():
         return False
-    ## Only MySQL 8.0.19 and later support VALUES alias
+    # Only MySQL 8.0.19 and later support VALUES alias
     if mysql_version.major >= 8:
         if mysql_version.major > 8:
             return True

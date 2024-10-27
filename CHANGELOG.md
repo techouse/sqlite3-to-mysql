@@ -1,3 +1,10 @@
+# 2.3.2
+
+* [FIX] fix --mysql-insert-method
+* [FIX] modify the existing `check_mysql_json_support` and `check_mysql_fulltext_support` to improve detection of
+  MariaDB versions
+* [FIX] fix connecting with empty MySQL password
+
 # 2.3.1
 
 * [FIX] fix conversion of SQLite `NUMERIC` data type with precision and scale to MySQL `DECIMAL` with precision and

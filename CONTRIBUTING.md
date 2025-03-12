@@ -13,7 +13,7 @@ interactions related to the project.
 
 Ensuring backward compatibility is an imperative requirement.
 
-Currently, the tool supports Python versions 3.8, 3.9, 3.10, 3.11, and 3.12.
+Currently, the tool supports Python versions 3.9, 3.10, 3.11, 3.12, and 3.13.
 
 ## MySQL version support
 
@@ -61,7 +61,7 @@ git commit -m "A brief summary of the commit
 > 
 > A paragraph describing what changed and its impact."
 ```
-    
+
 ## Coding standards
 
 It is essential to prioritize code readability and conciseness. To achieve this, we recommend

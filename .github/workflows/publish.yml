@@ -60,11 +60,6 @@ jobs:
         run: |
           set -e
           python3 -m build --sdist --wheel --outdir dist/ .
-      - name: Publish distribution package to Test PyPI
-        id: publish_test
-        uses: pypa/gh-action-pypi-publish@67339c736fd9354cd4f8cb0b744f2b82a74b5c70 # v1.12.3
-        with:
-          repository-url: https://test.pypi.org/legacy/
       - name: Publish distribution package to PyPI
         id: publish
         if: startsWith(github.ref, 'refs/tags')

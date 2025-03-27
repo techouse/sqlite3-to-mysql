@@ -29,6 +29,7 @@ Connection Options
 - ``-h, --mysql-host TEXT``: MySQL host. Defaults to localhost.
 - ``-P, --mysql-port INTEGER``: MySQL port. Defaults to 3306.
 - ``-S, --skip-ssl``: Disable MySQL connection encryption.
+- ``--mysql-socket TEXT``: Path to MySQL unix socket file.
 
 Transfer Options
 """"""""""""""""

@@ -1,3 +1,7 @@
+# 2.4.0
+
+* [CHORE] drop support for Python 3.8
+
 # 2.3.2
 
 * [FIX] fix --mysql-insert-method

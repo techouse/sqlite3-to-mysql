@@ -1,11 +1,15 @@
+from unittest.mock import MagicMock, patch
+
 import pytest
 from packaging.version import Version
 
 from sqlite3_to_mysql.mysql_utils import (
+    CharSet,
     check_mysql_fulltext_support,
     check_mysql_json_support,
     check_mysql_values_alias_support,
     get_mysql_version,
+    mysql_supported_character_sets,
     safe_identifier_length,
 )
 
@@ -85,3 +89,68 @@ class TestMySQLUtils:
     )
     def test_safe_identifier_length(self, identifier: str, expected: str) -> None:
         assert safe_identifier_length(identifier) == expected
+
+    def test_mysql_supported_character_sets_with_charset(self) -> None:
+        """Test mysql_supported_character_sets function with a specific charset."""
+        # Mock the MYSQL_CHARACTER_SETS list
+        mock_character_sets = [
+            None,  # Index 0
+            ("utf8", "utf8_general_ci", True),  # Index 1
+            ("latin1", "latin1_swedish_ci", True),  # Index 2
+        ]
+
+        with patch("sqlite3_to_mysql.mysql_utils.MYSQL_CHARACTER_SETS", mock_character_sets):
+            # Test with a charset that exists
+            result = list(mysql_supported_character_sets(charset="utf8"))
+            assert len(result) == 1
+            assert result[0] == CharSet(1, "utf8", "utf8_general_ci")
+
+            # Test with a charset that doesn't exist
+            result = list(mysql_supported_character_sets(charset="unknown"))
+            assert len(result) == 0
+
+    def test_mysql_supported_character_sets_without_charset(self) -> None:
+        """Test mysql_supported_character_sets function without a specific charset."""
+        # Mock the MYSQL_CHARACTER_SETS list
+        mock_character_sets = [
+            None,  # Index 0
+            ("utf8", "utf8_general_ci", True),  # Index 1
+            ("latin1", "latin1_swedish_ci", True),  # Index 2
+        ]
+
+        # Mock the CharacterSet().get_supported() method
+        mock_get_supported = MagicMock(return_value=["utf8", "latin1"])
+
+        with patch("sqlite3_to_mysql.mysql_utils.MYSQL_CHARACTER_SETS", mock_character_sets):
+            with patch("mysql.connector.CharacterSet.get_supported", mock_get_supported):
+                result = list(mysql_supported_character_sets())
+                # The function yields a CharSet for each combination of charset and index
+                assert len(result) == 4
+                assert CharSet(1, "utf8", "utf8_general_ci") in result
+                assert CharSet(2, "utf8", "latin1_swedish_ci") in result
+                assert CharSet(1, "latin1", "utf8_general_ci") in result
+                assert CharSet(2, "latin1", "latin1_swedish_ci") in result
+
+    def test_mysql_supported_character_sets_with_keyerror(self) -> None:
+        """Test mysql_supported_character_sets function with KeyError."""
+        # Mock the MYSQL_CHARACTER_SETS list with an entry that will cause a KeyError
+        mock_character_sets = [
+            None,  # Index 0
+            ("utf8", "utf8_general_ci", True),  # Index 1
+            None,  # Index 2 - This will cause a KeyError when accessed
+        ]
+
+        with patch("sqlite3_to_mysql.mysql_utils.MYSQL_CHARACTER_SETS", mock_character_sets):
+            # Test with a charset that exists but will cause a KeyError
+            result = list(mysql_supported_character_sets(charset="utf8"))
+            assert len(result) == 1
+            assert result[0] == CharSet(1, "utf8", "utf8_general_ci")
+
+        # Mock for testing without charset
+        mock_get_supported = MagicMock(return_value=["utf8"])
+
+        with patch("sqlite3_to_mysql.mysql_utils.MYSQL_CHARACTER_SETS", mock_character_sets):
+            with patch("mysql.connector.CharacterSet.get_supported", mock_get_supported):
+                result = list(mysql_supported_character_sets())
+                assert len(result) == 1
+                assert CharSet(1, "utf8", "utf8_general_ci") in result

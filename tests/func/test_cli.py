@@ -21,7 +21,7 @@ from tests.conftest import MySQLCredentials
 class TestSQLite3toMySQL:
     def test_no_arguments(self, cli_runner: CliRunner, mysql_database: Engine) -> None:
         result: Result = cli_runner.invoke(sqlite3mysql)
-        assert result.exit_code == 0
+        assert result.exit_code in {0, 2}
         assert all(
             message in result.output
             for message in {

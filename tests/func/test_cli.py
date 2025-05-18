@@ -498,6 +498,135 @@ class TestSQLite3toMySQL:
         assert result.exit_code > 0
         assert "Process interrupted" in result.output
 
+    def test_keyboard_interrupt_debug_mode(
+        self,
+        cli_runner: CliRunner,
+        sqlite_database: str,
+        mysql_credentials: MySQLCredentials,
+        mocker: MockFixture,
+    ) -> None:
+        """Test keyboard interrupt handling in debug mode."""
+        mocker.patch.object(SQLite3toMySQL, "transfer", side_effect=KeyboardInterrupt())
+        result: Result = cli_runner.invoke(
+            sqlite3mysql,
+            [
+                "-f",
+                sqlite_database,
+                "-d",
+                mysql_credentials.database,
+                "-u",
+                mysql_credentials.user,
+                "--mysql-password",
+                mysql_credentials.password,
+                "-h",
+                mysql_credentials.host,
+                "-P",
+                str(mysql_credentials.port),
+                "--debug",  # Enable debug mode
+            ],
+        )
+        # In debug mode, the KeyboardInterrupt should be raised
+        # However, Click's testing framework converts it to SystemExit
+        assert result.exit_code > 0
+        assert isinstance(result.exception, SystemExit)
+
+    def test_exception_debug_mode(
+        self,
+        cli_runner: CliRunner,
+        sqlite_database: str,
+        mysql_credentials: MySQLCredentials,
+        mocker: MockFixture,
+    ) -> None:
+        """Test exception handling in debug mode."""
+        # Mock the transfer method to raise an exception
+        mocker.patch.object(SQLite3toMySQL, "transfer", side_effect=ValueError("Test error"))
+        result: Result = cli_runner.invoke(
+            sqlite3mysql,
+            [
+                "-f",
+                sqlite_database,
+                "-d",
+                mysql_credentials.database,
+                "-u",
+                mysql_credentials.user,
+                "--mysql-password",
+                mysql_credentials.password,
+                "-h",
+                mysql_credentials.host,
+                "-P",
+                str(mysql_credentials.port),
+                "--debug",  # Enable debug mode
+            ],
+        )
+        # In debug mode, the exception should be raised
+        assert result.exit_code > 0
+        assert isinstance(result.exception, ValueError)
+        assert str(result.exception) == "Test error"
+
+    def test_exception_normal_mode(
+        self,
+        cli_runner: CliRunner,
+        sqlite_database: str,
+        mysql_credentials: MySQLCredentials,
+        mocker: MockFixture,
+    ) -> None:
+        """Test exception handling in normal mode (non-debug)."""
+        # Mock the transfer method to raise an exception
+        mocker.patch.object(SQLite3toMySQL, "transfer", side_effect=ValueError("Test error"))
+        result: Result = cli_runner.invoke(
+            sqlite3mysql,
+            [
+                "-f",
+                sqlite_database,
+                "-d",
+                mysql_credentials.database,
+                "-u",
+                mysql_credentials.user,
+                "--mysql-password",
+                mysql_credentials.password,
+                "-h",
+                mysql_credentials.host,
+                "-P",
+                str(mysql_credentials.port),
+                # No debug flag
+            ],
+        )
+        # In normal mode, the exception should be caught and the error message printed
+        assert result.exit_code > 0
+        assert "Test error" in result.output
+
+    def test_invalid_mysql_collation(
+        self,
+        cli_runner: CliRunner,
+        sqlite_database: str,
+        mysql_credentials: MySQLCredentials,
+    ) -> None:
+        """Test validation of mysql_collation against charset_collations."""
+        result: Result = cli_runner.invoke(
+            sqlite3mysql,
+            [
+                "-f",
+                sqlite_database,
+                "-d",
+                mysql_credentials.database,
+                "-u",
+                mysql_credentials.user,
+                "--mysql-password",
+                mysql_credentials.password,
+                "-h",
+                mysql_credentials.host,
+                "-P",
+                str(mysql_credentials.port),
+                "--mysql-charset",
+                "utf8mb4",
+                "--mysql-collation",
+                "invalid_collation",  # Invalid collation for utf8mb4
+            ],
+        )
+        assert result.exit_code > 0
+        assert "Error: Invalid value for '--mysql-collation'" in result.output
+        assert "invalid_collation" in result.output
+
     def test_transfer_specific_tables_only(
         self,
         cli_runner: CliRunner,

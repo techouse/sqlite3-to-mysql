@@ -154,3 +154,57 @@ class TestMySQLUtils:
                 result = list(mysql_supported_character_sets())
                 assert len(result) == 1
                 assert CharSet(1, "utf8", "utf8_general_ci") in result
+
+    def test_mysql_supported_character_sets_with_keyerror_in_info_access(self) -> None:
+        """Test mysql_supported_character_sets function with KeyError when accessing info elements."""
+
+        # Create a mock tuple that will raise KeyError when accessed with index
+        class MockTuple:
+            def __getitem__(self, key):
+                if key == 0:
+                    return "utf8"
+                raise KeyError("Mock KeyError")
+
+        # Mock the MYSQL_CHARACTER_SETS list with an entry that will cause a KeyError
+        mock_character_sets = [
+            None,  # Index 0
+            MockTuple(),  # Index 1 - This will cause a KeyError when accessing index 1
+        ]
+
+        # Test with a specific charset
+        with patch("sqlite3_to_mysql.mysql_utils.MYSQL_CHARACTER_SETS", mock_character_sets):
+            result = list(mysql_supported_character_sets(charset="utf8"))
+            # The function should skip the KeyError and return an empty list
+            assert len(result) == 0
+
+        # Test without a specific charset
+        mock_get_supported = MagicMock(return_value=["utf8"])
+        with patch("sqlite3_to_mysql.mysql_utils.MYSQL_CHARACTER_SETS", mock_character_sets):
+            with patch("mysql.connector.CharacterSet.get_supported", mock_get_supported):
+                result = list(mysql_supported_character_sets())
+                # The function should skip the KeyError and return an empty list
+                assert len(result) == 0
+
+    def test_mysql_supported_character_sets_with_keyerror_in_charset_match(self) -> None:
+        """Test mysql_supported_character_sets function with KeyError when matching charset."""
+
+        # Create a mock tuple that will raise KeyError when checking if info[0] == charset
+        class MockTuple:
+            def __getitem__(self, key):
+                if key == 0:
+                    raise KeyError("Mock KeyError in charset match")
+                if key == 1:
+                    return "utf8_general_ci"
+                return None
+
+        # Mock the MYSQL_CHARACTER_SETS list with an entry that will cause a KeyError
+        mock_character_sets = [
+            None,  # Index 0
+            MockTuple(),  # Index 1 - This will cause a KeyError when accessing info[0]
+        ]
+
+        # Test with a specific charset
+        with patch("sqlite3_to_mysql.mysql_utils.MYSQL_CHARACTER_SETS", mock_character_sets):
+            result = list(mysql_supported_character_sets(charset="utf8"))
+            # The function should skip the KeyError and return an empty list
+            assert len(result) == 0

@@ -428,3 +428,208 @@ class TestSQLite3toMySQL:
 
         sqlite_cnx.close()
         sqlite_engine.dispose()
+
+    @pytest.mark.parametrize("quiet", [False, True])
+    def test_add_index_duplicate_key_error(
+        self,
+        sqlite_database: str,
+        mysql_database: Engine,
+        mysql_credentials: MySQLCredentials,
+        mocker: MockFixture,
+        faker: Faker,
+        caplog: LogCaptureFixture,
+        quiet: bool,
+    ) -> None:
+        """Test handling of duplicate key errors in _add_index."""
+        proc = SQLite3toMySQL(  # type: ignore[call-arg]
+            sqlite_file=sqlite_database,
+            mysql_user=mysql_credentials.user,
+            mysql_password=mysql_credentials.password,
+            mysql_host=mysql_credentials.host,
+            mysql_port=mysql_credentials.port,
+            mysql_database=mysql_credentials.database,
+            quiet=quiet,
+            ignore_duplicate_keys=False,  # Don't ignore duplicate keys
+        )
+
+        # Create a mock cursor that raises a duplicate key error on first call
+        # and succeeds on second call (for the renamed key)
+        class FakeCursor:
+            call_count = 0
+
+            def execute(self, statement):
+                self.call_count += 1
+                if self.call_count == 1:
+                    raise mysql.connector.Error(msg="Duplicate key name", errno=errorcode.ER_DUP_KEYNAME)
+                # Second call should succeed
+                return None
+
+        fake_cursor = FakeCursor()
+        mocker.patch.object(proc, "_mysql_cur", fake_cursor)
+
+        # Mock MySQL connection commit
+        mocker.patch.object(proc._mysql, "commit")
+
+        # Create fake index info
+        index = {"name": "test_index", "unique": 0}
+        index_infos = ({"name": "test_column"},)
+
+        caplog.set_level(logging.DEBUG)
+        # Call _add_index - it should handle the duplicate key error and retry
+        proc._add_index(
+            table_name="test_table",
+            index_type="INDEX",
+            index=index,
+            index_columns="test_column",
+            index_infos=index_infos,
+        )
+
+        # Verify the cursor was called twice (once for original key, once for renamed)
+        assert fake_cursor.call_count == 2
+
+        # Verify warning was logged
+        assert any("Duplicate key" in message for message in caplog.messages)
+        assert any("Trying to create new key" in message for message in caplog.messages)
+
+    @pytest.mark.parametrize("quiet", [False, True])
+    def test_add_index_duplicate_key_error_ignored(
+        self,
+        sqlite_database: str,
+        mysql_database: Engine,
+        mysql_credentials: MySQLCredentials,
+        mocker: MockFixture,
+        faker: Faker,
+        caplog: LogCaptureFixture,
+        quiet: bool,
+    ) -> None:
+        """Test handling of duplicate key errors in _add_index when ignore_duplicate_keys is True."""
+        proc = SQLite3toMySQL(  # type: ignore[call-arg]
+            sqlite_file=sqlite_database,
+            mysql_user=mysql_credentials.user,
+            mysql_password=mysql_credentials.password,
+            mysql_host=mysql_credentials.host,
+            mysql_port=mysql_credentials.port,
+            mysql_database=mysql_credentials.database,
+            quiet=quiet,
+            ignore_duplicate_keys=True,  # Ignore duplicate keys
+        )
+
+        # Create a mock cursor that raises a duplicate key error
+        class FakeCursor:
+            def execute(self, statement):
+                raise mysql.connector.Error(msg="Duplicate key name", errno=errorcode.ER_DUP_KEYNAME)
+
+        mocker.patch.object(proc, "_mysql_cur", FakeCursor())
+
+        # Create fake index info
+        index = {"name": "test_index", "unique": 0}
+        index_infos = ({"name": "test_column"},)
+
+        caplog.set_level(logging.DEBUG)
+        # Call _add_index - it should handle the duplicate key error and not retry
+        proc._add_index(
+            table_name="test_table",
+            index_type="INDEX",
+            index=index,
+            index_columns="test_column",
+            index_infos=index_infos,
+        )
+
+        # Verify warning was logged
+        assert any("Ignoring duplicate key" in message for message in caplog.messages)
+
+    @pytest.mark.parametrize("quiet", [False, True])
+    def test_add_index_bad_fulltext_error(
+        self,
+        sqlite_database: str,
+        mysql_database: Engine,
+        mysql_credentials: MySQLCredentials,
+        mocker: MockFixture,
+        faker: Faker,
+        caplog: LogCaptureFixture,
+        quiet: bool,
+    ) -> None:
+        """Test handling of bad FULLTEXT index errors in _add_index."""
+        proc = SQLite3toMySQL(  # type: ignore[call-arg]
+            sqlite_file=sqlite_database,
+            mysql_user=mysql_credentials.user,
+            mysql_password=mysql_credentials.password,
+            mysql_host=mysql_credentials.host,
+            mysql_port=mysql_credentials.port,
+            mysql_database=mysql_credentials.database,
+            quiet=quiet,
+        )
+
+        # Create a mock cursor that raises a bad FULLTEXT error
+        class FakeCursor:
+            def execute(self, statement):
+                raise mysql.connector.Error(msg="Bad FULLTEXT column", errno=errorcode.ER_BAD_FT_COLUMN)
+
+        mocker.patch.object(proc, "_mysql_cur", FakeCursor())
+
+        # Create fake index info
+        index = {"name": "test_index", "unique": 0}
+        index_infos = ({"name": "test_column"},)
+
+        caplog.set_level(logging.DEBUG)
+        # Call _add_index with FULLTEXT index type
+        with pytest.raises(mysql.connector.Error) as excinfo:
+            proc._add_index(
+                table_name="test_table",
+                index_type="FULLTEXT",
+                index=index,
+                index_columns="test_column",
+                index_infos=index_infos,
+            )
+
+        # Verify error was raised and warning was logged
+        assert excinfo.value.errno == errorcode.ER_BAD_FT_COLUMN
+        assert any("Failed adding FULLTEXT index" in message for message in caplog.messages)
+
+    @pytest.mark.parametrize("quiet", [False, True])
+    def test_transfer_finally_block(
+        self,
+        sqlite_database: str,
+        mysql_database: Engine,
+        mysql_credentials: MySQLCredentials,
+        mocker: MockFixture,
+        faker: Faker,
+        caplog: LogCaptureFixture,
+        quiet: bool,
+    ) -> None:
+        """Test the finally block in the transfer method."""
+        proc = SQLite3toMySQL(  # type: ignore[call-arg]
+            sqlite_file=sqlite_database,
+            mysql_user=mysql_credentials.user,
+            mysql_password=mysql_credentials.password,
+            mysql_host=mysql_credentials.host,
+            mysql_port=mysql_credentials.port,
+            mysql_database=mysql_credentials.database,
+            quiet=quiet,
+        )
+
+        # Create a mock cursor that raises an exception during transfer
+        class FakeCursor:
+            execute_calls = []
+
+            def execute(self, statement):
+                self.execute_calls.append(statement)
+                if "FOREIGN_KEY_CHECKS=0" in statement:
+                    return None
+                if "FOREIGN_KEY_CHECKS=1" in statement:
+                    return None
+                raise ValueError("Test error during transfer")
+
+        fake_cursor = FakeCursor()
+        mocker.patch.object(proc, "_mysql_cur", fake_cursor)
+
+        # Call transfer - it should raise the ValueError but still execute FOREIGN_KEY_CHECKS=1
+        with pytest.raises(ValueError) as excinfo:
+            proc.transfer()
+
+        # Verify error was raised
+        assert str(excinfo.value) == "Test error during transfer"
+
+        # Verify both FOREIGN_KEY_CHECKS statements were executed
+        assert "FOREIGN_KEY_CHECKS=0" in fake_cursor.execute_calls[0]
+        assert "FOREIGN_KEY_CHECKS=1" in fake_cursor.execute_calls[-1]

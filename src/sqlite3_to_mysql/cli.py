@@ -62,7 +62,7 @@ _copyright_header: str = f"sqlite3mysql version {package_version} Copyright (c) 
 @click.option("--mysql-password", default=None, help="MySQL password")
 @click.option("-h", "--mysql-host", default="localhost", help="MySQL host. Defaults to localhost.")
 @click.option("-P", "--mysql-port", type=int, default=3306, help="MySQL port. Defaults to 3306.")
-@click.option("--mysql-socket", default=None, help="Path to MySQL unix socket file.")
+@click.option("--mysql-socket", type=click.Path(exists=True), default=None, help="Path to MySQL unix socket file.")
 @click.option("-S", "--skip-ssl", is_flag=True, help="Disable MySQL connection encryption.")
 @click.option(
     "-i",
@@ -138,7 +138,7 @@ def cli(
     mysql_database: str,
     mysql_host: str,
     mysql_port: int,
-    mysql_socket: str,
+    mysql_socket: t.Optional[str],
     skip_ssl: bool,
     mysql_insert_method: str,
     mysql_truncate_tables: bool,

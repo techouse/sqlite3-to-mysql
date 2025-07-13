@@ -75,7 +75,14 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
 
         self._mysql_port = kwargs.get("mysql_port", 3306) or 3306
 
-        self._mysql_socket = str(kwargs.get("mysql_socket")) if kwargs.get("mysql_socket") else None
+        if kwargs.get("mysql_socket") is not None:
+            if not os.path.exists(str(kwargs.get("mysql_socket"))):
+                raise FileNotFoundError("MySQL socket does not exist")
+            else:
+                self._mysql_socket = realpath(str(kwargs.get("mysql_socket")))
+                self._mysql_port = None
+        else:
+            self._mysql_socket = None
 
         self._sqlite_tables = kwargs.get("sqlite_tables") or tuple()
 

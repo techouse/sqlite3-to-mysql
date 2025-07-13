@@ -1,3 +1,7 @@
+# 2.4.1
+
+* [FEAT] add MySQL Unix socket connection support via the `--mysql-socket` option
+
 # 2.4.0
 
 * [CHORE] drop support for Python 3.8

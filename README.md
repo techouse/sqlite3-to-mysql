@@ -49,7 +49,7 @@ Options:
   --mysql-password TEXT           MySQL password
   -h, --mysql-host TEXT           MySQL host. Defaults to localhost.
   -P, --mysql-port INTEGER        MySQL port. Defaults to 3306.
-  --mysql-socket TEXT             Path to MySQL unix socket file.
+  -k, --mysql-socket PATH         Path to MySQL unix socket file.
   -S, --skip-ssl                  Disable MySQL connection encryption.
   -i, --mysql-insert-method [DEFAULT|IGNORE|UPDATE]
                                   MySQL insert method. DEFAULT will throw

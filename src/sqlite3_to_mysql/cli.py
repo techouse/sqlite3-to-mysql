@@ -165,9 +165,6 @@ def cli(
     """Transfer SQLite to MySQL using the provided CLI options."""
     click.echo(_copyright_header)
     try:
-        if mysql_port and mysql_socket:
-            raise click.ClickException("Error: Can only specify either -P/--mysql-port or -k/--mysql-socket, not both.")
-
         if mysql_collation:
             charset_collations: t.Tuple[str, ...] = tuple(
                 cs.collation for cs in mysql_supported_character_sets(mysql_charset.lower())
@@ -193,7 +190,7 @@ def cli(
             mysql_password=mysql_password or prompt_mysql_password,
             mysql_database=mysql_database,
             mysql_host=mysql_host,
-            mysql_port=mysql_port,
+            mysql_port=None if mysql_socket else mysql_port,
             mysql_socket=mysql_socket,
             mysql_ssl_disabled=skip_ssl,
             mysql_insert_method=mysql_insert_method,

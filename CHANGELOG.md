@@ -1,3 +1,7 @@
+# 2.4.2
+
+* [FIX] fix conflict between MySQL port and socket options in CLI
+
 # 2.4.1
 
 * [FEAT] add MySQL Unix socket connection support via the `--mysql-socket` option

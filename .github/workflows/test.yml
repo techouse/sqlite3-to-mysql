@@ -167,61 +167,61 @@ jobs:
           - toxenv: "python3.9"
             db: "mariadb:11.4"
             legacy_db: 0
-            experimental: true
+            experimental: false
             py: "3.9"
 
           - toxenv: "python3.10"
             db: "mariadb:11.4"
             legacy_db: 0
-            experimental: true
+            experimental: false
             py: "3.10"
 
           - toxenv: "python3.11"
             db: "mariadb:11.4"
             legacy_db: 0
-            experimental: true
+            experimental: false
             py: "3.11"
 
           - toxenv: "python3.12"
             db: "mariadb:11.4"
             legacy_db: 0
-            experimental: true
+            experimental: false
             py: "3.12"
 
           - toxenv: "python3.13"
             db: "mariadb:11.4"
             legacy_db: 0
-            experimental: true
+            experimental: false
             py: "3.13"
 
           - toxenv: "python3.9"
             db: "mariadb:11.8"
             legacy_db: 0
-            experimental: true
+            experimental: false
             py: "3.9"
 
           - toxenv: "python3.10"
             db: "mariadb:11.8"
             legacy_db: 0
-            experimental: true
+            experimental: false
             py: "3.10"
 
           - toxenv: "python3.11"
             db: "mariadb:11.8"
             legacy_db: 0
-            experimental: true
+            experimental: false
             py: "3.11"
 
           - toxenv: "python3.12"
             db: "mariadb:11.8"
             legacy_db: 0
-            experimental: true
+            experimental: false
             py: "3.12"
 
           - toxenv: "python3.13"
             db: "mariadb:11.8"
             legacy_db: 0
-            experimental: true
+            experimental: false
             py: "3.13"
 
           - toxenv: "python3.9"
@@ -374,7 +374,6 @@ jobs:
             py: "3.13"
     continue-on-error: ${{ matrix.experimental }}
     services:
-
       mysql:
         image: ${{ matrix.db }}
         ports:
@@ -384,7 +383,8 @@ jobs:
           MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: yes
         options: >-
           --name=mysqld
-          --health-cmd="mysqladmin ping -h 127.0.0.1 --silent"
+          --health-start-period=60s
+          --health-cmd="command -v healthcheck.sh >/dev/null 2>&1 && healthcheck.sh --connect --innodb_initialized || mysqladmin ping -h 127.0.0.1 --silent"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=30

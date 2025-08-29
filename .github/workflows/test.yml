@@ -8,10 +8,16 @@ on:
     branches:
       - master
   workflow_call:
+
 defaults:
   run:
     shell: bash
+
 permissions: read-all
+
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   analyze:
@@ -34,66 +40,68 @@ jobs:
     name: "Test"
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
+      max-parallel: 8
       matrix:
         include:
           - toxenv: "python3.9"
             db: "mariadb:5.5"
             legacy_db: 1
-            experimental: false
+            experimental: true
             py: "3.9"
 
           - toxenv: "python3.10"
             db: "mariadb:5.5"
             legacy_db: 1
-            experimental: false
+            experimental: true
             py: "3.10"
 
           - toxenv: "python3.11"
             db: "mariadb:5.5"
             legacy_db: 1
-            experimental: false
+            experimental: true
             py: "3.11"
 
           - toxenv: "python3.12"
             db: "mariadb:5.5"
             legacy_db: 1
-            experimental: false
+            experimental: true
             py: "3.12"
 
           - toxenv: "python3.13"
             db: "mariadb:5.5"
             legacy_db: 1
-            experimental: false
+            experimental: true
             py: "3.13"
 
           - toxenv: "python3.9"
             db: "mariadb:10.0"
             legacy_db: 1
-            experimental: false
+            experimental: true
             py: "3.9"
 
           - toxenv: "python3.10"
             db: "mariadb:10.0"
             legacy_db: 1
-            experimental: false
+            experimental: true
             py: "3.10"
 
           - toxenv: "python3.11"
             db: "mariadb:10.0"
             legacy_db: 1
-            experimental: false
+            experimental: true
             py: "3.11"
 
           - toxenv: "python3.12"
             db: "mariadb:10.0"
             legacy_db: 1
-            experimental: false
+            experimental: true
             py: "3.12"
 
           - toxenv: "python3.13"
             db: "mariadb:10.0"
             legacy_db: 1
-            experimental: false
+            experimental: true
             py: "3.13"
 
           - toxenv: "python3.9"
@@ -219,91 +227,91 @@ jobs:
           - toxenv: "python3.9"
             db: "mysql:5.5"
             legacy_db: 1
-            experimental: false
+            experimental: true
             py: "3.9"
 
           - toxenv: "python3.10"
             db: "mysql:5.5"
             legacy_db: 1
-            experimental: false
+            experimental: true
             py: "3.10"
 
           - toxenv: "python3.11"
             db: "mysql:5.5"
             legacy_db: 1
-            experimental: false
+            experimental: true
             py: "3.11"
 
           - toxenv: "python3.12"
             db: "mysql:5.5"
             legacy_db: 1
-            experimental: false
+            experimental: true
             py: "3.12"
 
           - toxenv: "python3.13"
             db: "mysql:5.5"
             legacy_db: 1
-            experimental: false
+            experimental: true
             py: "3.13"
 
           - toxenv: "python3.9"
             db: "mysql:5.6"
             legacy_db: 1
-            experimental: false
+            experimental: true
             py: "3.9"
 
           - toxenv: "python3.10"
             db: "mysql:5.6"
             legacy_db: 1
-            experimental: false
+            experimental: true
             py: "3.10"
 
           - toxenv: "python3.11"
             db: "mysql:5.6"
             legacy_db: 1
-            experimental: false
+            experimental: true
             py: "3.11"
 
           - toxenv: "python3.12"
             db: "mysql:5.6"
             legacy_db: 1
-            experimental: false
+            experimental: true
             py: "3.12"
 
           - toxenv: "python3.13"
             db: "mysql:5.6"
             legacy_db: 1
-            experimental: false
+            experimental: true
             py: "3.13"
 
           - toxenv: "python3.9"
             db: "mysql:5.7"
             legacy_db: 0
-            experimental: false
+            experimental: true
             py: "3.9"
 
           - toxenv: "python3.10"
             db: "mysql:5.7"
             legacy_db: 0
-            experimental: false
+            experimental: true
             py: "3.10"
 
           - toxenv: "python3.11"
             db: "mysql:5.7"
             legacy_db: 0
-            experimental: false
+            experimental: true
             py: "3.11"
 
           - toxenv: "python3.12"
             db: "mysql:5.7"
             legacy_db: 0
-            experimental: false
+            experimental: true
             py: "3.12"
 
           - toxenv: "python3.13"
             db: "mysql:5.7"
             legacy_db: 0
-            experimental: false
+            experimental: true
             py: "3.13"
 
           - toxenv: "python3.9"
@@ -373,25 +381,31 @@ jobs:
           - 3306:3306
         env:
           MYSQL_ALLOW_EMPTY_PASSWORD: yes
+          MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: yes
         options: >-
           --name=mysqld
+          --health-cmd="mysqladmin ping -h 127.0.0.1 --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=30
     steps:
       - uses: actions/checkout@v5
       - name: Set up Python ${{ matrix.py }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.py }}
-      - uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-1
-          restore-keys: |
-            ${{ runner.os }}-pip-
+          cache: "pip"
+          cache-dependency-path: requirements_dev.txt
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -U codecov tox-gh-actions
+          python -m pip install -U tox-gh-actions
           pip install -r requirements_dev.txt
+      - name: Install MySQL client
+        run: |
+          set -e
+          sudo apt-get update
+          sudo apt-get install -y mysql-client
       - name: Set up MySQL
         env:
           DB: ${{ matrix.db }}
@@ -402,12 +416,6 @@ jobs:
           MYSQL_PORT: 3306
         run: |
           set -e
-          
-          while :
-          do
-            sleep 1
-            mysql -h127.0.0.1 -uroot -e 'select version()' && break
-          done
           
           case "$DB" in
             'mysql:8.0'|'mysql:8.4')
@@ -469,8 +477,12 @@ jobs:
       - name: Test with tox
         env:
           LEGACY_DB: ${{ matrix.legacy_db }}
+          TOXENV: ${{ matrix.toxenv }}
         run: tox
       - name: Upload coverage to Codecov
+        env:
+          OS: ubuntu-latest
+          PYTHON: ${{ matrix.py }}
         uses: codecov/codecov-action@v5
         continue-on-error: true
         with:

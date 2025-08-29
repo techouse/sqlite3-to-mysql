@@ -5,8 +5,9 @@ build-backend = "hatchling.build"
 [project]
 name = "sqlite3-to-mysql"
 description = "A simple Python tool to transfer data from SQLite 3 to MySQL"
-readme = "README.md"
-license = { text = "MIT" }
+readme = { file = "README.md", content-type = "text/markdown" }
+license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.9"
 authors = [
     { name = "Klemen Tusar", email = "techouse@gmail.com" },
@@ -35,6 +36,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: Implementation :: CPython",
+    "Typing :: Typed",
     "Topic :: Database",
 ]
 dependencies = [
@@ -42,12 +44,11 @@ dependencies = [
     "mysql-connector-python>=9.0.0",
     "pytimeparse2",
     "python-dateutil>=2.9.0.post0",
-    "types_python_dateutil",
     "simplejson>=3.19.1",
     "tqdm>=4.65.0",
     "tabulate",
     "Unidecode>=1.3.6",
-    "typing_extensions",
+    "typing-extensions; python_version < \"3.11\"",
     "packaging",
 ]
 dynamic = ["version"]
@@ -55,10 +56,36 @@ dynamic = ["version"]
 [project.urls]
 Homepage = "https://techouse.github.io/sqlite3-to-mysql/"
 Documentation = "https://techouse.github.io/sqlite3-to-mysql/"
-Source = "https://github.com/techouse/sqlite3-to-mysql"
+Repository = "https://github.com/techouse/sqlite3-to-mysql.git"
+Issues = "https://github.com/techouse/sqlite3-to-mysql/issues"
 Changelog = "https://github.com/techouse/sqlite3-to-mysql/blob/master/CHANGELOG.md"
 Sponsor = "https://github.com/sponsors/techouse"
 PayPal = "https://paypal.me/ktusar"
+
+[project.optional-dependencies]
+dev = [
+    "docker>=6.1.3",
+    "factory-boy",
+    "Faker>=18.10.0",
+    "PyMySQL>=1.0.3",
+    "pytest>=7.3.1",
+    "pytest-cov",
+    "pytest-mock",
+    "pytest-timeout",
+    "types-python-dateutil",
+    "types-simplejson",
+    "sqlalchemy>=2.0.0",
+    "sqlalchemy-utils",
+    "types-sqlalchemy-utils",
+    "tox",
+    "types-tqdm",
+    "packaging",
+    "types-tabulate",
+    "types-Pygments",
+    "types-colorama",
+    "types-mock",
+    "types-setuptools"
+]
 
 [tool.hatch.version]
 path = "src/sqlite3_to_mysql/__init__.py"
@@ -73,6 +100,9 @@ include = [
     "LICENSE",
     "requirements_dev.txt",
 ]
+
+[tool.hatch.build.targets.wheel]
+include = ["src/sqlite3_to_mysql/py.typed"]
 
 [project.scripts]
 sqlite3mysql = "sqlite3_to_mysql.cli:cli"
@@ -112,7 +142,7 @@ pythonpath = ["src"]
 testpaths = ["tests"]
 norecursedirs = [".*", "venv", "env", "*.egg", "dist", "build"]
 minversion = "7.3.1"
-addopts = "-rsxX -l --tb=short --strict-markers"
+addopts = "-rsxX --tb=short --strict-markers"
 timeout = 300
 markers = [
     "init: Run the initialisation test functions",

@@ -9,6 +9,9 @@ defaults:
     shell: bash
 permissions: read-all
 
+env:
+  NAME: sqlite3-to-mysql
+
 jobs:
   test:
     uses: ./.github/workflows/test.yml
@@ -19,10 +22,13 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: pypi
-      url: https://pypi.org/p/sqlite3-to-mysql
+      url: https://pypi.org/p/${{ env.NAME }}
     permissions:
       id-token: write
       contents: write
+    concurrency:
+      group: publish-${{ github.ref }}
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v5
       - name: Compare package version with ref/tag
@@ -32,7 +38,7 @@ jobs:
           VERSION=$(awk -F'"' '/__version__/ {print $2}' src/sqlite3_to_mysql/__init__.py)
           TAG=${GITHUB_REF_NAME#v}
           if [[ "$VERSION" != "$TAG" ]]; then
-            echo "Version in src/sqlite3_to_mysql/__version__.py ($VERSION) does not match tag ($TAG)"
+            echo "Version in src/sqlite3_to_mysql/__init__.py ($VERSION) does not match tag ($TAG)"
             exit 1
           fi
           echo "VERSION=$VERSION" >> $GITHUB_ENV
@@ -49,32 +55,33 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.x"
+          cache: "pip"
       - name: Install build dependencies
         id: install_build_dependencies
         run: |
           set -e
-          python3 -m pip install --upgrade pip
-          pip install build setuptools wheel
+          python3 -m pip install -U pip
+          python3 -m pip install -U build
       - name: Build a binary wheel and a source tarball
         id: build
         run: |
           set -e
           python3 -m build --sdist --wheel --outdir dist/ .
+      - name: Verify package metadata (twine)
+        id: twine_check
+        run: |
+          set -e
+          python3 -m pip install -U twine
+          twine check dist/*
+      - name: Ensure py.typed is packaged
+        id: assert_py_typed
+        run: |
+          set -e
+          unzip -l dist/*.whl | grep -q 'sqlite3_to_mysql/py.typed'
       - name: Publish distribution package to PyPI
         id: publish
         if: startsWith(github.ref, 'refs/tags')
-        uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc # v1.12.4
-      - name: Install pyproject-parser
-        id: install_pyproject_parser
-        run: |
-          set -e
-          pip install pyproject-parser[cli]
-      - name: Read project name from pyproject.toml
-        id: read_project_name
-        run: |
-          set -e
-          NAME=$(pyproject-parser info project.name -r | tr -d '"')
-          echo "NAME=$NAME" >> $GITHUB_ENV
+        uses: pypa/gh-action-pypi-publish@release/v1
       - name: Create tag-specific CHANGELOG
         id: create_changelog
         run: |

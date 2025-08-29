@@ -6,9 +6,26 @@ import os
 import sys
 
 
-sys.path.insert(0, os.path.abspath(".."))
+from pathlib import Path
+import re
 
-from sqlite3_to_mysql import __version__
+ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / "src"
+sys.path.insert(0, str(SRC))
+
+from importlib.metadata import PackageNotFoundError, version as pkg_version
+
+
+def _version_from_source() -> str:
+    init_py = SRC / "sqlite3_to_mysql" / "__init__.py"
+    m = re.search(r'^__version__\s*=\s*[\'"]([^\'"]+)[\'"]', init_py.read_text(encoding="utf-8"), re.M)
+    return m.group(1) if m else "0+unknown"
+
+
+try:
+    __version__ = pkg_version("sqlite3-to-mysql")
+except PackageNotFoundError:
+    __version__ = _version_from_source()
 
 
 # -- Project information -----------------------------------------------------

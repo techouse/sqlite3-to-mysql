@@ -2,12 +2,14 @@ name: Docs
 
 on:
   workflow_dispatch:
-    branches:
-      - main
   workflow_call:
 
 permissions:
   contents: write
+
+concurrency:
+  group: docs-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   docs:

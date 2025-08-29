@@ -1,3 +1,7 @@
+# 2.4.3
+
+* [CHORE] update pyproject.toml for improved metadata, dependency management, and dev requirements
+
 # 2.4.2
 
 * [FIX] fix conflict between MySQL port and socket options in CLI

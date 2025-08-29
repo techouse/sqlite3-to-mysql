@@ -3,13 +3,12 @@
 # For the full list of built-in configuration values, see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 import os
+import re
 import sys
+from pathlib import Path
 
 
 sys.path.insert(0, os.path.abspath("../src"))
-
-import re
-from pathlib import Path
 
 _ROOT = Path(__file__).resolve().parents[1]
 _ver_file = _ROOT / "src" / "sqlite3_to_mysql" / "__init__.py"

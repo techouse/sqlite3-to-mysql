@@ -90,6 +90,9 @@ dev = [
 [tool.hatch.version]
 path = "src/sqlite3_to_mysql/__init__.py"
 
+[tool.hatch.build]
+sources = ["src"]
+
 [tool.hatch.build.targets.sdist]
 include = [
     "src",
@@ -102,6 +105,7 @@ include = [
 ]
 
 [tool.hatch.build.targets.wheel]
+packages = ["src/sqlite3_to_mysql"]
 include = ["src/sqlite3_to_mysql/py.typed"]
 
 [project.scripts]

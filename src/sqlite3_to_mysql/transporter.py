@@ -161,8 +161,8 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
         else:
             connection_args["host"] = self._mysql_host
             connection_args["port"] = self._mysql_port
-            if not self._mysql_ssl_disabled:
-                connection_args["ssl_disabled"] = False
+            if self._mysql_ssl_disabled:
+                connection_args["ssl_disabled"] = True
 
         try:
             _mysql_connection = mysql.connector.connect(**connection_args)

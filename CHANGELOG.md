@@ -1,3 +1,7 @@
+# 2.4.5
+
+* [FIX] fix MySQL connection parameters to handle optional socket, host and port
+
 # 2.4.4
 
 * [FIX] fix pyproject.toml build sources and specify package inclusion for sdist and wheel

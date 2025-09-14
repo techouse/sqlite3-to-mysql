@@ -80,6 +80,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                 raise FileNotFoundError("MySQL socket does not exist")
             else:
                 self._mysql_socket = realpath(str(kwargs.get("mysql_socket")))
+                self._mysql_host = None
                 self._mysql_port = None
         else:
             self._mysql_socket = None
@@ -147,18 +148,24 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
         if not self._mysql_transfer_data and not self._mysql_create_tables:
             raise ValueError("Unable to continue without transferring data or creating tables!")
 
+        connection_args: t.Dict[str, t.Any] = {
+            "user": self._mysql_user,
+            "use_pure": True,
+            "charset": self._mysql_charset,
+            "collation": self._mysql_collation,
+        }
+        if self._mysql_password is not None:
+            connection_args["password"] = self._mysql_password
+        if self._mysql_socket is not None:
+            connection_args["unix_socket"] = self._mysql_socket
+        else:
+            connection_args["host"] = self._mysql_host
+            connection_args["port"] = self._mysql_port
+            if not self._mysql_ssl_disabled:
+                connection_args["ssl_disabled"] = False
+
         try:
-            _mysql_connection = mysql.connector.connect(
-                user=self._mysql_user,
-                password=self._mysql_password,
-                host=self._mysql_host,
-                port=self._mysql_port,
-                unix_socket=self._mysql_socket,
-                ssl_disabled=self._mysql_ssl_disabled,
-                use_pure=True,
-                charset=self._mysql_charset,
-                collation=self._mysql_collation,
-            )
+            _mysql_connection = mysql.connector.connect(**connection_args)
             if isinstance(_mysql_connection, mysql.connector.MySQLConnection):
                 self._mysql = _mysql_connection
             else:

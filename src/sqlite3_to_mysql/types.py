@@ -48,7 +48,7 @@ class SQLite3toMySQLAttributes:
     _without_foreign_keys: bool
     _mysql_user: str
     _mysql_password: t.Optional[str]
-    _mysql_host: str
+    _mysql_host: t.Optional[str]
     _mysql_port: t.Optional[int]
     _mysql_socket: t.Optional[t.Union[str, "os.PathLike[t.Any]"]]
     _mysql_ssl_disabled: bool

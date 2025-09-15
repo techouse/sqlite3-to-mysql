@@ -397,10 +397,10 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                 if len_match:
                     try:
                         n = int(len_match.group(0).strip("()"))
-                        if 0 < n <= 6:
-                            fsp = f"({n})"
-                    except Exception:
-                        pass
+                    except ValueError:
+                        n = None
+                    if n is not None and 0 < n <= 6:
+                        fsp = f"({n})"
                 return f"CURRENT_TIMESTAMP{fsp}"
 
         # DATE
@@ -424,10 +424,10 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                 if len_match:
                     try:
                         n = int(len_match.group(0).strip("()"))
-                        if 0 < n <= 6:
-                            fsp = f"({n})"
-                    except Exception:
-                        pass
+                    except ValueError:
+                        n = None
+                    if n is not None and 0 < n <= 6:
+                        fsp = f"({n})"
                 return f"CURRENT_TIME{fsp}"
 
         # Booleans (store as 0/1)

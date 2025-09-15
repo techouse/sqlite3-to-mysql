@@ -332,6 +332,122 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
             return self._mysql_string_type
         return full_column_type
 
+    @staticmethod
+    def _strip_wrapping_parentheses(expr: str) -> str:
+        """Remove one or more layers of wrapping parentheses around an expression."""
+        s = expr.strip()
+        while s.startswith("(") and s.endswith(")"):
+            depth = 0
+            balanced = True
+            for ch in s:
+                if ch == "(":
+                    depth += 1
+                elif ch == ")":
+                    depth -= 1
+                    if depth < 0:
+                        balanced = False
+                        break
+            if balanced and depth == 0:
+                s = s[1:-1].strip()
+            else:
+                break
+        return s
+
+    def _translate_default_for_mysql(self, column_type: str, default: str) -> str:
+        """Translate SQLite DEFAULT expression to a MySQL-compatible one for common cases.
+
+        Returns a string suitable to append after "DEFAULT ", without the word itself.
+        Keeps literals as-is, maps `CURRENT_*`/`datetime('now')`/`strftime(...,'now')` to
+        the appropriate MySQL `CURRENT_*` functions, preserves fractional seconds if the
+        column type declares a precision, and normalizes booleans to 0/1.
+        """
+        raw = default.strip()
+        if not raw:
+            return raw
+
+        s = self._strip_wrapping_parentheses(raw)
+        u = s.upper()
+
+        # NULL passthrough
+        if u == "NULL":
+            return "NULL"
+
+        # Determine base data type
+        match = self._valid_column_type(column_type)
+        base = match.group(0).upper() if match else column_type.upper()
+
+        # Regex helpers
+        current_ts = re.compile(r"^CURRENT_TIMESTAMP(?:\s*\(\s*\))?$", re.IGNORECASE)
+        current_date = re.compile(r"^CURRENT_DATE(?:\s*\(\s*\))?$", re.IGNORECASE)
+        current_time = re.compile(r"^CURRENT_TIME(?:\s*\(\s*\))?$", re.IGNORECASE)
+        sqlite_now_func = re.compile(
+            r"^(datetime|date|time)\s*\(\s*'now'(?:\s*,\s*'(localtime|utc)')?\s*\)$",
+            re.IGNORECASE,
+        )
+        strftime_now = re.compile(
+            r"^strftime\s*\(\s*'([^']+)'\s*,\s*'now'(?:\s*,\s*'(localtime|utc)')?\s*\)$",
+            re.IGNORECASE,
+        )
+
+        # TIMESTAMP/DATETIME
+        if base.startswith("TIMESTAMP") or base.startswith("DATETIME"):
+            if current_ts.match(s) or sqlite_now_func.match(s) or strftime_now.match(s):
+                len_match = self.COLUMN_LENGTH_PATTERN.search(column_type)
+                fsp = ""
+                if len_match:
+                    try:
+                        n = int(len_match.group(0).strip("()"))
+                        if 0 < n <= 6:
+                            fsp = f"({n})"
+                    except Exception:
+                        pass
+                return f"CURRENT_TIMESTAMP{fsp}"
+
+        # DATE
+        if base.startswith("DATE"):
+            if (
+                current_date.match(s)
+                or (sqlite_now_func.match(s) and s.lower().startswith("date"))
+                or strftime_now.match(s)
+            ):
+                return "CURRENT_DATE"
+
+        # TIME
+        if base.startswith("TIME"):
+            if (
+                current_time.match(s)
+                or (sqlite_now_func.match(s) and s.lower().startswith("time"))
+                or strftime_now.match(s)
+            ):
+                len_match = self.COLUMN_LENGTH_PATTERN.search(column_type)
+                fsp = ""
+                if len_match:
+                    try:
+                        n = int(len_match.group(0).strip("()"))
+                        if 0 < n <= 6:
+                            fsp = f"({n})"
+                    except Exception:
+                        pass
+                return f"CURRENT_TIME{fsp}"
+
+        # Booleans (store as 0/1)
+        if base in {"BOOL", "BOOLEAN"} or base.startswith("TINYINT"):
+            if u in {"TRUE", "'TRUE'", '"TRUE"'}:
+                return "1"
+            if u in {"FALSE", "'FALSE'", '"FALSE"'}:
+                return "0"
+
+        # Numeric literals (possibly wrapped)
+        if re.match(r"^[+-]?\d+(\.\d+)?$", s):
+            return s
+
+        # Quoted strings and hex blobs pass through as-is
+        if (s.startswith("'") and s.endswith("'")) or (s.startswith('"') and s.endswith('"')) or u.startswith("X'"):
+            return s
+
+        # Fallback: return stripped expression (MySQL 8.0.13+ allows expression defaults)
+        return s
+
     @classmethod
     def _column_type_length(cls, column_type: str, default: t.Optional[t.Union[str, int, float]] = None) -> str:
         suffix: t.Optional[t.Match[str]] = cls.COLUMN_LENGTH_PATTERN.search(column_type)
@@ -385,7 +501,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                 notnull="NOT NULL" if column["notnull"] or column["pk"] else "NULL",
                 auto_increment="AUTO_INCREMENT" if auto_increment else "",
                 default=(
-                    "DEFAULT " + column["dflt_value"]
+                    "DEFAULT " + self._translate_default_for_mysql(column_type, str(column["dflt_value"]))
                     if column["dflt_value"]
                     and column_type not in MYSQL_COLUMN_TYPES_WITHOUT_DEFAULT
                     and not auto_increment

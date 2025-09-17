@@ -13,12 +13,19 @@ from os.path import isfile, realpath
 from sys import stdout
 
 import mysql.connector
-import typing_extensions as tx
 from mysql.connector import CharacterSet
 from mysql.connector import __version__ as mysql_connector_version_string
 from mysql.connector import errorcode
 from packaging import version
 from tqdm import tqdm, trange
+
+
+try:
+    # Python 3.11+
+    from typing import Unpack  # type: ignore[attr-defined]
+except ImportError:
+    # Python < 3.11
+    from typing_extensions import Unpack  # type: ignore
 
 from sqlite3_to_mysql.sqlite_utils import (
     adapt_decimal,
@@ -55,7 +62,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
 
     MYSQL_CONNECTOR_VERSION: version.Version = version.parse(mysql_connector_version_string)
 
-    def __init__(self, **kwargs: tx.Unpack[SQLite3toMySQLParams]):
+    def __init__(self, **kwargs: Unpack[SQLite3toMySQLParams]):
         """Constructor."""
         if kwargs.get("sqlite_file") is None:
             raise ValueError("Please provide an SQLite file")

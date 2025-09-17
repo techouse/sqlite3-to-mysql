@@ -1,3 +1,7 @@
+# 2.4.6
+
+* [FIX] fix importing `typing_extensions` on Python >= 3.11
+
 # 2.4.5
 
 * [FIX] fix MySQL connection parameters to handle optional socket, host and port

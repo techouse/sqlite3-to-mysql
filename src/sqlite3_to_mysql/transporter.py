@@ -490,7 +490,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
         suffix: t.Optional[t.Match[str]] = cls.COLUMN_LENGTH_PATTERN.search(column_type)
         if suffix:
             return suffix.group(0)
-        if default:
+        if default is not None:
             return f"({default})"
         return ""
 
@@ -532,18 +532,22 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                 column["pk"] > 0 and column_type.startswith(("INT", "BIGINT")) and not compound_primary_key
             )
 
+            # Build DEFAULT clause safely (preserve falsy defaults like 0/'')
+            default_clause: str = ""
+            if (
+                column["dflt_value"] is not None
+                and column_type not in MYSQL_COLUMN_TYPES_WITHOUT_DEFAULT
+                and not auto_increment
+            ):
+                td: str = self._translate_default_for_mysql(column_type, str(column["dflt_value"]))
+                if td != "":
+                    default_clause = "DEFAULT " + td
             sql += " `{name}` {type} {notnull} {default} {auto_increment}, ".format(
                 name=mysql_safe_name,
                 type=column_type,
                 notnull="NOT NULL" if column["notnull"] or column["pk"] else "NULL",
                 auto_increment="AUTO_INCREMENT" if auto_increment else "",
-                default=(
-                    "DEFAULT " + self._translate_default_for_mysql(column_type, str(column["dflt_value"]))
-                    if column["dflt_value"]
-                    and column_type not in MYSQL_COLUMN_TYPES_WITHOUT_DEFAULT
-                    and not auto_increment
-                    else ""
-                ),
+                default=default_clause,
             )
 
             if column["pk"] > 0:

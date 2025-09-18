@@ -633,3 +633,24 @@ class TestSQLite3toMySQL:
         # Verify both FOREIGN_KEY_CHECKS statements were executed
         assert "FOREIGN_KEY_CHECKS=0" in fake_cursor.execute_calls[0]
         assert "FOREIGN_KEY_CHECKS=1" in fake_cursor.execute_calls[-1]
+
+    @pytest.mark.parametrize(
+        "expr, expected",
+        [
+            ("a", "a"),
+            ("(a)", "a"),
+            ("((a))", "a"),
+            ("(((a)))", "a"),
+            ("(a) + (b)", "(a) + (b)"),  # not fully wrapped; must remain unchanged
+            ("((a) + (b))", "(a) + (b)"),  # fully wrapped once; strip one layer only
+            (" ( ( a + b ) ) ", "a + b"),  # trims whitespace between iterations
+            ("((CURRENT_TIMESTAMP))", "CURRENT_TIMESTAMP"),  # multiple full layers
+            ("", ""),  # empty remains empty
+            ("   ", ""),  # whitespace-only becomes empty
+            ("(a", "(a"),  # unmatched; unchanged
+            ("a)", "a)"),  # unmatched; unchanged
+        ],
+    )
+    def test_strip_wrapping_parentheses(self, expr: str, expected: str) -> None:
+        """Verify only fully wrapping outer parentheses are removed, repeatedly."""
+        assert SQLite3toMySQL._strip_wrapping_parentheses(expr) == expected

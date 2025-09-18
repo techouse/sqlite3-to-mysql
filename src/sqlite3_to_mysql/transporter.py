@@ -44,6 +44,9 @@ from .mysql_utils import (
     MYSQL_INSERT_METHOD,
     MYSQL_TEXT_COLUMN_TYPES,
     MYSQL_TEXT_COLUMN_TYPES_WITH_JSON,
+    check_mysql_current_timestamp_datetime_support,
+    check_mysql_expression_defaults_support,
+    check_mysql_fractional_seconds_support,
     check_mysql_fulltext_support,
     check_mysql_json_support,
     check_mysql_values_alias_support,
@@ -59,6 +62,18 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
     COLUMN_LENGTH_PATTERN: t.Pattern[str] = re.compile(r"\(\d+\)")
     COLUMN_PRECISION_AND_SCALE_PATTERN: t.Pattern[str] = re.compile(r"\(\d+,\d+\)")
     COLUMN_UNSIGNED_PATTERN: t.Pattern[str] = re.compile(r"\bUNSIGNED\b", re.IGNORECASE)
+    CURRENT_TS: t.Pattern[str] = re.compile(r"^CURRENT_TIMESTAMP(?:\s*\(\s*\))?$", re.IGNORECASE)
+    CURRENT_DATE: t.Pattern[str] = re.compile(r"^CURRENT_DATE(?:\s*\(\s*\))?$", re.IGNORECASE)
+    CURRENT_TIME: t.Pattern[str] = re.compile(r"^CURRENT_TIME(?:\s*\(\s*\))?$", re.IGNORECASE)
+    SQLITE_NOW_FUNC: t.Pattern[str] = re.compile(
+        r"^(datetime|date|time)\s*\(\s*'now'(?:\s*,\s*'(localtime|utc)')?\s*\)$",
+        re.IGNORECASE,
+    )
+    STRFTIME_NOW: t.Pattern[str] = re.compile(
+        r"^strftime\s*\(\s*'([^']+)'\s*,\s*'now'(?:\s*,\s*'(localtime|utc)')?\s*\)$",
+        re.IGNORECASE,
+    )
+    NUMERIC_LITERAL_PATTERN: t.Pattern[str] = re.compile(r"^[+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?$")
 
     MYSQL_CONNECTOR_VERSION: version.Version = version.parse(mysql_connector_version_string)
 
@@ -194,6 +209,9 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
             self._mysql_version = self._get_mysql_version()
             self._mysql_json_support = check_mysql_json_support(self._mysql_version)
             self._mysql_fulltext_support = check_mysql_fulltext_support(self._mysql_version)
+            self._allow_expr_defaults = check_mysql_expression_defaults_support(self._mysql_version)
+            self._allow_current_ts_dt = check_mysql_current_timestamp_datetime_support(self._mysql_version)
+            self._allow_fsp = check_mysql_fractional_seconds_support(self._mysql_version)
 
             if self._use_fulltext and not self._mysql_fulltext_support:
                 raise ValueError("Your MySQL version does not support InnoDB FULLTEXT indexes!")
@@ -378,74 +396,76 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
         the appropriate MySQL `CURRENT_*` functions, preserves fractional seconds if the
         column type declares a precision, and normalizes booleans to 0/1.
         """
-        raw = default.strip()
+        raw: str = default.strip()
         if not raw:
             return raw
 
-        s = self._strip_wrapping_parentheses(raw)
-        u = s.upper()
+        s: str = self._strip_wrapping_parentheses(raw)
+        u: str = s.upper()
 
         # NULL passthrough
         if u == "NULL":
             return "NULL"
 
         # Determine base data type
-        match = self._valid_column_type(column_type)
-        base = match.group(0).upper() if match else column_type.upper()
-
-        # Regex helpers
-        current_ts = re.compile(r"^CURRENT_TIMESTAMP(?:\s*\(\s*\))?$", re.IGNORECASE)
-        current_date = re.compile(r"^CURRENT_DATE(?:\s*\(\s*\))?$", re.IGNORECASE)
-        current_time = re.compile(r"^CURRENT_TIME(?:\s*\(\s*\))?$", re.IGNORECASE)
-        sqlite_now_func = re.compile(
-            r"^(datetime|date|time)\s*\(\s*'now'(?:\s*,\s*'(localtime|utc)')?\s*\)$",
-            re.IGNORECASE,
-        )
-        strftime_now = re.compile(
-            r"^strftime\s*\(\s*'([^']+)'\s*,\s*'now'(?:\s*,\s*'(localtime|utc)')?\s*\)$",
-            re.IGNORECASE,
-        )
+        match: t.Optional[re.Match[str]] = self._valid_column_type(column_type)
+        base: str = match.group(0).upper() if match else column_type.upper()
 
         # TIMESTAMP/DATETIME
-        if base.startswith("TIMESTAMP") or base.startswith("DATETIME"):
-            if current_ts.match(s) or sqlite_now_func.match(s) or strftime_now.match(s):
-                len_match = self.COLUMN_LENGTH_PATTERN.search(column_type)
-                fsp = ""
-                if len_match:
-                    try:
-                        n = int(len_match.group(0).strip("()"))
-                    except ValueError:
-                        n = None
-                    if n is not None and 0 < n <= 6:
-                        fsp = f"({n})"
-                return f"CURRENT_TIMESTAMP{fsp}"
+        if (
+            (base.startswith("TIMESTAMP") or base.startswith("DATETIME"))
+            and (self.CURRENT_TS.match(s) or self.SQLITE_NOW_FUNC.match(s) or self.STRFTIME_NOW.match(s))
+            and self._allow_current_ts_dt
+        ):
+            # Too old for CURRENT_TIMESTAMP defaults on DATETIME/TIMESTAMP → fall back
+            len_match: t.Optional[re.Match[str]] = self.COLUMN_LENGTH_PATTERN.search(column_type)
+            fsp: str = ""
+            n: t.Optional[int]
+            if self._allow_fsp and len_match:
+                try:
+                    n = int(len_match.group(0).strip("()"))
+                except ValueError:
+                    n = None
+                if n is not None and 0 < n <= 6:
+                    fsp = f"({n})"
+            return f"CURRENT_TIMESTAMP{fsp}"
 
         # DATE
-        if base.startswith("DATE"):
-            if (
-                current_date.match(s)
-                or (sqlite_now_func.match(s) and s.lower().startswith("date"))
-                or strftime_now.match(s)
-            ):
-                return "CURRENT_DATE"
+        if (
+            base.startswith("DATE")
+            and (
+                self.CURRENT_DATE.match(s)
+                or self.CURRENT_TS.match(s)  # map CURRENT_TIMESTAMP → CURRENT_DATE for DATE
+                or (self.SQLITE_NOW_FUNC.match(s) and s.lower().startswith("date"))
+                or self.STRFTIME_NOW.match(s)
+            )
+            and self._allow_expr_defaults
+        ):
+            # Too old for expression defaults on DATE → fall back
+            return "CURRENT_DATE"
 
         # TIME
-        if base.startswith("TIME"):
-            if (
-                current_time.match(s)
-                or (sqlite_now_func.match(s) and s.lower().startswith("time"))
-                or strftime_now.match(s)
-            ):
-                len_match = self.COLUMN_LENGTH_PATTERN.search(column_type)
-                fsp = ""
-                if len_match:
-                    try:
-                        n = int(len_match.group(0).strip("()"))
-                    except ValueError:
-                        n = None
-                    if n is not None and 0 < n <= 6:
-                        fsp = f"({n})"
-                return f"CURRENT_TIME{fsp}"
+        if (
+            base.startswith("TIME")
+            and (
+                self.CURRENT_TIME.match(s)
+                or self.CURRENT_TS.match(s)  # map CURRENT_TIMESTAMP → CURRENT_TIME for TIME
+                or (self.SQLITE_NOW_FUNC.match(s) and s.lower().startswith("time"))
+                or self.STRFTIME_NOW.match(s)
+            )
+            and self._allow_expr_defaults
+        ):
+            # Too old for expression defaults on TIME → fall back
+            len_match = self.COLUMN_LENGTH_PATTERN.search(column_type)
+            fsp = ""
+            if self._allow_fsp and len_match:
+                try:
+                    n = int(len_match.group(0).strip("()"))
+                except ValueError:
+                    n = None
+                if n is not None and 0 < n <= 6:
+                    fsp = f"({n})"
+            return f"CURRENT_TIME{fsp}"
 
         # Booleans (store as 0/1)
         if base in {"BOOL", "BOOLEAN"} or base.startswith("TINYINT"):
@@ -455,7 +475,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                 return "0"
 
         # Numeric literals (possibly wrapped)
-        if re.match(r"^[+-]?\d+(\.\d+)?$", s):
+        if self.NUMERIC_LITERAL_PATTERN.match(s):
             return s
 
         # Quoted strings and hex blobs pass through as-is

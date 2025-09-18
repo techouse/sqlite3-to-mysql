@@ -73,7 +73,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
         r"^strftime\s*\(\s*'([^']+)'\s*,\s*'now'(?:\s*,\s*'(localtime|utc)')?\s*\)$",
         re.IGNORECASE,
     )
-    NUMERIC_LITERAL_PATTERN: t.Pattern[str] = re.compile(r"^[+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?$")
+    NUMERIC_LITERAL_PATTERN: t.Pattern[str] = re.compile(r"^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$")
 
     MYSQL_CONNECTOR_VERSION: version.Version = version.parse(mysql_connector_version_string)
 

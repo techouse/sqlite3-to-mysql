@@ -659,53 +659,53 @@ class TestSQLite3toMySQL:
     def _mk(*, expr: bool, ts_dt: bool, fsp: bool) -> SQLite3toMySQL:
         """
         Build a lightweight instance without hitting __init__ (no DB connection needed).
-        Toggle the same feature flags transporter sets after version checks.
+        Toggle the same feature flags transporter§ sets after version checks.
         """
-        o = SQLite3toMySQL.__new__(SQLite3toMySQL)
-        o._allow_expr_defaults = expr  # MySQL >= 8.0.13
-        o._allow_current_ts_dt = ts_dt  # MySQL >= 5.6.5
-        o._allow_fsp = fsp  # MySQL >= 5.6.4
-        return o
+        instance: SQLite3toMySQL = SQLite3toMySQL.__new__(SQLite3toMySQL)
+        instance._allow_expr_defaults = expr  # MySQL >= 8.0.13
+        instance._allow_current_ts_dt = ts_dt  # MySQL >= 5.6.5
+        instance._allow_fsp = fsp  # MySQL >= 5.6.4
+        return instance
 
     @pytest.mark.parametrize(
         "col, default, flags, expected",
         [
             # --- TIMESTAMP/DATETIME + CURRENT_TIMESTAMP / now() mapping ---
             # Too old for CURRENT_TIMESTAMP on TIMESTAMP: fall back to stripped expr
-            ("TIMESTAMP(3)", "CURRENT_TIMESTAMP", dict(expr=False, ts_dt=False, fsp=False), "CURRENT_TIMESTAMP"),
+            ("TIMESTAMP(3)", "CURRENT_TIMESTAMP", {"expr": False, "ts_dt": False, "fsp": False}, "CURRENT_TIMESTAMP"),
             # Allowed, but no FSP support
-            ("TIMESTAMP(3)", "CURRENT_TIMESTAMP", dict(expr=False, ts_dt=True, fsp=False), "CURRENT_TIMESTAMP"),
+            ("TIMESTAMP(3)", "CURRENT_TIMESTAMP", {"expr": False, "ts_dt": True, "fsp": False}, "CURRENT_TIMESTAMP"),
             # Allowed with FSP support -> keep precision
-            ("TIMESTAMP(3)", "CURRENT_TIMESTAMP", dict(expr=False, ts_dt=True, fsp=True), "CURRENT_TIMESTAMP(3)"),
+            ("TIMESTAMP(3)", "CURRENT_TIMESTAMP", {"expr": False, "ts_dt": True, "fsp": True}, "CURRENT_TIMESTAMP(3)"),
             # SQLite-style now -> map to CURRENT_TIMESTAMP (with FSP when allowed)
-            ("DATETIME(2)", "datetime('now')", dict(expr=False, ts_dt=True, fsp=True), "CURRENT_TIMESTAMP(2)"),
+            ("DATETIME(2)", "datetime('now')", {"expr": False, "ts_dt": True, "fsp": True}, "CURRENT_TIMESTAMP(2)"),
             # --- DATE mapping (from 'now' forms or CURRENT_TIMESTAMP) ---
             # Only map when expression defaults are allowed
-            ("DATE", "datetime('now')", dict(expr=True, ts_dt=False, fsp=False), "CURRENT_DATE"),
-            ("DATE", "datetime('now')", dict(expr=False, ts_dt=False, fsp=False), "datetime('now')"),
-            ("DATE", "CURRENT_TIMESTAMP", dict(expr=True, ts_dt=True, fsp=True), "CURRENT_DATE"),
-            ("DATE", "CURRENT_TIMESTAMP", dict(expr=False, ts_dt=True, fsp=True), "CURRENT_TIMESTAMP"),
+            ("DATE", "datetime('now')", {"expr": True, "ts_dt": False, "fsp": False}, "CURRENT_DATE"),
+            ("DATE", "datetime('now')", {"expr": False, "ts_dt": False, "fsp": False}, "datetime('now')"),
+            ("DATE", "CURRENT_TIMESTAMP", {"expr": True, "ts_dt": True, "fsp": True}, "CURRENT_DATE"),
+            ("DATE", "CURRENT_TIMESTAMP", {"expr": False, "ts_dt": True, "fsp": True}, "CURRENT_TIMESTAMP"),
             # --- TIME mapping (from 'now' forms or CURRENT_TIMESTAMP) ---
-            ("TIME(3)", "CURRENT_TIME", dict(expr=True, ts_dt=False, fsp=True), "CURRENT_TIME(3)"),
-            ("TIME(3)", "CURRENT_TIME", dict(expr=True, ts_dt=False, fsp=False), "CURRENT_TIME"),
-            ("TIME(6)", "CURRENT_TIMESTAMP", dict(expr=True, ts_dt=True, fsp=True), "CURRENT_TIME(6)"),
-            ("TIME(6)", "CURRENT_TIMESTAMP", dict(expr=False, ts_dt=True, fsp=True), "CURRENT_TIMESTAMP"),
+            ("TIME(3)", "CURRENT_TIME", {"expr": True, "ts_dt": False, "fsp": True}, "CURRENT_TIME(3)"),
+            ("TIME(3)", "CURRENT_TIME", {"expr": True, "ts_dt": False, "fsp": False}, "CURRENT_TIME"),
+            ("TIME(6)", "CURRENT_TIMESTAMP", {"expr": True, "ts_dt": True, "fsp": True}, "CURRENT_TIME(6)"),
+            ("TIME(6)", "CURRENT_TIMESTAMP", {"expr": False, "ts_dt": True, "fsp": True}, "CURRENT_TIMESTAMP"),
             # --- Boolean normalization (for BOOL/BOOLEAN/TINYINT) ---
-            ("BOOLEAN", "TRUE", dict(expr=False, ts_dt=False, fsp=False), "1"),
-            ("TINYINT(1)", "'FALSE'", dict(expr=False, ts_dt=False, fsp=False), "0"),
+            ("BOOLEAN", "TRUE", {"expr": False, "ts_dt": False, "fsp": False}, "1"),
+            ("TINYINT(1)", "'FALSE'", {"expr": False, "ts_dt": False, "fsp": False}, "0"),
             # --- Numeric literals (incl. scientific notation) ---
-            ("INT", "42", dict(expr=False, ts_dt=False, fsp=False), "42"),
-            ("DOUBLE", "-3.14", dict(expr=False, ts_dt=False, fsp=False), "-3.14"),
-            ("DOUBLE", "1e-3", dict(expr=False, ts_dt=False, fsp=False), "1e-3"),
-            ("DOUBLE", "-2.5E+10", dict(expr=False, ts_dt=False, fsp=False), "-2.5E+10"),
+            ("INT", "42", {"expr": False, "ts_dt": False, "fsp": False}, "42"),
+            ("DOUBLE", "-3.14", {"expr": False, "ts_dt": False, "fsp": False}, "-3.14"),
+            ("DOUBLE", "1e-3", {"expr": False, "ts_dt": False, "fsp": False}, "1e-3"),
+            ("DOUBLE", "-2.5E+10", {"expr": False, "ts_dt": False, "fsp": False}, "-2.5E+10"),
             # --- Quoted strings and hex blobs pass through unchanged ---
-            ("VARCHAR(10)", "'hello'", dict(expr=False, ts_dt=False, fsp=False), "'hello'"),
-            ("BLOB", "X'ABCD'", dict(expr=False, ts_dt=False, fsp=False), "X'ABCD'"),
+            ("VARCHAR(10)", "'hello'", {"expr": False, "ts_dt": False, "fsp": False}, "'hello'"),
+            ("BLOB", "X'ABCD'", {"expr": False, "ts_dt": False, "fsp": False}, "X'ABCD'"),
             # --- Expression fallback (strip fully wrapping parens, leave the expr) ---
-            ("VARCHAR(10)", "(1+2)", dict(expr=False, ts_dt=False, fsp=False), "1+2"),
+            ("VARCHAR(10)", "(1+2)", {"expr": False, "ts_dt": False, "fsp": False}, "1+2"),
         ],
     )
-    def test_translate_default_for_mysql(self, col, default, flags, expected):
+    def test_translate_default_for_mysql(self, col: str, default: str, flags: t.Dict[str, bool], expected: str):
         assert self._mk(**flags)._translate_default_for_mysql(col, default) == expected
 
     def test_time_mapping_from_sqlite_now_respects_fsp(self):

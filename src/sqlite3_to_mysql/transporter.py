@@ -341,23 +341,33 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
 
     @staticmethod
     def _strip_wrapping_parentheses(expr: str) -> str:
-        """Remove one or more layers of wrapping parentheses around an expression."""
-        s = expr.strip()
-        while s.startswith("(") and s.endswith(")"):
-            depth = 0
-            balanced = True
-            for ch in s:
+        """Remove one or more layers of *fully wrapping* parentheses around an expression.
+
+        Only strip if the matching ')' for the very first '(' is the final character
+        of the string. This avoids corrupting expressions like "(a) + (b)".
+        """
+        s: str = expr.strip()
+        while s.startswith("("):
+            depth: int = 0
+            match_idx: int = -1
+            i: int
+            ch: str
+            # Find the matching ')' for the '(' at index 0
+            for i, ch in enumerate(s):
                 if ch == "(":
                     depth += 1
                 elif ch == ")":
                     depth -= 1
-                    if depth < 0:
-                        balanced = False
+                    if depth == 0:
+                        match_idx = i
                         break
-            if balanced and depth == 0:
-                s = s[1:-1].strip()
-            else:
-                break
+            # Only strip if the match closes at the very end
+            if match_idx == len(s) - 1:
+                s = s[1:match_idx].strip()
+                # continue to try stripping more fully-wrapping layers
+                continue
+            # Not a fully-wrapped expression; stop
+            break
         return s
 
     def _translate_default_for_mysql(self, column_type: str, default: str) -> str:

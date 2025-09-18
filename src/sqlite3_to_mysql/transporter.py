@@ -411,16 +411,33 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
         match: t.Optional[re.Match[str]] = self._valid_column_type(column_type)
         base: str = match.group(0).upper() if match else column_type.upper()
 
-        # TIMESTAMP/DATETIME
-        if (
-            (base.startswith("TIMESTAMP") or base.startswith("DATETIME"))
-            and (self.CURRENT_TS.match(s) or self.SQLITE_NOW_FUNC.match(s) or self.STRFTIME_NOW.match(s))
-            and self._allow_current_ts_dt
+        # TIMESTAMP: allow CURRENT_TIMESTAMP across versions; preserve FSP only if supported
+        if base.startswith("TIMESTAMP") and (
+            self.CURRENT_TS.match(s)
+            or (self.SQLITE_NOW_FUNC.match(s) and s.lower().startswith("datetime"))
+            or self.STRFTIME_NOW.match(s)
         ):
-            # Too old for CURRENT_TIMESTAMP defaults on DATETIME/TIMESTAMP → fall back
             len_match: t.Optional[re.Match[str]] = self.COLUMN_LENGTH_PATTERN.search(column_type)
             fsp: str = ""
-            n: t.Optional[int]
+            if self._allow_fsp and len_match:
+                try:
+                    n = int(len_match.group(0).strip("()"))
+                except ValueError:
+                    n = None
+                if n is not None and 0 < n <= 6:
+                    fsp = f"({n})"
+            return f"CURRENT_TIMESTAMP{fsp}"
+
+        # DATETIME: require server support, otherwise omit the DEFAULT
+        if base.startswith("DATETIME") and (
+            self.CURRENT_TS.match(s)
+            or (self.SQLITE_NOW_FUNC.match(s) and s.lower().startswith("datetime"))
+            or self.STRFTIME_NOW.match(s)
+        ):
+            if not self._allow_current_ts_dt:
+                return ""
+            len_match = self.COLUMN_LENGTH_PATTERN.search(column_type)
+            fsp = ""
             if self._allow_fsp and len_match:
                 try:
                     n = int(len_match.group(0).strip("()"))

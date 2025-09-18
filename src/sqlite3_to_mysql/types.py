@@ -85,3 +85,6 @@ class SQLite3toMySQLAttributes:
     _mysql_version: str
     _mysql_json_support: bool
     _mysql_fulltext_support: bool
+    _allow_expr_defaults: bool
+    _allow_current_ts_dt: bool
+    _allow_fsp: bool

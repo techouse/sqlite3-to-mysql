@@ -679,17 +679,18 @@ class TestSQLite3toMySQL:
             ("TIMESTAMP(3)", "CURRENT_TIMESTAMP", {"expr": False, "ts_dt": True, "fsp": True}, "CURRENT_TIMESTAMP(3)"),
             # SQLite-style now -> map to CURRENT_TIMESTAMP (with FSP when allowed)
             ("DATETIME(2)", "datetime('now')", {"expr": False, "ts_dt": True, "fsp": True}, "CURRENT_TIMESTAMP(2)"),
+            ("DATETIME(6)", "CURRENT_TIMESTAMP", dict(expr=False, ts_dt=False, fsp=True), ""),
             # --- DATE mapping (from 'now' forms or CURRENT_TIMESTAMP) ---
             # Only map when expression defaults are allowed
             ("DATE", "datetime('now')", {"expr": True, "ts_dt": False, "fsp": False}, "CURRENT_DATE"),
-            ("DATE", "datetime('now')", {"expr": False, "ts_dt": False, "fsp": False}, "datetime('now')"),
+            ("DATE", "datetime('now')", {"expr": False, "ts_dt": False, "fsp": False}, ""),
             ("DATE", "CURRENT_TIMESTAMP", {"expr": True, "ts_dt": True, "fsp": True}, "CURRENT_DATE"),
-            ("DATE", "CURRENT_TIMESTAMP", {"expr": False, "ts_dt": True, "fsp": True}, "CURRENT_TIMESTAMP"),
+            ("DATE", "CURRENT_TIMESTAMP", {"expr": False, "ts_dt": True, "fsp": True}, ""),
             # --- TIME mapping (from 'now' forms or CURRENT_TIMESTAMP) ---
             ("TIME(3)", "CURRENT_TIME", {"expr": True, "ts_dt": False, "fsp": True}, "CURRENT_TIME(3)"),
             ("TIME(3)", "CURRENT_TIME", {"expr": True, "ts_dt": False, "fsp": False}, "CURRENT_TIME"),
             ("TIME(6)", "CURRENT_TIMESTAMP", {"expr": True, "ts_dt": True, "fsp": True}, "CURRENT_TIME(6)"),
-            ("TIME(6)", "CURRENT_TIMESTAMP", {"expr": False, "ts_dt": True, "fsp": True}, "CURRENT_TIMESTAMP"),
+            ("TIME(6)", "CURRENT_TIMESTAMP", {"expr": False, "ts_dt": True, "fsp": True}, ""),
             # --- Boolean normalization (for BOOL/BOOLEAN/TINYINT) ---
             ("BOOLEAN", "TRUE", {"expr": False, "ts_dt": False, "fsp": False}, "1"),
             ("TINYINT(1)", "'FALSE'", {"expr": False, "ts_dt": False, "fsp": False}, "0"),
@@ -702,7 +703,7 @@ class TestSQLite3toMySQL:
             ("VARCHAR(10)", "'hello'", {"expr": False, "ts_dt": False, "fsp": False}, "'hello'"),
             ("BLOB", "X'ABCD'", {"expr": False, "ts_dt": False, "fsp": False}, "X'ABCD'"),
             # --- Expression fallback (strip fully wrapping parens, leave the expr) ---
-            ("VARCHAR(10)", "(1+2)", {"expr": False, "ts_dt": False, "fsp": False}, "1+2"),
+            ("VARCHAR(10)", "(1+2)", {"expr": False, "ts_dt": False, "fsp": False}, ""),
         ],
     )
     def test_translate_default_for_mysql(self, col: str, default: str, flags: t.Dict[str, bool], expected: str):

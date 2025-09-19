@@ -500,7 +500,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
             return s
 
         # Fallback: return stripped expression (MySQL 8.0.13+ allows expression defaults)
-        return s if self._allow_expr_defaults else ""
+        return s
 
     @classmethod
     def _column_type_length(cls, column_type: str, default: t.Optional[t.Union[str, int, float]] = None) -> str:

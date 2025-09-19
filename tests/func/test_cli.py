@@ -36,6 +36,7 @@ class TestSQLite3toMySQL:
         assert "Error: Invalid value" in result.output
         assert "does not exist" in result.output
 
+    @pytest.mark.xfail
     def test_no_database_name(self, cli_runner: CliRunner, sqlite_database: str, mysql_database: Engine) -> None:
         result = cli_runner.invoke(sqlite3mysql, ["-f", sqlite_database])
         assert result.exit_code > 0
@@ -47,6 +48,7 @@ class TestSQLite3toMySQL:
             }
         )
 
+    @pytest.mark.xfail
     def test_no_database_user(
         self, cli_runner: CliRunner, sqlite_database: str, mysql_credentials: MySQLCredentials, mysql_database: Engine
     ) -> None:

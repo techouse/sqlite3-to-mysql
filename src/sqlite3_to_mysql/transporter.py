@@ -44,6 +44,9 @@ from .mysql_utils import (
     MYSQL_INSERT_METHOD,
     MYSQL_TEXT_COLUMN_TYPES,
     MYSQL_TEXT_COLUMN_TYPES_WITH_JSON,
+    check_mysql_current_timestamp_datetime_support,
+    check_mysql_expression_defaults_support,
+    check_mysql_fractional_seconds_support,
     check_mysql_fulltext_support,
     check_mysql_json_support,
     check_mysql_values_alias_support,
@@ -59,6 +62,18 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
     COLUMN_LENGTH_PATTERN: t.Pattern[str] = re.compile(r"\(\d+\)")
     COLUMN_PRECISION_AND_SCALE_PATTERN: t.Pattern[str] = re.compile(r"\(\d+,\d+\)")
     COLUMN_UNSIGNED_PATTERN: t.Pattern[str] = re.compile(r"\bUNSIGNED\b", re.IGNORECASE)
+    CURRENT_TS: t.Pattern[str] = re.compile(r"^CURRENT_TIMESTAMP(?:\s*\(\s*\))?$", re.IGNORECASE)
+    CURRENT_DATE: t.Pattern[str] = re.compile(r"^CURRENT_DATE(?:\s*\(\s*\))?$", re.IGNORECASE)
+    CURRENT_TIME: t.Pattern[str] = re.compile(r"^CURRENT_TIME(?:\s*\(\s*\))?$", re.IGNORECASE)
+    SQLITE_NOW_FUNC: t.Pattern[str] = re.compile(
+        r"^(datetime|date|time)\s*\(\s*'now'(?:\s*,\s*'(localtime|utc)')?\s*\)$",
+        re.IGNORECASE,
+    )
+    STRFTIME_NOW: t.Pattern[str] = re.compile(
+        r"^strftime\s*\(\s*'([^']+)'\s*,\s*'now'(?:\s*,\s*'(localtime|utc)')?\s*\)$",
+        re.IGNORECASE,
+    )
+    NUMERIC_LITERAL_PATTERN: t.Pattern[str] = re.compile(r"^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$")
 
     MYSQL_CONNECTOR_VERSION: version.Version = version.parse(mysql_connector_version_string)
 
@@ -194,6 +209,9 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
             self._mysql_version = self._get_mysql_version()
             self._mysql_json_support = check_mysql_json_support(self._mysql_version)
             self._mysql_fulltext_support = check_mysql_fulltext_support(self._mysql_version)
+            self._allow_expr_defaults = check_mysql_expression_defaults_support(self._mysql_version)
+            self._allow_current_ts_dt = check_mysql_current_timestamp_datetime_support(self._mysql_version)
+            self._allow_fsp = check_mysql_fractional_seconds_support(self._mysql_version)
 
             if self._use_fulltext and not self._mysql_fulltext_support:
                 raise ValueError("Your MySQL version does not support InnoDB FULLTEXT indexes!")
@@ -339,12 +357,157 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
             return self._mysql_string_type
         return full_column_type
 
+    @staticmethod
+    def _strip_wrapping_parentheses(expr: str) -> str:
+        """Remove one or more layers of *fully wrapping* parentheses around an expression.
+
+        Only strip if the matching ')' for the very first '(' is the final character
+        of the string. This avoids corrupting expressions like "(a) + (b)".
+        """
+        s: str = expr.strip()
+        while s.startswith("("):
+            depth: int = 0
+            match_idx: int = -1
+            i: int
+            ch: str
+            # Find the matching ')' for the '(' at index 0
+            for i, ch in enumerate(s):
+                if ch == "(":
+                    depth += 1
+                elif ch == ")":
+                    depth -= 1
+                    if depth == 0:
+                        match_idx = i
+                        break
+            # Only strip if the match closes at the very end
+            if match_idx == len(s) - 1:
+                s = s[1:match_idx].strip()
+                # continue to try stripping more fully-wrapping layers
+                continue
+            # Not a fully-wrapped expression; stop
+            break
+        return s
+
+    def _translate_default_for_mysql(self, column_type: str, default: str) -> str:
+        """Translate SQLite DEFAULT expression to a MySQL-compatible one for common cases.
+
+        Returns a string suitable to append after "DEFAULT ", without the word itself.
+        Keeps literals as-is, maps `CURRENT_*`/`datetime('now')`/`strftime(...,'now')` to
+        the appropriate MySQL `CURRENT_*` functions, preserves fractional seconds if the
+        column type declares a precision, and normalizes booleans to 0/1.
+        """
+        raw: str = default.strip()
+        if not raw:
+            return raw
+
+        s: str = self._strip_wrapping_parentheses(raw)
+        u: str = s.upper()
+
+        # NULL passthrough
+        if u == "NULL":
+            return "NULL"
+
+        # Determine base data type
+        match: t.Optional[re.Match[str]] = self._valid_column_type(column_type)
+        base: str = match.group(0).upper() if match else column_type.upper()
+
+        # TIMESTAMP: allow CURRENT_TIMESTAMP across versions; preserve FSP only if supported
+        if base.startswith("TIMESTAMP") and (
+            self.CURRENT_TS.match(s)
+            or (self.SQLITE_NOW_FUNC.match(s) and s.lower().startswith("datetime"))
+            or self.STRFTIME_NOW.match(s)
+        ):
+            len_match: t.Optional[re.Match[str]] = self.COLUMN_LENGTH_PATTERN.search(column_type)
+            fsp: str = ""
+            if self._allow_fsp and len_match:
+                try:
+                    n = int(len_match.group(0).strip("()"))
+                except ValueError:
+                    n = None
+                if n is not None and 0 < n <= 6:
+                    fsp = f"({n})"
+            return f"CURRENT_TIMESTAMP{fsp}"
+
+        # DATETIME: require server support, otherwise omit the DEFAULT
+        if base.startswith("DATETIME") and (
+            self.CURRENT_TS.match(s)
+            or (self.SQLITE_NOW_FUNC.match(s) and s.lower().startswith("datetime"))
+            or self.STRFTIME_NOW.match(s)
+        ):
+            if not self._allow_current_ts_dt:
+                return ""
+            len_match = self.COLUMN_LENGTH_PATTERN.search(column_type)
+            fsp = ""
+            if self._allow_fsp and len_match:
+                try:
+                    n = int(len_match.group(0).strip("()"))
+                except ValueError:
+                    n = None
+                if n is not None and 0 < n <= 6:
+                    fsp = f"({n})"
+            return f"CURRENT_TIMESTAMP{fsp}"
+
+        # DATE
+        if (
+            base.startswith("DATE")
+            and (
+                self.CURRENT_DATE.match(s)
+                or self.CURRENT_TS.match(s)  # map CURRENT_TIMESTAMP → CURRENT_DATE for DATE
+                or (self.SQLITE_NOW_FUNC.match(s) and s.lower().startswith("date"))
+                or self.STRFTIME_NOW.match(s)
+            )
+            and self._allow_expr_defaults
+        ):
+            # Too old for expression defaults on DATE → fall back
+            return "CURRENT_DATE"
+
+        # TIME
+        if (
+            base.startswith("TIME")
+            and (
+                self.CURRENT_TIME.match(s)
+                or self.CURRENT_TS.match(s)  # map CURRENT_TIMESTAMP → CURRENT_TIME for TIME
+                or (self.SQLITE_NOW_FUNC.match(s) and s.lower().startswith("time"))
+                or self.STRFTIME_NOW.match(s)
+            )
+            and self._allow_expr_defaults
+        ):
+            # Too old for expression defaults on TIME → fall back
+            len_match = self.COLUMN_LENGTH_PATTERN.search(column_type)
+            fsp = ""
+            if self._allow_fsp and len_match:
+                try:
+                    n = int(len_match.group(0).strip("()"))
+                except ValueError:
+                    n = None
+                if n is not None and 0 < n <= 6:
+                    fsp = f"({n})"
+            return f"CURRENT_TIME{fsp}"
+
+        # Booleans (store as 0/1)
+        if base in {"BOOL", "BOOLEAN"} or base.startswith("TINYINT"):
+            if u in {"TRUE", "'TRUE'", '"TRUE"'}:
+                return "1"
+            if u in {"FALSE", "'FALSE'", '"FALSE"'}:
+                return "0"
+
+        # Numeric literals (possibly wrapped)
+        if self.NUMERIC_LITERAL_PATTERN.match(s):
+            return s
+
+        # Quoted strings and hex blobs pass through as-is
+        if (s.startswith("'") and s.endswith("'")) or (s.startswith('"') and s.endswith('"')) or u.startswith("X'"):
+            return s
+
+        # Fallback: return stripped expression (MySQL 8.0.13+ allows expression defaults)
+        return s
+
     @classmethod
     def _column_type_length(cls, column_type: str, default: t.Optional[t.Union[str, int, float]] = None) -> str:
         suffix: t.Optional[t.Match[str]] = cls.COLUMN_LENGTH_PATTERN.search(column_type)
         if suffix:
             return suffix.group(0)
-        if default:
+        if default is not None:
             return f"({default})"
         return ""
 
@@ -386,18 +549,22 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                 column["pk"] > 0 and column_type.startswith(("INT", "BIGINT")) and not compound_primary_key
             )
 
+            # Build DEFAULT clause safely (preserve falsy defaults like 0/'')
+            default_clause: str = ""
+            if (
+                column["dflt_value"] is not None
+                and column_type not in MYSQL_COLUMN_TYPES_WITHOUT_DEFAULT
+                and not auto_increment
+            ):
+                td: str = self._translate_default_for_mysql(column_type, str(column["dflt_value"]))
+                if td != "":
+                    default_clause = "DEFAULT " + td
             sql += " `{name}` {type} {notnull} {default} {auto_increment}, ".format(
                 name=mysql_safe_name,
                 type=column_type,
                 notnull="NOT NULL" if column["notnull"] or column["pk"] else "NULL",
                 auto_increment="AUTO_INCREMENT" if auto_increment else "",
-                default=(
-                    "DEFAULT " + column["dflt_value"]
-                    if column["dflt_value"]
-                    and column_type not in MYSQL_COLUMN_TYPES_WITHOUT_DEFAULT
-                    and not auto_increment
-                    else ""
-                ),
+                default=default_clause,
             )
 
             if column["pk"] > 0:

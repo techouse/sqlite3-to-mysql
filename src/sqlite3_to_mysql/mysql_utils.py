@@ -139,6 +139,30 @@ def check_mysql_fulltext_support(version_string: str) -> bool:
     return mysql_version >= version.parse("5.6.0")
 
 
+def check_mysql_expression_defaults_support(version_string: str) -> bool:
+    """Check for expression defaults support."""
+    mysql_version: version.Version = get_mysql_version(version_string)
+    if "-mariadb" in version_string.lower():
+        return mysql_version >= version.parse("10.2.0")
+    return mysql_version >= version.parse("8.0.13")
+
+
+def check_mysql_current_timestamp_datetime_support(version_string: str) -> bool:
+    """Check for CURRENT_TIMESTAMP support for DATETIME fields."""
+    mysql_version: version.Version = get_mysql_version(version_string)
+    if "-mariadb" in version_string.lower():
+        return mysql_version >= version.parse("10.0.1")
+    return mysql_version >= version.parse("5.6.5")
+
+
+def check_mysql_fractional_seconds_support(version_string: str) -> bool:
+    """Check for fractional seconds support."""
+    mysql_version: version.Version = get_mysql_version(version_string)
+    if "-mariadb" in version_string.lower():
+        return mysql_version >= version.parse("10.1.2")
+    return mysql_version >= version.parse("5.6.4")
+
+
 def safe_identifier_length(identifier_name: str, max_length: int = 64) -> str:
     """https://dev.mysql.com/doc/refman/8.0/en/identifier-length.html."""
     return str(identifier_name)[:max_length]

@@ -5,6 +5,9 @@ from packaging.version import Version
 
 from sqlite3_to_mysql.mysql_utils import (
     CharSet,
+    check_mysql_current_timestamp_datetime_support,
+    check_mysql_expression_defaults_support,
+    check_mysql_fractional_seconds_support,
     check_mysql_fulltext_support,
     check_mysql_json_support,
     check_mysql_values_alias_support,
@@ -208,3 +211,82 @@ class TestMySQLUtils:
             result = list(mysql_supported_character_sets(charset="utf8"))
             # The function should skip the KeyError and return an empty list
             assert len(result) == 0
+
+    # -----------------------------
+    # Expression defaults (MySQL 8.0.13+, MariaDB 10.2.0+)
+    # -----------------------------
+    @pytest.mark.parametrize(
+        "ver, expected",
+        [
+            ("8.0.12", False),
+            ("8.0.13", True),
+            ("8.0.13-8ubuntu1", True),
+            ("5.7.44", False),
+        ],
+    )
+    def test_expr_defaults_mysql(self, ver: str, expected: bool) -> None:
+        assert check_mysql_expression_defaults_support(ver) is expected
+
+    @pytest.mark.parametrize(
+        "ver, expected",
+        [
+            ("10.1.99-MariaDB", False),
+            ("10.2.0-MariaDB", True),
+            ("10.2.7-MariaDB-1~deb10u1", True),
+            ("10.1.2-mArIaDb", False),  # case-insensitive detection
+        ],
+    )
+    def test_expr_defaults_mariadb(self, ver: str, expected: bool) -> None:
+        assert check_mysql_expression_defaults_support(ver) is expected
+
+    # -----------------------------
+    # CURRENT_TIMESTAMP for DATETIME (MySQL 5.6.5+, MariaDB 10.0.1+)
+    # -----------------------------
+    @pytest.mark.parametrize(
+        "ver, expected",
+        [
+            ("5.6.4", False),
+            ("5.6.5", True),
+            ("5.6.5-ps-log", True),
+            ("5.5.62", False),
+        ],
+    )
+    def test_current_timestamp_datetime_mysql(self, ver: str, expected: bool) -> None:
+        assert check_mysql_current_timestamp_datetime_support(ver) is expected
+
+    @pytest.mark.parametrize(
+        "ver, expected",
+        [
+            ("10.0.0-MariaDB", False),
+            ("10.0.1-MariaDB", True),
+            ("10.3.39-MariaDB-1:10.3.39+maria~focal", True),
+        ],
+    )
+    def test_current_timestamp_datetime_mariadb(self, ver: str, expected: bool) -> None:
+        assert check_mysql_current_timestamp_datetime_support(ver) is expected
+
+    # -----------------------------
+    # Fractional seconds (fsp) (MySQL 5.6.4+, MariaDB 10.1.2+)
+    # -----------------------------
+    @pytest.mark.parametrize(
+        "ver, expected",
+        [
+            ("5.6.3", False),
+            ("5.6.4", True),
+            ("5.7.44-0ubuntu0.18.04.1", True),
+        ],
+    )
+    def test_fractional_seconds_mysql(self, ver: str, expected: bool) -> None:
+        assert check_mysql_fractional_seconds_support(ver) is expected
+
+    @pytest.mark.parametrize(
+        "ver, expected",
+        [
+            ("10.1.1-MariaDB", False),
+            ("10.1.2-MariaDB", True),
+            ("10.6.16-MariaDB-1:10.6.16+maria~jammy", True),
+            ("10.1.2-mArIaDb", True),  # case-insensitive detection
+        ],
+    )
+    def test_fractional_seconds_mariadb(self, ver: str, expected: bool) -> None:
+        assert check_mysql_fractional_seconds_support(ver) is expected

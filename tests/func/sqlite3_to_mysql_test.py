@@ -458,32 +458,56 @@ class TestSQLite3toMySQL:
 
     @pytest.mark.transfer
     @pytest.mark.parametrize(
-        "chunk, with_rowid, mysql_insert_method, ignore_duplicate_keys",
+        "chunk, with_rowid, mysql_insert_method, ignore_duplicate_keys, exclude_tables",
         [
-            (None, False, "IGNORE", False),
-            (None, False, "IGNORE", True),
-            (None, False, "UPDATE", True),
-            (None, False, "UPDATE", False),
-            (None, False, "DEFAULT", True),
-            (None, False, "DEFAULT", False),
-            (None, True, "IGNORE", False),
-            (None, True, "IGNORE", True),
-            (None, True, "UPDATE", True),
-            (None, True, "UPDATE", False),
-            (None, True, "DEFAULT", True),
-            (None, True, "DEFAULT", False),
-            (10, False, "IGNORE", False),
-            (10, False, "IGNORE", True),
-            (10, False, "UPDATE", True),
-            (10, False, "UPDATE", False),
-            (10, False, "DEFAULT", True),
-            (10, False, "DEFAULT", False),
-            (10, True, "IGNORE", False),
-            (10, True, "IGNORE", True),
-            (10, True, "UPDATE", True),
-            (10, True, "UPDATE", False),
-            (10, True, "DEFAULT", True),
-            (10, True, "DEFAULT", False),
+            (None, False, "IGNORE", False, False),
+            (None, False, "IGNORE", False, True),
+            (None, False, "IGNORE", True, False),
+            (None, False, "IGNORE", True, True),
+            (None, False, "UPDATE", True, False),
+            (None, False, "UPDATE", True, True),
+            (None, False, "UPDATE", False, False),
+            (None, False, "UPDATE", False, True),
+            (None, False, "DEFAULT", True, False),
+            (None, False, "DEFAULT", True, True),
+            (None, False, "DEFAULT", False, False),
+            (None, False, "DEFAULT", False, True),
+            (None, True, "IGNORE", False, False),
+            (None, True, "IGNORE", False, True),
+            (None, True, "IGNORE", True, False),
+            (None, True, "IGNORE", True, True),
+            (None, True, "UPDATE", True, False),
+            (None, True, "UPDATE", True, True),
+            (None, True, "UPDATE", False, False),
+            (None, True, "UPDATE", False, True),
+            (None, True, "DEFAULT", True, False),
+            (None, True, "DEFAULT", True, True),
+            (None, True, "DEFAULT", False, False),
+            (None, True, "DEFAULT", False, True),
+            (10, False, "IGNORE", False, False),
+            (10, False, "IGNORE", False, True),
+            (10, False, "IGNORE", True, False),
+            (10, False, "IGNORE", True, True),
+            (10, False, "UPDATE", True, False),
+            (10, False, "UPDATE", True, True),
+            (10, False, "UPDATE", False, False),
+            (10, False, "UPDATE", False, True),
+            (10, False, "DEFAULT", True, False),
+            (10, False, "DEFAULT", True, True),
+            (10, False, "DEFAULT", False, False),
+            (10, False, "DEFAULT", False, True),
+            (10, True, "IGNORE", False, False),
+            (10, True, "IGNORE", False, True),
+            (10, True, "IGNORE", True, False),
+            (10, True, "IGNORE", True, True),
+            (10, True, "UPDATE", True, False),
+            (10, True, "UPDATE", True, True),
+            (10, True, "UPDATE", False, False),
+            (10, True, "UPDATE", False, True),
+            (10, True, "DEFAULT", True, False),
+            (10, True, "DEFAULT", True, True),
+            (10, True, "DEFAULT", False, False),
+            (10, True, "DEFAULT", False, True),
         ],
     )
     def test_transfer_specific_tables_transfers_only_specified_tables_from_sqlite_file(
@@ -498,6 +522,7 @@ class TestSQLite3toMySQL:
         with_rowid: bool,
         mysql_insert_method: str,
         ignore_duplicate_keys: bool,
+        exclude_tables: bool,
     ) -> None:
         sqlite_engine: Engine = create_engine(
             f"sqlite:///{sqlite_database}",
@@ -513,9 +538,13 @@ class TestSQLite3toMySQL:
         random_sqlite_tables: t.List[str] = sample(sqlite_tables, table_number)
         random_sqlite_tables.sort()
 
+        remaining_tables: t.List[str] = list(set(sqlite_tables) - set(random_sqlite_tables))
+        remaining_tables.sort()
+
         proc: SQLite3toMySQL = SQLite3toMySQL(  # type: ignore[call-arg]
             sqlite_file=sqlite_database,
-            sqlite_tables=random_sqlite_tables,
+            sqlite_tables=None if exclude_tables else random_sqlite_tables,
+            exclude_sqlite_tables=random_sqlite_tables if exclude_tables else None,
             mysql_user=mysql_credentials.user,
             mysql_password=mysql_credentials.password,
             mysql_host=mysql_credentials.host,
@@ -528,6 +557,16 @@ class TestSQLite3toMySQL:
         )
         caplog.set_level(logging.DEBUG)
         proc.transfer()
+        assert all(
+            message in [record.message for record in caplog.records]
+            for message in set(
+                [
+                    f"Transferring table {table}"
+                    for table in (remaining_tables if exclude_tables else random_sqlite_tables)
+                ]
+                + ["Done!"]
+            )
+        )
         assert all(record.levelname == "INFO" for record in caplog.records)
         assert not any(record.levelname == "ERROR" for record in caplog.records)
         out, err = capsys.readouterr()
@@ -542,10 +581,13 @@ class TestSQLite3toMySQL:
         mysql_tables: t.List[str] = mysql_inspect.get_table_names()
 
         """ Test if both databases have the same table names """
-        assert random_sqlite_tables == mysql_tables
+        if exclude_tables:
+            assert remaining_tables == mysql_tables
+        else:
+            assert random_sqlite_tables == mysql_tables
 
         """ Test if all the tables have the same column names """
-        for table_name in random_sqlite_tables:
+        for table_name in remaining_tables if exclude_tables else random_sqlite_tables:
             column_names: t.List[t.Any] = [column["name"] for column in sqlite_inspect.get_columns(table_name)]
             if with_rowid:
                 column_names.insert(0, "rowid")
@@ -558,7 +600,7 @@ class TestSQLite3toMySQL:
             for index in (chain.from_iterable(mysql_inspect.get_indexes(table_name) for table_name in mysql_tables))
         )
 
-        for table_name in random_sqlite_tables:
+        for table_name in remaining_tables if exclude_tables else random_sqlite_tables:
             sqlite_indices: t.List[ReflectedIndex] = sqlite_inspect.get_indexes(table_name)
             if with_rowid:
                 sqlite_indices.insert(
@@ -580,7 +622,7 @@ class TestSQLite3toMySQL:
         mysql_results: t.List[t.Tuple[t.Tuple[t.Any, ...], ...]] = []
 
         meta: MetaData = MetaData()
-        for table_name in random_sqlite_tables:
+        for table_name in remaining_tables if exclude_tables else random_sqlite_tables:
             sqlite_table: Table = Table(table_name, meta, autoload_with=sqlite_engine)
             sqlite_stmt: Select = select(sqlite_table)
             sqlite_result: t.List[Row[t.Any]] = list(sqlite_cnx.execute(sqlite_stmt).fetchall())

@@ -41,6 +41,15 @@ _copyright_header: str = f"sqlite3mysql version {package_version} Copyright (c) 
     help="Transfer only these specific tables (space separated table names). "
     "Implies --without-foreign-keys which inhibits the transfer of foreign keys.",
 )
+@click.option(
+    "-e",
+    "--exclude-sqlite-tables",
+    type=tuple,
+    cls=OptionEatAll,
+    help="Transfer all tables except these specific tables (space separated table names). "
+    "Implies --without-foreign-keys which inhibits the transfer of foreign keys. "
+    "Can not be used together with --sqlite-tables.",
+)
 @click.option("-X", "--without-foreign-keys", is_flag=True, help="Do not transfer foreign keys.")
 @click.option(
     "-W",
@@ -136,6 +145,7 @@ _copyright_header: str = f"sqlite3mysql version {package_version} Copyright (c) 
 def cli(
     sqlite_file: t.Union[str, "os.PathLike[t.Any]"],
     sqlite_tables: t.Optional[t.Sequence[str]],
+    exclude_sqlite_tables: t.Optional[t.Sequence[str]],
     without_foreign_keys: bool,
     ignore_duplicate_keys: bool,
     mysql_user: str,
@@ -182,9 +192,16 @@ def cli(
                 "There is nothing to do. Exiting..."
             )
 
+        if exclude_sqlite_tables and sqlite_tables:
+            raise click.ClickException(
+                "Error: Both -t/--sqlite-tables and -e/--exclude-sqlite-tables options are set. "
+                "Please use only one of them."
+            )
+
         SQLite3toMySQL(
             sqlite_file=sqlite_file,
             sqlite_tables=sqlite_tables or tuple(),
+            exclude_sqlite_tables=exclude_sqlite_tables or tuple(),
             without_foreign_keys=without_foreign_keys or (sqlite_tables is not None and len(sqlite_tables) > 0),
             mysql_user=mysql_user,
             mysql_password=mysql_password or prompt_mysql_password,

@@ -629,6 +629,40 @@ class TestSQLite3toMySQL:
         assert "Error: Invalid value for '--mysql-collation'" in result.output
         assert "invalid_collation" in result.output
 
+    def test_specific_tables_include_and_exclude_are_mutually_exclusive_options(
+        self,
+        cli_runner: CliRunner,
+        sqlite_database: str,
+        mysql_credentials: MySQLCredentials,
+    ) -> None:
+        """Test that specifying both include and exclude tables raises an error."""
+        result: Result = cli_runner.invoke(
+            sqlite3mysql,
+            [
+                "-f",
+                sqlite_database,
+                "-t",
+                "table1 table2",
+                "-e",
+                "table3 table4",
+                "-d",
+                mysql_credentials.database,
+                "-u",
+                mysql_credentials.user,
+                "--mysql-password",
+                mysql_credentials.password,
+                "-h",
+                mysql_credentials.host,
+                "-P",
+                str(mysql_credentials.port),
+            ],
+        )
+        assert result.exit_code > 0
+        assert (
+            "Error: Both -t/--sqlite-tables and -e/--exclude-sqlite-tables options are set. "
+            "Please use only one of them."
+        ) in result.output
+
     def test_transfer_specific_tables_only(
         self,
         cli_runner: CliRunner,

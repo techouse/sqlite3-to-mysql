@@ -109,7 +109,15 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
 
         self._sqlite_tables = kwargs.get("sqlite_tables") or tuple()
 
-        self._without_foreign_keys = bool(self._sqlite_tables) or bool(kwargs.get("without_foreign_keys", False))
+        self._exclude_sqlite_tables = kwargs.get("exclude_sqlite_tables") or tuple()
+
+        if bool(self._sqlite_tables) and bool(self._exclude_sqlite_tables):
+            raise ValueError("Please provide either sqlite_tables or exclude_sqlite_tables, not both")
+
+        if bool(self._sqlite_tables) or bool(self._exclude_sqlite_tables):
+            self._without_foreign_keys = True
+        else:
+            self._without_foreign_keys = bool(kwargs.get("without_foreign_keys", False))
 
         self._mysql_ssl_disabled = bool(kwargs.get("mysql_ssl_disabled", False))
 
@@ -857,16 +865,23 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
 
     def transfer(self) -> None:
         """The primary and only method with which we transfer all the data."""
-        if len(self._sqlite_tables) > 0:
+        if len(self._sqlite_tables) > 0 or len(self._exclude_sqlite_tables) > 0:
             # transfer only specific tables
+            specific_tables: t.Sequence[str] = (
+                self._exclude_sqlite_tables if len(self._exclude_sqlite_tables) > 0 else self._sqlite_tables
+            )
+
             self._sqlite_cur.execute(
-                f"""
+                """
                 SELECT name FROM sqlite_master
                 WHERE type='table'
                 AND name NOT LIKE 'sqlite_%'
-                AND name IN({("?, " * len(self._sqlite_tables)).rstrip(" ,")})
-                """,
-                self._sqlite_tables,
+                AND name {exclude} IN ({placeholders})
+                """.format(
+                    exclude="NOT" if len(self._exclude_sqlite_tables) > 0 else "",
+                    placeholders=", ".join("?" * len(specific_tables)),
+                ),
+                specific_tables,
             )
         else:
             # transfer all tables

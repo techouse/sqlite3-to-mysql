@@ -34,7 +34,8 @@ Connection Options
 Transfer Options
 """"""""""""""""
 
-- ``-t, --sqlite-tables TUPLE``: Transfer only these specific tables (space separated table names). Implies ``--without-foreign-keys`` which inhibits the transfer of foreign keys.
+- ``-t, --sqlite-tables TUPLE``: Transfer only these specific tables (space separated table names). Implies ``--without-foreign-keys`` which inhibits the transfer of foreign keys. Can not be used together with ``--exclude-sqlite-tables``.
+- ``-e, --exclude-sqlite-tables TUPLE``: Exclude these specific tables (space separated table names). Implies ``--without-foreign-keys`` which inhibits the transfer of foreign keys. Can not be used together with ``--sqlite-tables``.
 - ``-E, --mysql-truncate-tables``: Truncates existing tables before inserting data.
 - ``-K, --mysql-skip-create-tables``: Skip creating tables in MySQL.
 - ``-i, --mysql-insert-method [UPDATE|IGNORE|DEFAULT]``: MySQL insert method. DEFAULT will throw errors when encountering duplicate records; UPDATE will update existing rows; IGNORE will ignore insert errors. Defaults to IGNORE.

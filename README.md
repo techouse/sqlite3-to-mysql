@@ -37,7 +37,14 @@ Options:
   -t, --sqlite-tables TUPLE       Transfer only these specific tables (space
                                   separated table names). Implies --without-
                                   foreign-keys which inhibits the transfer of
-                                  foreign keys.
+                                  foreign keys. Can not be used together with
+                                  --exclude-sqlite-tables.
+  -e, --exclude-sqlite-tables TUPLE
+                                  Transfer all tables except these specific
+                                  tables (space separated table names).
+                                  Implies --without-foreign-keys which
+                                  inhibits the transfer of foreign keys. Can
+                                  not be used together with --sqlite-tables.
   -X, --without-foreign-keys      Do not transfer foreign keys.
   -W, --ignore-duplicate-keys     Ignore duplicate keys. The default behavior
                                   is to create new ones with a numerical

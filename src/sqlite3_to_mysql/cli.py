@@ -39,7 +39,8 @@ _copyright_header: str = f"sqlite3mysql version {package_version} Copyright (c) 
     type=tuple,
     cls=OptionEatAll,
     help="Transfer only these specific tables (space separated table names). "
-    "Implies --without-foreign-keys which inhibits the transfer of foreign keys.",
+    "Implies --without-foreign-keys which inhibits the transfer of foreign keys. "
+    "Can not be used together with --exclude-sqlite-tables.",
 )
 @click.option(
     "-e",

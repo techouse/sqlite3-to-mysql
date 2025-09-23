@@ -1,3 +1,8 @@
+# 2.5.0
+
+* [FEAT] translate SQLite defaults to MySQL
+* [FEAT] exclude transferring SQLite tables via `-e`/`--exclude-sqlite-tables`
+
 # 2.4.6
 
 * [FIX] fix importing `typing_extensions` on Python >= 3.11

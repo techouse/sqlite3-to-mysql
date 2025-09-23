@@ -202,7 +202,11 @@ def cli(
             sqlite_file=sqlite_file,
             sqlite_tables=sqlite_tables or tuple(),
             exclude_sqlite_tables=exclude_sqlite_tables or tuple(),
-            without_foreign_keys=without_foreign_keys or (sqlite_tables is not None and len(sqlite_tables) > 0),
+            without_foreign_keys=without_foreign_keys
+            or (
+                (sqlite_tables is not None and len(sqlite_tables) > 0)
+                or (exclude_sqlite_tables is not None and len(exclude_sqlite_tables) > 0)
+            ),
             mysql_user=mysql_user,
             mysql_password=mysql_password or prompt_mysql_password,
             mysql_database=mysql_database,

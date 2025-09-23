@@ -192,7 +192,7 @@ def cli(
                 "There is nothing to do. Exiting..."
             )
 
-        if exclude_sqlite_tables is not None and sqlite_tables is not None:
+        if sqlite_tables and exclude_sqlite_tables:
             raise click.ClickException(
                 "Error: Both -t/--sqlite-tables and -e/--exclude-sqlite-tables options are set. "
                 "Please use only one of them."

@@ -192,7 +192,7 @@ def cli(
                 "There is nothing to do. Exiting..."
             )
 
-        if exclude_sqlite_tables and sqlite_tables:
+        if exclude_sqlite_tables is not None and sqlite_tables is not None:
             raise click.ClickException(
                 "Error: Both -t/--sqlite-tables and -e/--exclude-sqlite-tables options are set. "
                 "Please use only one of them."
@@ -202,11 +202,7 @@ def cli(
             sqlite_file=sqlite_file,
             sqlite_tables=sqlite_tables or tuple(),
             exclude_sqlite_tables=exclude_sqlite_tables or tuple(),
-            without_foreign_keys=without_foreign_keys
-            or (
-                (sqlite_tables is not None and len(sqlite_tables) > 0)
-                or (exclude_sqlite_tables is not None and len(exclude_sqlite_tables) > 0)
-            ),
+            without_foreign_keys=without_foreign_keys or bool(sqlite_tables) or bool(exclude_sqlite_tables),
             mysql_user=mysql_user,
             mysql_password=mysql_password or prompt_mysql_password,
             mysql_database=mysql_database,

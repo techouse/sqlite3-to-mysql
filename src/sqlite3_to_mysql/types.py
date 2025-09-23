@@ -22,6 +22,7 @@ class SQLite3toMySQLParams(TypedDict):
 
     sqlite_file: t.Union[str, "os.PathLike[t.Any]"]
     sqlite_tables: t.Optional[t.Sequence[str]]
+    exclude_sqlite_tables: t.Optional[t.Sequence[str]]
     without_foreign_keys: t.Optional[bool]
     mysql_user: t.Optional[str]
     mysql_password: t.Optional[t.Union[str, bool]]
@@ -52,6 +53,7 @@ class SQLite3toMySQLAttributes:
 
     _sqlite_file: t.Union[str, "os.PathLike[t.Any]"]
     _sqlite_tables: t.Sequence[str]
+    _exclude_sqlite_tables: t.Sequence[str]
     _without_foreign_keys: bool
     _mysql_user: str
     _mysql_password: t.Optional[str]

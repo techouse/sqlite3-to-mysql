@@ -1,3 +1,7 @@
+# 2.5.1
+
+* [FEAT] enhance table creation logic to handle default values and improve error handling
+
 # 2.5.0
 
 * [FEAT] translate SQLite defaults to MySQL

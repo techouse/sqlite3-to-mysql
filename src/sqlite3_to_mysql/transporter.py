@@ -526,7 +526,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
             return suffix.group(0)
         return ""
 
-    def _create_table(self, table_name: str, transfer_rowid: bool = False) -> None:
+    def _create_table(self, table_name: str, transfer_rowid: bool = False, skip_default: bool = False) -> None:
         primary_keys: t.List[t.Dict[str, str]] = []
 
         sql: str = f"CREATE TABLE IF NOT EXISTS `{safe_identifier_length(table_name)}` ( "
@@ -560,7 +560,8 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
             # Build DEFAULT clause safely (preserve falsy defaults like 0/'')
             default_clause: str = ""
             if (
-                column["dflt_value"] is not None
+                not skip_default
+                and column["dflt_value"] is not None
                 and column_type not in MYSQL_COLUMN_TYPES_WITHOUT_DEFAULT
                 and not auto_increment
             ):
@@ -603,12 +604,20 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
             self._mysql_cur.execute(sql)
             self._mysql.commit()
         except mysql.connector.Error as err:
-            self._logger.error(
-                "MySQL failed creating table %s: %s",
-                safe_identifier_length(table_name),
-                err,
-            )
-            raise
+            if err.errno == errorcode.ER_INVALID_DEFAULT and not skip_default:
+                self._logger.warning(
+                    "MySQL failed creating table %s with DEFAULT values: %s. Retrying without DEFAULT values ...",
+                    safe_identifier_length(table_name),
+                    err,
+                )
+                return self._create_table(table_name, transfer_rowid, skip_default=True)
+            else:
+                self._logger.error(
+                    "MySQL failed creating table %s: %s",
+                    safe_identifier_length(table_name),
+                    err,
+                )
+                raise
 
     def _truncate_table(self, table_name: str) -> None:
         self._mysql_cur.execute(
@@ -644,44 +653,52 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
 
             index_type: str = "UNIQUE" if int(index["unique"]) == 1 else "INDEX"
 
-            if any(
-                table_columns[index_info["name"]].upper() in MYSQL_TEXT_COLUMN_TYPES_WITH_JSON
-                for index_info in index_infos
-            ):
-                if self._use_fulltext and self._mysql_fulltext_support:
-                    # Use fulltext if requested and available
-                    index_type = "FULLTEXT"
-                    index_columns: str = ",".join(
-                        f'`{safe_identifier_length(index_info["name"])}`' for index_info in index_infos
-                    )
-                else:
-                    # Limit the max TEXT field index length to 255
-                    index_columns = ", ".join(
-                        "`{column}`{length}".format(
-                            column=safe_identifier_length(index_info["name"]),
-                            length=(
-                                "(255)"
-                                if table_columns[index_info["name"]].upper() in MYSQL_TEXT_COLUMN_TYPES_WITH_JSON
-                                else ""
-                            ),
+            try:
+                if any(
+                    table_columns[index_info["name"]].upper() in MYSQL_TEXT_COLUMN_TYPES_WITH_JSON
+                    for index_info in index_infos
+                ):
+                    if self._use_fulltext and self._mysql_fulltext_support:
+                        # Use fulltext if requested and available
+                        index_type = "FULLTEXT"
+                        index_columns: str = ",".join(
+                            f'`{safe_identifier_length(index_info["name"])}`' for index_info in index_infos
                         )
-                        for index_info in index_infos
-                    )
-            else:
-                column_list: t.List[str] = []
-                for index_info in index_infos:
-                    index_length: str = ""
-                    # Limit the max BLOB field index length to 255
-                    if table_columns[index_info["name"]].upper() in MYSQL_BLOB_COLUMN_TYPES:
-                        index_length = "(255)"
                     else:
-                        suffix: t.Optional[t.Match[str]] = self.COLUMN_LENGTH_PATTERN.search(
-                            table_columns[index_info["name"]]
+                        # Limit the max TEXT field index length to 255
+                        index_columns = ", ".join(
+                            "`{column}`{length}".format(
+                                column=safe_identifier_length(index_info["name"]),
+                                length=(
+                                    "(255)"
+                                    if table_columns[index_info["name"]].upper() in MYSQL_TEXT_COLUMN_TYPES_WITH_JSON
+                                    else ""
+                                ),
+                            )
+                            for index_info in index_infos
                         )
-                        if suffix:
-                            index_length = suffix.group(0)
-                    column_list.append(f'`{safe_identifier_length(index_info["name"])}`{index_length}')
-                index_columns = ", ".join(column_list)
+                else:
+                    column_list: t.List[str] = []
+                    for index_info in index_infos:
+                        index_length: str = ""
+                        # Limit the max BLOB field index length to 255
+                        if table_columns[index_info["name"]].upper() in MYSQL_BLOB_COLUMN_TYPES:
+                            index_length = "(255)"
+                        else:
+                            suffix: t.Optional[t.Match[str]] = self.COLUMN_LENGTH_PATTERN.search(
+                                table_columns[index_info["name"]]
+                            )
+                            if suffix:
+                                index_length = suffix.group(0)
+                        column_list.append(f'`{safe_identifier_length(index_info["name"])}`{index_length}')
+                    index_columns = ", ".join(column_list)
+            except (KeyError, TypeError, IndexError, ValueError):
+                self._logger.warning(
+                    """Failed adding index to column "%s" in table %s: Column not found!""",
+                    ", ".join(safe_identifier_length(index_info["name"]) for index_info in index_infos),
+                    safe_identifier_length(table_name),
+                )
+                continue
 
             try:
                 self._add_index(
@@ -773,6 +790,30 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                         safe_identifier_length(index["name"]),
                         safe_identifier_length(table_name),
                     )
+            elif err.errno == errorcode.ER_DUP_ENTRY:
+                self._logger.warning(
+                    """Ignoring duplicate entry when adding index to column "%s" in table %s!""",
+                    ", ".join(safe_identifier_length(index_info["name"]) for index_info in index_infos),
+                    safe_identifier_length(table_name),
+                )
+            elif err.errno == errorcode.ER_DUP_FIELDNAME:
+                self._logger.warning(
+                    """Failed adding index to column "%s" in table %s: Duplicate field name! Ignoring...""",
+                    ", ".join(safe_identifier_length(index_info["name"]) for index_info in index_infos),
+                    safe_identifier_length(table_name),
+                )
+            elif err.errno == errorcode.ER_TOO_MANY_KEYS:
+                self._logger.warning(
+                    """Failed adding index to column "%s" in table %s: Too many keys! Ignoring...""",
+                    ", ".join(safe_identifier_length(index_info["name"]) for index_info in index_infos),
+                    safe_identifier_length(table_name),
+                )
+            elif err.errno == errorcode.ER_TOO_LONG_KEY:
+                self._logger.warning(
+                    """Failed adding index to column "%s" in table %s: Key length too long! Ignoring...""",
+                    ", ".join(safe_identifier_length(index_info["name"]) for index_info in index_infos),
+                    safe_identifier_length(table_name),
+                )
             elif err.errno == errorcode.ER_BAD_FT_COLUMN:
                 # handle bad FULLTEXT index
                 self._logger.warning(

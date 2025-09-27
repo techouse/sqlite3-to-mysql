@@ -20,7 +20,7 @@ __version__ = _m.group(1) if _m else "0+unknown"
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = "sqlite3-to-mysql"
-copyright = "2024, Klemen Tusar"
+copyright = "%Y, Klemen Tusar"
 author = "Klemen Tusar"
 release = __version__
 

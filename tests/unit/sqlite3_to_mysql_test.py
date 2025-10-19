@@ -1146,3 +1146,34 @@ class TestSQLite3toMySQL:
         result = instance._translate_sqlite_view_definition(long_name, f"CREATE VIEW {long_name} AS SELECT 1")
         expected = long_name[:64]
         assert result == f"CREATE OR REPLACE VIEW `{expected}` AS SELECT 1"
+
+    def test_init_chunk_parameter_conversion(
+        self,
+        sqlite_database: str,
+        mysql_credentials: MySQLCredentials,
+        mocker: MockFixture,
+    ) -> None:
+        """Verify chunk parameter is correctly converted to integer _chunk_size."""
+        # Chunk=2 should yield _chunk_size == 2
+        instance = SQLite3toMySQL(
+            sqlite_file=sqlite_database,
+            mysql_user=mysql_credentials.user,
+            mysql_password=mysql_credentials.password,
+            mysql_host=mysql_credentials.host,
+            mysql_port=mysql_credentials.port,
+            mysql_database=mysql_credentials.database,
+            chunk=2,
+        )
+        assert instance._chunk_size == 2
+
+        # Chunk=None should yield _chunk_size == None
+        instance = SQLite3toMySQL(
+            sqlite_file=sqlite_database,
+            mysql_user=mysql_credentials.user,
+            mysql_password=mysql_credentials.password,
+            mysql_host=mysql_credentials.host,
+            mysql_port=mysql_credentials.port,
+            mysql_database=mysql_credentials.database,
+            chunk=None,
+        )
+        assert instance._chunk_size is None

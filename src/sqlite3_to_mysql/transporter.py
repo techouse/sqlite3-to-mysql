@@ -558,6 +558,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
             FROM sqlite_master
             WHERE type IN ({object_types})
             AND name NOT LIKE 'sqlite_%'
+            ORDER BY type, name
         """.format(
                 columns=", ".join(columns),
                 object_types=object_placeholders,
@@ -1038,7 +1039,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
         """The primary and only method with which we transfer all the data."""
         table_types: t.Tuple[str, ...] = ("table",)
         if self._sqlite_views_as_tables:
-            table_types = table_types + ("view",)
+            table_types = (*table_types, "view")
 
         tables: t.List[t.Dict[str, t.Any]] = self._fetch_sqlite_master_rows(table_types)
 

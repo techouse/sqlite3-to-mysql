@@ -279,9 +279,15 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
             )
             raise
 
+    @staticmethod
+    def _sqlite_quote_ident(name: str) -> str:
+        """Return a SQLite identifier with internal quotes escaped."""
+        return str(name).replace('"', '""')
+
     def _sqlite_table_has_rowid(self, table: str) -> bool:
         try:
-            self._sqlite_cur.execute(f'SELECT rowid FROM "{table}" LIMIT 1')
+            quoted_table: str = self._sqlite_quote_ident(table)
+            self._sqlite_cur.execute(f'SELECT rowid FROM "{quoted_table}" LIMIT 1')
             self._sqlite_cur.fetchall()
             return True
         except sqlite3.OperationalError:
@@ -650,10 +656,12 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
         if transfer_rowid:
             sql += " `rowid` BIGINT NOT NULL, "
 
+        quoted_table_name: str = self._sqlite_quote_ident(table_name)
+
         if self._sqlite_table_xinfo_support:
-            self._sqlite_cur.execute(f'PRAGMA table_xinfo("{table_name}")')
+            self._sqlite_cur.execute(f'PRAGMA table_xinfo("{quoted_table_name}")')
         else:
-            self._sqlite_cur.execute(f'PRAGMA table_info("{table_name}")')
+            self._sqlite_cur.execute(f'PRAGMA table_info("{quoted_table_name}")')
 
         rows: t.List[t.Any] = self._sqlite_cur.fetchall()
         compound_primary_key: bool = len(tuple(True for row in rows if dict(row)["pk"] > 0)) > 1
@@ -751,20 +759,23 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
             self._mysql_cur.execute(f"TRUNCATE TABLE `{safe_identifier_length(table_name)}`")
 
     def _add_indices(self, table_name: str) -> None:
-        self._sqlite_cur.execute(f'PRAGMA table_info("{table_name}")')
+        quoted_table_name: str = self._sqlite_quote_ident(table_name)
+
+        self._sqlite_cur.execute(f'PRAGMA table_info("{quoted_table_name}")')
         table_columns: t.Dict[str, str] = {}
         for row in self._sqlite_cur.fetchall():
             column: t.Dict[str, t.Any] = dict(row)
             table_columns[column["name"]] = column["type"]
 
-        self._sqlite_cur.execute(f'PRAGMA index_list("{table_name}")')
+        self._sqlite_cur.execute(f'PRAGMA index_list("{quoted_table_name}")')
         indices: t.Tuple[t.Dict[str, t.Any], ...] = tuple(dict(row) for row in self._sqlite_cur.fetchall())
 
         for index in indices:
             if index["origin"] == "pk":
                 continue
 
-            self._sqlite_cur.execute(f'PRAGMA index_info("{index["name"]}")')
+            quoted_index_name: str = self._sqlite_quote_ident(index["name"])
+            self._sqlite_cur.execute(f'PRAGMA index_info("{quoted_index_name}")')
             index_infos: t.Tuple[t.Dict[str, t.Any], ...] = tuple(dict(row) for row in self._sqlite_cur.fetchall())
 
             index_type: str = "UNIQUE" if int(index["unique"]) == 1 else "INDEX"
@@ -948,7 +959,8 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                 raise
 
     def _add_foreign_keys(self, table_name: str) -> None:
-        self._sqlite_cur.execute(f'PRAGMA foreign_key_list("{table_name}")')
+        quoted_table_name: str = self._sqlite_quote_ident(table_name)
+        self._sqlite_cur.execute(f'PRAGMA foreign_key_list("{quoted_table_name}")')
 
         for row in self._sqlite_cur.fetchall():
             foreign_key: t.Dict[str, t.Any] = dict(row)
@@ -1039,6 +1051,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
             for table in tables:
                 table_name: str = table["name"]
                 object_type: str = table.get("type", "table")
+                quoted_table_name: str = self._sqlite_quote_ident(table_name)
 
                 # check if we're transferring rowid
                 transfer_rowid: bool = self._with_rowid and self._sqlite_table_has_rowid(table_name)
@@ -1053,7 +1066,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
 
                 # get the size of the data
                 if self._mysql_transfer_data:
-                    self._sqlite_cur.execute(f'SELECT COUNT(*) AS total_records FROM "{table_name}"')
+                    self._sqlite_cur.execute(f'SELECT COUNT(*) AS total_records FROM "{quoted_table_name}"')
                     total_records = int(dict(self._sqlite_cur.fetchone())["total_records"])
                 else:
                     total_records = 0
@@ -1066,12 +1079,11 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                         "view" if object_type == "view" else "table",
                         table_name,
                     )
-                    self._sqlite_cur.execute(
-                        '''SELECT {rowid} * FROM "{table_name}"'''.format(
-                            rowid='rowid as "rowid",' if transfer_rowid else "",
-                            table_name=table_name,
-                        )
-                    )
+                    if transfer_rowid:
+                        select_list: str = 'rowid as "rowid", *'
+                    else:
+                        select_list = "*"
+                    self._sqlite_cur.execute(f'SELECT {select_list} FROM "{quoted_table_name}"')
                     columns: t.List[str] = [
                         safe_identifier_length(column[0]) for column in self._sqlite_cur.description
                     ]

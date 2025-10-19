@@ -126,7 +126,9 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
 
         self._mysql_ssl_disabled = bool(kwargs.get("mysql_ssl_disabled", False))
 
-        self._chunk_size = bool(kwargs.get("chunk"))
+        # Expect an integer chunk size; normalize to None when unset/invalid or <= 0
+        _chunk = kwargs.get("chunk")
+        self._chunk_size = int(_chunk) if isinstance(_chunk, int) and _chunk > 0 else None
 
         self._quiet = bool(kwargs.get("quiet", False))
 

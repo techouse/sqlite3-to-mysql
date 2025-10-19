@@ -149,6 +149,16 @@ def test_fetch_sqlite_master_rows_with_exclusion_filter(mocker: MockFixture) -> 
     assert params[-1] == "skip_me"
 
 
+def test_sqlite_table_has_rowid_quotes(mocker: MockFixture) -> None:
+    instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+    cursor = mocker.MagicMock()
+    cursor.fetchall.return_value = []
+    instance._sqlite_cur = cursor
+
+    assert instance._sqlite_table_has_rowid('weird"name')
+    cursor.execute.assert_called_once_with('SELECT rowid FROM "weird""name" LIMIT 1')
+
+
 def test_fetch_sqlite_master_rows_without_types_returns_empty(mocker: MockFixture) -> None:
     instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
     instance._sqlite_cur = mocker.MagicMock()
@@ -333,7 +343,7 @@ def test_transfer_with_data_invokes_transfer_table_data(mocker: MockFixture) -> 
     instance._sqlite_cur.fetchall.return_value = [(1, 2)]
 
     def execute_side_effect(sql, *params):
-        if "SELECT rowid" in sql:
+        if sql.startswith("SELECT ") and "FROM" in sql and "COUNT" not in sql.upper():
             instance._sqlite_cur.description = [("c1",), ("c2",)]
 
     instance._sqlite_cur.execute.side_effect = execute_side_effect
@@ -344,6 +354,27 @@ def test_transfer_with_data_invokes_transfer_table_data(mocker: MockFixture) -> 
     assert instance._transfer_table_data.called
     sql_arg = instance._transfer_table_data.call_args.kwargs["sql"]
     assert "INSERT" in sql_arg
+
+
+def test_transfer_escapes_sqlite_identifiers(mocker: MockFixture) -> None:
+    instance = _make_transfer_stub(mocker)
+    instance._mysql_transfer_data = True
+    instance._sqlite_cur.fetchone.return_value = {"total_records": 1}
+    instance._sqlite_cur.fetchall.return_value = [(1,)]
+
+    def execute_side_effect(sql, *params):
+        if sql.startswith("SELECT ") and "FROM" in sql and "COUNT" not in sql.upper():
+            instance._sqlite_cur.description = [("c1",)]
+        return None
+
+    instance._sqlite_cur.execute.side_effect = execute_side_effect
+    instance._fetch_sqlite_master_rows = mocker.MagicMock(side_effect=[[{"name": 'tbl"quote', "type": "table"}], []])
+
+    instance.transfer()
+
+    executed_sqls = [call.args[0] for call in instance._sqlite_cur.execute.call_args_list]
+    assert 'SELECT COUNT(*) AS total_records FROM "tbl""quote"' in executed_sqls
+    assert 'SELECT * FROM "tbl""quote"' in executed_sqls
 
 
 def test_transfer_skips_views_without_sql(mocker: MockFixture) -> None:

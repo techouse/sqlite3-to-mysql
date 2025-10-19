@@ -13,10 +13,13 @@ from os.path import isfile, realpath
 from sys import stdout
 
 import mysql.connector
+import sqlglot
 from mysql.connector import CharacterSet
 from mysql.connector import __version__ as mysql_connector_version_string
 from mysql.connector import errorcode
 from packaging import version
+from sqlglot import errors as sqlglot_errors
+from sqlglot import expressions as exp
 from tqdm import tqdm, trange
 
 
@@ -110,6 +113,8 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
         self._sqlite_tables = kwargs.get("sqlite_tables") or tuple()
 
         self._exclude_sqlite_tables = kwargs.get("exclude_sqlite_tables") or tuple()
+
+        self._sqlite_views_as_tables = bool(kwargs.get("sqlite_views_as_tables", False))
 
         if bool(self._sqlite_tables) and bool(self._exclude_sqlite_tables):
             raise ValueError("Please provide either sqlite_tables or exclude_sqlite_tables, not both")
@@ -526,6 +531,117 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
             return suffix.group(0)
         return ""
 
+    def _fetch_sqlite_master_rows(
+        self,
+        object_types: t.Sequence[str],
+        include_sql: bool = False,
+    ) -> t.List[t.Dict[str, t.Any]]:
+        if not object_types:
+            return []
+
+        columns: t.List[str] = ["name", "type"]
+        if include_sql:
+            columns.append("sql")
+
+        object_placeholders: str = ", ".join("?" * len(object_types))
+        query: str = (
+            """
+            SELECT {columns}
+            FROM sqlite_master
+            WHERE type IN ({object_types})
+            AND name NOT LIKE 'sqlite_%'
+        """.format(
+                columns=", ".join(columns),
+                object_types=object_placeholders,
+            )
+        )
+        params: t.List[t.Any] = list(object_types)
+
+        if self._sqlite_tables:
+            query += " AND name IN ({names})".format(
+                names=", ".join("?" * len(self._sqlite_tables)),
+            )
+            params.extend(self._sqlite_tables)
+        elif self._exclude_sqlite_tables:
+            query += " AND name NOT IN ({names})".format(
+                names=", ".join("?" * len(self._exclude_sqlite_tables)),
+            )
+            params.extend(self._exclude_sqlite_tables)
+
+        self._sqlite_cur.execute(query, params)
+        return [dict(row) for row in self._sqlite_cur.fetchall()]
+
+    def _translate_sqlite_view_definition(self, view_name: str, view_sql: str) -> str:
+        safe_name: str = safe_identifier_length(view_name)
+        try:
+            expression = sqlglot.parse_one(view_sql, read="sqlite")
+        except sqlglot_errors.ParseError as err:
+            raise ValueError(f"Unable to parse SQLite view {view_name!r}: {err}") from err
+
+        expression.set("replace", True)
+        expression.set("this", exp.to_identifier(safe_name))
+
+        expression = expression.transform(self._rewrite_sqlite_view_functions)
+
+        try:
+            return expression.sql(dialect="mysql", identify=True)
+        except sqlglot_errors.SqlglotError as err:
+            raise ValueError(f"Unable to render MySQL view {view_name!r}: {err}") from err
+
+    @staticmethod
+    def _rewrite_sqlite_view_functions(node: exp.Expression) -> exp.Expression:
+        def _is_now_literal(arg: exp.Expression) -> bool:
+            return isinstance(arg, exp.Literal) and arg.is_string and str(arg.this).lower() == "now"
+
+        if isinstance(node, exp.Anonymous):
+            name: str = node.name.upper()
+            args: t.Sequence[exp.Expression] = node.expressions or ()
+
+            if name in {"DATETIME", "DATE", "TIME"} and args and _is_now_literal(args[0]):
+                if name == "DATETIME":
+                    return exp.CurrentTimestamp()
+                if name == "DATE":
+                    return exp.CurrentDate()
+                return exp.CurrentTime()
+
+            if name == "STRFTIME" and len(args) >= 2 and isinstance(args[0], exp.Literal) and _is_now_literal(args[1]):
+                return exp.Anonymous(
+                    this=exp.Var(this="DATE_FORMAT"),
+                    expressions=[exp.CurrentTimestamp(), exp.Literal.string(str(args[0].this))],
+                )
+        elif isinstance(node, exp.TimeToStr):
+            fmt: t.Optional[exp.Expression] = node.args.get("format")
+            inner: exp.Expression = node.this
+            if (
+                isinstance(fmt, exp.Literal)
+                and isinstance(inner, exp.TsOrDsToTimestamp)
+                and isinstance(inner.this, exp.Literal)
+                and inner.this.is_string
+                and str(inner.this.this).lower() == "now"
+            ):
+                return exp.Anonymous(
+                    this=exp.Var(this="DATE_FORMAT"),
+                    expressions=[exp.CurrentTimestamp(), exp.Literal.string(str(fmt.this))],
+                )
+        return node
+
+    def _create_mysql_view(self, view_name: str, view_sql: str) -> None:
+        safe_name: str = safe_identifier_length(view_name)
+        try:
+            self._mysql_cur.execute(f"DROP TABLE IF EXISTS `{safe_name}`")
+            self._mysql.commit()
+        except mysql.connector.Error as err:
+            if err.errno not in {
+                errorcode.ER_BAD_TABLE_ERROR,
+                errorcode.ER_WRONG_OBJECT,
+                errorcode.ER_UNKNOWN_TABLE,
+            }:
+                raise
+
+        self._logger.info("Creating view %s", safe_name)
+        self._mysql_cur.execute(view_sql)
+        self._mysql.commit()
+
     def _create_table(self, table_name: str, transfer_rowid: bool = False, skip_default: bool = False) -> None:
         primary_keys: t.List[t.Dict[str, str]] = []
 
@@ -906,53 +1022,38 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
 
     def transfer(self) -> None:
         """The primary and only method with which we transfer all the data."""
-        if len(self._sqlite_tables) > 0 or len(self._exclude_sqlite_tables) > 0:
-            # transfer only specific tables
-            specific_tables: t.Sequence[str] = (
-                self._exclude_sqlite_tables if len(self._exclude_sqlite_tables) > 0 else self._sqlite_tables
-            )
+        table_types: t.Tuple[str, ...] = ("table",)
+        if self._sqlite_views_as_tables:
+            table_types = table_types + ("view",)
 
-            self._sqlite_cur.execute(
-                """
-                SELECT name FROM sqlite_master
-                WHERE type='table'
-                AND name NOT LIKE 'sqlite_%'
-                AND name {exclude} IN ({placeholders})
-                """.format(
-                    exclude="NOT" if len(self._exclude_sqlite_tables) > 0 else "",
-                    placeholders=", ".join("?" * len(specific_tables)),
-                ),
-                specific_tables,
-            )
+        tables: t.List[t.Dict[str, t.Any]] = self._fetch_sqlite_master_rows(table_types)
+
+        if not self._sqlite_views_as_tables and self._mysql_create_tables:
+            views: t.List[t.Dict[str, t.Any]] = self._fetch_sqlite_master_rows(("view",), include_sql=True)
         else:
-            # transfer all tables
-            self._sqlite_cur.execute(
-                """
-                SELECT name FROM sqlite_master
-                WHERE type='table'
-                AND name NOT LIKE 'sqlite_%'
-                """
-            )
+            views = []
+
         try:
             self._mysql_cur.execute("SET FOREIGN_KEY_CHECKS=0")
 
-            for row in self._sqlite_cur.fetchall():
-                table: t.Dict[str, t.Any] = dict(row)
+            for table in tables:
+                table_name: str = table["name"]
+                object_type: str = table.get("type", "table")
 
                 # check if we're transferring rowid
-                transfer_rowid: bool = self._with_rowid and self._sqlite_table_has_rowid(table["name"])
+                transfer_rowid: bool = self._with_rowid and self._sqlite_table_has_rowid(table_name)
 
                 # create the table
                 if self._mysql_create_tables:
-                    self._create_table(table["name"], transfer_rowid=transfer_rowid)
+                    self._create_table(table_name, transfer_rowid=transfer_rowid)
 
                 # truncate the table on request
                 if self._mysql_truncate_tables:
-                    self._truncate_table(table["name"])
+                    self._truncate_table(table_name)
 
                 # get the size of the data
                 if self._mysql_transfer_data:
-                    self._sqlite_cur.execute(f'SELECT COUNT(*) AS total_records FROM "{table["name"]}"')
+                    self._sqlite_cur.execute(f'SELECT COUNT(*) AS total_records FROM "{table_name}"')
                     total_records = int(dict(self._sqlite_cur.fetchone())["total_records"])
                 else:
                     total_records = 0
@@ -960,11 +1061,15 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                 # only continue if there is anything to transfer
                 if total_records > 0:
                     # populate it
-                    self._logger.info("Transferring table %s", table["name"])
+                    self._logger.info(
+                        "Transferring %s %s",
+                        "view" if object_type == "view" else "table",
+                        table_name,
+                    )
                     self._sqlite_cur.execute(
                         '''SELECT {rowid} * FROM "{table_name}"'''.format(
                             rowid='rowid as "rowid",' if transfer_rowid else "",
-                            table_name=table["name"],
+                            table_name=table_name,
                         )
                     )
                     columns: t.List[str] = [
@@ -978,7 +1083,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                             {values_clause}
                             ON DUPLICATE KEY UPDATE {field_updates}
                         """.format(
-                            table=safe_identifier_length(table["name"]),
+                            table=safe_identifier_length(table_name),
                             fields=("`{}`, " * len(columns)).rstrip(" ,").format(*columns),
                             values_clause=(
                                 "VALUES ({placeholders}) AS `__new__`"
@@ -998,7 +1103,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                             VALUES ({placeholders})
                         """.format(
                             ignore="IGNORE" if self._mysql_insert_method.upper() == "IGNORE" else "",
-                            table=safe_identifier_length(table["name"]),
+                            table=safe_identifier_length(table_name),
                             fields=("`{}`, " * len(columns)).rstrip(" ,").format(*columns),
                             placeholders=("%s, " * len(columns)).rstrip(" ,"),
                         )
@@ -1006,19 +1111,48 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                         self._transfer_table_data(sql=sql, total_records=total_records)
                     except mysql.connector.Error as err:
                         self._logger.error(
-                            "MySQL transfer failed inserting data into table %s: %s",
-                            safe_identifier_length(table["name"]),
+                            "MySQL transfer failed inserting data into %s %s: %s",
+                            "view" if object_type == "view" else "table",
+                            safe_identifier_length(table_name),
                             err,
                         )
                         raise
 
                 # add indices
                 if self._mysql_create_tables:
-                    self._add_indices(table["name"])
+                    self._add_indices(table_name)
 
                 # add foreign keys
                 if self._mysql_create_tables and not self._without_foreign_keys:
-                    self._add_foreign_keys(table["name"])
+                    self._add_foreign_keys(table_name)
+
+            if not self._sqlite_views_as_tables and self._mysql_create_tables:
+                for view in views:
+                    view_name: str = view["name"]
+                    sql_definition: t.Optional[str] = view.get("sql")
+                    if not sql_definition:
+                        self._logger.warning(
+                            "Skipping view %s: sqlite_master definition missing.",
+                            safe_identifier_length(view_name),
+                        )
+                        continue
+                    try:
+                        mysql_view_sql: str = self._translate_sqlite_view_definition(view_name, sql_definition)
+                        self._create_mysql_view(view_name, mysql_view_sql)
+                    except ValueError as err:
+                        self._logger.error(
+                            "Failed translating view %s: %s",
+                            safe_identifier_length(view_name),
+                            err,
+                        )
+                        raise
+                    except mysql.connector.Error as err:
+                        self._logger.error(
+                            "MySQL failed creating view %s: %s",
+                            safe_identifier_length(view_name),
+                            err,
+                        )
+                        raise
         except Exception:  # pylint: disable=W0706
             raise
         finally:

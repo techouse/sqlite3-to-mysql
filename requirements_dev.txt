@@ -13,6 +13,7 @@ python-dateutil>=2.9.0.post0
 types-python-dateutil
 simplejson>=3.19.1
 types-simplejson
+sqlglot>=27.27.0
 sqlalchemy>=2.0.0
 sqlalchemy-utils
 types-sqlalchemy-utils

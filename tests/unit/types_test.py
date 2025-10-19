@@ -18,6 +18,8 @@ class TestTypes:
         params: SQLite3toMySQLParams = {
             "sqlite_file": "test.db",
             "sqlite_tables": ["table1", "table2"],
+            "exclude_sqlite_tables": ["skip_this"],
+            "sqlite_views_as_tables": False,
             "without_foreign_keys": False,
             "mysql_user": "user",
             "mysql_password": "password",
@@ -46,6 +48,8 @@ class TestTypes:
         # Test that all fields are accessible
         assert params["sqlite_file"] == "test.db"
         assert params["sqlite_tables"] == ["table1", "table2"]
+        assert params["exclude_sqlite_tables"] == ["skip_this"]
+        assert params["sqlite_views_as_tables"] is False
         assert params["without_foreign_keys"] is False
         assert params["mysql_user"] == "user"
         assert params["mysql_password"] == "password"
@@ -87,6 +91,8 @@ class TestTypes:
                 # Initialize all required attributes
                 self._sqlite_file = "test.db"
                 self._sqlite_tables = ["table1", "table2"]
+                self._exclude_sqlite_tables = []
+                self._sqlite_views_as_tables = False
                 self._without_foreign_keys = False
                 self._mysql_user = "user"
                 self._mysql_password = "password"
@@ -127,6 +133,8 @@ class TestTypes:
         # Test that all attributes are accessible
         assert instance._sqlite_file == "test.db"
         assert instance._sqlite_tables == ["table1", "table2"]
+        assert instance._exclude_sqlite_tables == []
+        assert instance._sqlite_views_as_tables is False
         assert instance._without_foreign_keys is False
         assert instance._mysql_user == "user"
         assert instance._mysql_password == "password"

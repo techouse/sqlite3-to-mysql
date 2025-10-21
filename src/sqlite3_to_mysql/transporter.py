@@ -596,8 +596,8 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
         except sqlglot_errors.SqlglotError as err:
             raise ValueError(f"Unable to render MySQL view {view_name!r}: {err}") from err
 
-    @staticmethod
-    def _rewrite_sqlite_view_functions(node: exp.Expression) -> exp.Expression:
+    @classmethod
+    def _rewrite_sqlite_view_functions(cls, node: exp.Expression) -> exp.Expression:
         def _is_now_literal(arg: exp.Expression) -> bool:
             return isinstance(arg, exp.Literal) and arg.is_string and str(arg.this).lower() == "now"
 
@@ -613,9 +613,9 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                 return exp.CurrentTime()
 
             if name == "STRFTIME" and len(args) >= 2 and isinstance(args[0], exp.Literal) and _is_now_literal(args[1]):
-                return exp.Anonymous(
-                    this=exp.Var(this="DATE_FORMAT"),
-                    expressions=[exp.CurrentTimestamp(), exp.Literal.string(str(args[0].this))],
+                return exp.TimeToStr(
+                    this=exp.CurrentTimestamp(),
+                    format=exp.Literal.string(str(args[0].this)),
                 )
         elif isinstance(node, exp.TimeToStr):
             fmt: t.Optional[exp.Expression] = node.args.get("format")
@@ -627,9 +627,9 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                 and inner.this.is_string
                 and str(inner.this.this).lower() == "now"
             ):
-                return exp.Anonymous(
-                    this=exp.Var(this="DATE_FORMAT"),
-                    expressions=[exp.CurrentTimestamp(), exp.Literal.string(str(fmt.this))],
+                return exp.TimeToStr(
+                    this=exp.CurrentTimestamp(),
+                    format=exp.Literal.string(str(fmt.this)),
                 )
         return node
 

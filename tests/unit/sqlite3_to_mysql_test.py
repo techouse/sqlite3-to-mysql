@@ -252,21 +252,21 @@ def test_rewrite_sqlite_view_functions_datetime_now() -> None:
 def test_rewrite_sqlite_view_functions_strftime_now() -> None:
     node = exp.Anonymous(
         this=exp.Identifier(this="STRFTIME"),
-        expressions=[exp.Literal.string("%Y-%m-%d"), exp.Literal.string("now")],
+        expressions=[exp.Literal.string("%H:%M:%S"), exp.Literal.string("now")],
     )
     transformed = SQLite3toMySQL._rewrite_sqlite_view_functions(node)
-    assert isinstance(transformed, exp.Anonymous)
-    assert transformed.name.upper() == "DATE_FORMAT"
+    assert isinstance(transformed, exp.TimeToStr)
+    assert transformed.args["format"].this == "%H:%M:%S"
 
 
 def test_rewrite_sqlite_view_functions_time_to_str() -> None:
     node = exp.TimeToStr(
         this=exp.TsOrDsToTimestamp(this=exp.Literal.string("now")),
-        format=exp.Literal.string("%H"),
+        format=exp.Literal.string("%H:%M"),
     )
     transformed = SQLite3toMySQL._rewrite_sqlite_view_functions(node)
-    assert isinstance(transformed, exp.Anonymous)
-    assert transformed.name.upper() == "DATE_FORMAT"
+    assert isinstance(transformed, exp.TimeToStr)
+    assert transformed.args["format"].this == "%H:%M"
 
 
 def _make_transfer_stub(mocker: MockFixture) -> SQLite3toMySQL:
@@ -1139,6 +1139,13 @@ class TestSQLite3toMySQL:
             "v_fmt", "CREATE VIEW v_fmt AS SELECT strftime('%Y-%m-%d', 'now') AS d"
         )
         assert "DATE_FORMAT(CURRENT_TIMESTAMP(), '%Y-%m-%d')" in result
+
+    def test_translate_sqlite_view_definition_strftime_minutes_seconds(self):
+        instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+        result = instance._translate_sqlite_view_definition(
+            "v_time", "CREATE VIEW v_time AS SELECT strftime('%H:%M:%S', 'now') AS t"
+        )
+        assert "DATE_FORMAT(CURRENT_TIMESTAMP(), '%T')" in result
 
     def test_translate_sqlite_view_definition_truncates_name(self):
         instance = SQLite3toMySQL.__new__(SQLite3toMySQL)

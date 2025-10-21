@@ -257,6 +257,7 @@ def test_rewrite_sqlite_view_functions_strftime_now() -> None:
     transformed = SQLite3toMySQL._rewrite_sqlite_view_functions(node)
     assert isinstance(transformed, exp.TimeToStr)
     assert transformed.args["format"].this == "%H:%M:%S"
+    assert "'%T')" in transformed.sql(dialect="mysql")
 
 
 def test_rewrite_sqlite_view_functions_time_to_str() -> None:
@@ -375,6 +376,22 @@ def test_transfer_escapes_sqlite_identifiers(mocker: MockFixture) -> None:
     executed_sqls = [call.args[0] for call in instance._sqlite_cur.execute.call_args_list]
     assert 'SELECT COUNT(*) AS total_records FROM "tbl""quote"' in executed_sqls
     assert 'SELECT * FROM "tbl""quote"' in executed_sqls
+
+
+def test_translate_sqlite_view_definition_strftime_weekday() -> None:
+    instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+    result = instance._translate_sqlite_view_definition(
+        "v_week", "CREATE VIEW v_week AS SELECT strftime('%W %w', 'now') AS w"
+    )
+    assert "DATE_FORMAT(CURRENT_TIMESTAMP(), '%u %w')" in result
+
+
+def test_translate_sqlite_view_definition_strftime_literal_percent() -> None:
+    instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+    result = instance._translate_sqlite_view_definition(
+        "v_literal", "CREATE VIEW v_literal AS SELECT strftime('%%Y %Y', 'now') AS f"
+    )
+    assert "DATE_FORMAT(CURRENT_TIMESTAMP(), '%%Y %Y')" in result
 
 
 def test_transfer_skips_views_without_sql(mocker: MockFixture) -> None:

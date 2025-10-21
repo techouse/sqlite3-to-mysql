@@ -128,7 +128,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
 
         # Expect an integer chunk size; normalize to None when unset/invalid or <= 0
         _chunk = kwargs.get("chunk")
-        self._chunk_size = int(_chunk) if isinstance(_chunk, int) and _chunk > 0 else None
+        self._chunk_size = _chunk if isinstance(_chunk, int) and _chunk > 0 else None
 
         self._quiet = bool(kwargs.get("quiet", False))
 
@@ -1038,7 +1038,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
         """The primary and only method with which we transfer all the data."""
         table_types: t.Tuple[str, ...] = ("table",)
         if self._sqlite_views_as_tables:
-            table_types = table_types + ("view",)
+            table_types = (*table_types, "view")
 
         tables: t.List[t.Dict[str, t.Any]] = self._fetch_sqlite_master_rows(table_types)
 

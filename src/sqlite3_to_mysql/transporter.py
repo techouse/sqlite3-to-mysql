@@ -80,6 +80,28 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
 
     MYSQL_CONNECTOR_VERSION: version.Version = version.parse(mysql_connector_version_string)
 
+    SQLITE_STRFTIME_TO_MYSQL: t.Dict[str, str] = {
+        "%%": "%%",
+        "%a": "%a",
+        "%A": "%W",
+        "%b": "%b",
+        "%B": "%M",
+        "%d": "%d",
+        "%e": "%e",
+        "%f": "%f",
+        "%H": "%H",
+        "%I": "%h",
+        "%j": "%j",
+        "%m": "%m",
+        "%M": "%i",
+        "%p": "%p",
+        "%S": "%s",
+        "%w": "%w",
+        "%W": "%W",
+        "%Y": "%Y",
+        "%y": "%y",
+    }
+
     def __init__(self, **kwargs: Unpack[SQLite3toMySQLParams]):
         """Constructor."""
         if kwargs.get("sqlite_file") is None:
@@ -539,6 +561,14 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
             return suffix.group(0)
         return ""
 
+    @classmethod
+    def _translate_strftime_format(cls, fmt: str) -> str:
+        def _replace(match: re.Match[str]) -> str:
+            token: str = match.group(0)
+            return cls.SQLITE_STRFTIME_TO_MYSQL.get(token, token)
+
+        return re.sub(r"%[%A-Za-z]", _replace, fmt)
+
     def _fetch_sqlite_master_rows(
         self,
         object_types: t.Sequence[str],
@@ -613,9 +643,10 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                 return exp.CurrentTime()
 
             if name == "STRFTIME" and len(args) >= 2 and isinstance(args[0], exp.Literal) and _is_now_literal(args[1]):
+                mysql_format: str = cls._translate_strftime_format(str(args[0].this))
                 return exp.TimeToStr(
                     this=exp.CurrentTimestamp(),
-                    format=exp.Literal.string(str(args[0].this)),
+                    format=exp.Literal.string(mysql_format),
                 )
         elif isinstance(node, exp.TimeToStr):
             fmt: t.Optional[exp.Expression] = node.args.get("format")
@@ -627,9 +658,10 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                 and inner.this.is_string
                 and str(inner.this.this).lower() == "now"
             ):
+                mysql_format = cls._translate_strftime_format(str(fmt.this))
                 return exp.TimeToStr(
                     this=exp.CurrentTimestamp(),
-                    format=exp.Literal.string(str(fmt.this)),
+                    format=exp.Literal.string(mysql_format),
                 )
         return node
 

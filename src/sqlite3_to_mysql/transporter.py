@@ -20,6 +20,9 @@ from mysql.connector import errorcode
 from packaging import version
 from sqlglot import errors as sqlglot_errors
 from sqlglot import expressions as exp
+from sqlglot.dialects import mysql as sqlglot_mysql
+from sqlglot.time import format_time as sqlglot_format_time
+from sqlglot.trie import new_trie
 from tqdm import tqdm, trange
 
 
@@ -58,6 +61,12 @@ from .mysql_utils import (
 from .types import SQLite3toMySQLAttributes, SQLite3toMySQLParams
 
 
+SQLGLOT_MYSQL_INVERSE_TIME_MAPPING: t.Dict[str, str] = {
+    key: value for key, value in sqlglot_mysql.MySQL.INVERSE_TIME_MAPPING.items() if key != "%H:%M:%S"
+}
+SQLGLOT_MYSQL_INVERSE_TIME_TRIE: t.Dict[str, t.Any] = new_trie(SQLGLOT_MYSQL_INVERSE_TIME_MAPPING)
+
+
 class SQLite3toMySQL(SQLite3toMySQLAttributes):
     """Use this class to transfer an SQLite 3 database to MySQL."""
 
@@ -79,28 +88,6 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
     NUMERIC_LITERAL_PATTERN: t.Pattern[str] = re.compile(r"^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$")
 
     MYSQL_CONNECTOR_VERSION: version.Version = version.parse(mysql_connector_version_string)
-
-    SQLITE_STRFTIME_TO_MYSQL: t.Dict[str, str] = {
-        "%%": "%%",
-        "%a": "%a",
-        "%A": "%W",
-        "%b": "%b",
-        "%B": "%M",
-        "%d": "%d",
-        "%e": "%e",
-        "%f": "%f",
-        "%H": "%H",
-        "%I": "%h",
-        "%j": "%j",
-        "%m": "%m",
-        "%M": "%i",
-        "%p": "%p",
-        "%S": "%s",
-        "%w": "%w",
-        "%W": "%W",
-        "%Y": "%Y",
-        "%y": "%y",
-    }
 
     def __init__(self, **kwargs: Unpack[SQLite3toMySQLParams]):
         """Constructor."""
@@ -563,11 +550,12 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
 
     @classmethod
     def _translate_strftime_format(cls, fmt: str) -> str:
-        def _replace(match: re.Match[str]) -> str:
-            token: str = match.group(0)
-            return cls.SQLITE_STRFTIME_TO_MYSQL.get(token, token)
-
-        return re.sub(r"%[%A-Za-z]", _replace, fmt)
+        converted: t.Optional[str] = sqlglot_format_time(
+            fmt,
+            SQLGLOT_MYSQL_INVERSE_TIME_MAPPING,
+            SQLGLOT_MYSQL_INVERSE_TIME_TRIE,
+        )
+        return converted or fmt
 
     def _fetch_sqlite_master_rows(
         self,

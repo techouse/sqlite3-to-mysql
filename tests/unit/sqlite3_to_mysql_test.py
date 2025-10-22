@@ -256,8 +256,8 @@ def test_rewrite_sqlite_view_functions_strftime_now() -> None:
     )
     transformed = SQLite3toMySQL._rewrite_sqlite_view_functions(node)
     assert isinstance(transformed, exp.TimeToStr)
-    assert transformed.args["format"].this == "%H:%M:%S"
-    assert "'%T')" in transformed.sql(dialect="mysql")
+    assert transformed.args["format"].this == "%H:%i:%s"
+    assert "'%H:%i:%s')" in transformed.sql(dialect="mysql")
 
 
 def test_rewrite_sqlite_view_functions_time_to_str() -> None:
@@ -267,7 +267,7 @@ def test_rewrite_sqlite_view_functions_time_to_str() -> None:
     )
     transformed = SQLite3toMySQL._rewrite_sqlite_view_functions(node)
     assert isinstance(transformed, exp.TimeToStr)
-    assert transformed.args["format"].this == "%H:%M"
+    assert transformed.args["format"].this == "%H:%i"
 
 
 def _make_transfer_stub(mocker: MockFixture) -> SQLite3toMySQL:
@@ -1162,7 +1162,7 @@ class TestSQLite3toMySQL:
         result = instance._translate_sqlite_view_definition(
             "v_time", "CREATE VIEW v_time AS SELECT strftime('%H:%M:%S', 'now') AS t"
         )
-        assert "DATE_FORMAT(CURRENT_TIMESTAMP(), '%T')" in result
+        assert "DATE_FORMAT(CURRENT_TIMESTAMP(), '%H:%i:%s')" in result
 
     def test_translate_sqlite_view_definition_truncates_name(self):
         instance = SQLite3toMySQL.__new__(SQLite3toMySQL)

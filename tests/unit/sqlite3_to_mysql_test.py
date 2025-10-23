@@ -249,6 +249,26 @@ def test_rewrite_sqlite_view_functions_datetime_now() -> None:
     assert isinstance(transformed, exp.CurrentTimestamp)
 
 
+def test_rewrite_sqlite_view_functions_datetime_now_utc() -> None:
+    node = exp.Anonymous(
+        this=exp.Identifier(this="DATETIME"),
+        expressions=[exp.Literal.string("now"), exp.Literal.string("utc")],
+    )
+    transformed = SQLite3toMySQL._rewrite_sqlite_view_functions(node)
+    assert isinstance(transformed, exp.UtcTimestamp)
+    assert transformed.sql(dialect="mysql") == "UTC_TIMESTAMP()"
+
+
+def test_rewrite_sqlite_view_functions_datetime_now_localtime() -> None:
+    node = exp.Anonymous(
+        this=exp.Identifier(this="DATETIME"),
+        expressions=[exp.Literal.string("now"), exp.Literal.string("localtime")],
+    )
+    transformed = SQLite3toMySQL._rewrite_sqlite_view_functions(node)
+    assert isinstance(transformed, exp.CurrentTimestamp)
+    assert transformed.sql(dialect="mysql") == "CURRENT_TIMESTAMP()"
+
+
 def test_rewrite_sqlite_view_functions_strftime_now() -> None:
     node = exp.Anonymous(
         this=exp.Identifier(this="STRFTIME"),
@@ -258,6 +278,36 @@ def test_rewrite_sqlite_view_functions_strftime_now() -> None:
     assert isinstance(transformed, exp.TimeToStr)
     assert transformed.args["format"].this == "%H:%i:%s"
     assert "'%H:%i:%s')" in transformed.sql(dialect="mysql")
+
+
+def test_rewrite_sqlite_view_functions_strftime_now_utc() -> None:
+    node = exp.Anonymous(
+        this=exp.Identifier(this="STRFTIME"),
+        expressions=[
+            exp.Literal.string("%Y-%m-%d"),
+            exp.Literal.string("now"),
+            exp.Literal.string("utc"),
+        ],
+    )
+    transformed = SQLite3toMySQL._rewrite_sqlite_view_functions(node)
+    assert isinstance(transformed, exp.TimeToStr)
+    assert isinstance(transformed.this, exp.UtcTimestamp)
+    assert "UTC_TIMESTAMP()" in transformed.sql(dialect="mysql")
+
+
+def test_rewrite_sqlite_view_functions_strftime_now_localtime() -> None:
+    node = exp.Anonymous(
+        this=exp.Identifier(this="STRFTIME"),
+        expressions=[
+            exp.Literal.string("%Y-%m-%d"),
+            exp.Literal.string("now"),
+            exp.Literal.string("localtime"),
+        ],
+    )
+    transformed = SQLite3toMySQL._rewrite_sqlite_view_functions(node)
+    assert isinstance(transformed, exp.TimeToStr)
+    assert isinstance(transformed.this, exp.CurrentTimestamp)
+    assert "CURRENT_TIMESTAMP()" in transformed.sql(dialect="mysql")
 
 
 def test_rewrite_sqlite_view_functions_time_to_str() -> None:
@@ -1150,10 +1200,38 @@ class TestSQLite3toMySQL:
         )
         assert result == "CREATE OR REPLACE VIEW `v_now` AS SELECT CURRENT_TIMESTAMP() AS `stamp`"
 
+    def test_translate_sqlite_view_definition_current_timestamp_utc_modifier(self):
+        instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+        result = instance._translate_sqlite_view_definition(
+            "v_utc", "CREATE VIEW v_utc AS SELECT datetime('now','utc') AS stamp"
+        )
+        assert "UTC_TIMESTAMP()" in result
+
+    def test_translate_sqlite_view_definition_current_timestamp_localtime_modifier(self):
+        instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+        result = instance._translate_sqlite_view_definition(
+            "v_local", "CREATE VIEW v_local AS SELECT datetime('now','localtime') AS stamp"
+        )
+        assert "CURRENT_TIMESTAMP()" in result
+
     def test_translate_sqlite_view_definition_strftime_now(self):
         instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
         result = instance._translate_sqlite_view_definition(
             "v_fmt", "CREATE VIEW v_fmt AS SELECT strftime('%Y-%m-%d', 'now') AS d"
+        )
+        assert "DATE_FORMAT(CURRENT_TIMESTAMP(), '%Y-%m-%d')" in result
+
+    def test_translate_sqlite_view_definition_strftime_now_utc_modifier(self):
+        instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+        result = instance._translate_sqlite_view_definition(
+            "v_fmt_utc", "CREATE VIEW v_fmt_utc AS SELECT strftime('%Y-%m-%d', 'now', 'utc') AS d"
+        )
+        assert "DATE_FORMAT(UTC_TIMESTAMP(), '%Y-%m-%d')" in result
+
+    def test_translate_sqlite_view_definition_strftime_now_localtime_modifier(self):
+        instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+        result = instance._translate_sqlite_view_definition(
+            "v_fmt_local", "CREATE VIEW v_fmt_local AS SELECT strftime('%Y-%m-%d', 'now', 'localtime') AS d"
         )
         assert "DATE_FORMAT(CURRENT_TIMESTAMP(), '%Y-%m-%d')" in result
 

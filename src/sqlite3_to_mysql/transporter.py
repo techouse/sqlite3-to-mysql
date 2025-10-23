@@ -619,21 +619,42 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
         def _is_now_literal(arg: exp.Expression) -> bool:
             return isinstance(arg, exp.Literal) and arg.is_string and str(arg.this).lower() == "now"
 
+        def _extract_modifier(arguments: t.Sequence[exp.Expression]) -> t.Optional[str]:
+            modifier: t.Optional[str] = None
+            for arg in arguments[:2]:
+                if isinstance(arg, exp.Literal) and arg.is_string:
+                    value = str(arg.this).lower()
+                    if value in {"utc", "localtime"}:
+                        modifier = value
+            return modifier
+
+        def _current_datetime_expression(kind: str, modifier: t.Optional[str]) -> exp.Expression:
+            if modifier == "utc":
+                if kind == "DATETIME":
+                    return exp.UtcTimestamp()
+                if kind == "DATE":
+                    return exp.Anonymous(this="UTC_DATE")
+                return exp.UtcTime()
+            if kind == "DATETIME":
+                return exp.CurrentTimestamp()
+            if kind == "DATE":
+                return exp.CurrentDate()
+            return exp.CurrentTime()
+
         if isinstance(node, exp.Anonymous):
             name: str = node.name.upper()
             args: t.Sequence[exp.Expression] = node.expressions or ()
 
             if name in {"DATETIME", "DATE", "TIME"} and args and _is_now_literal(args[0]):
-                if name == "DATETIME":
-                    return exp.CurrentTimestamp()
-                if name == "DATE":
-                    return exp.CurrentDate()
-                return exp.CurrentTime()
+                modifier: t.Optional[str] = _extract_modifier(args[1:])
+                return _current_datetime_expression(name, modifier)
 
             if name == "STRFTIME" and len(args) >= 2 and isinstance(args[0], exp.Literal) and _is_now_literal(args[1]):
                 mysql_format: str = cls._translate_strftime_format(str(args[0].this))
+                # Optional modifiers follow the 'now' literal.
+                modifier = _extract_modifier(args[2:])
                 return exp.TimeToStr(
-                    this=exp.CurrentTimestamp(),
+                    this=_current_datetime_expression("DATETIME", modifier),
                     format=exp.Literal.string(mysql_format),
                 )
         elif isinstance(node, exp.TimeToStr):
@@ -647,8 +668,18 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                 and str(inner.this.this).lower() == "now"
             ):
                 mysql_format = cls._translate_strftime_format(str(fmt.this))
+                extra_args: t.List[exp.Expression] = []
+                if isinstance(inner, exp.TsOrDsToTimestamp):
+                    extra_args.extend(
+                        value
+                        for key, value in inner.args.items()
+                        if key != "this" and isinstance(value, exp.Expression)
+                    )
+                    if getattr(inner, "expressions", None):
+                        extra_args.extend(inner.expressions)
+                modifier = _extract_modifier(extra_args)
                 return exp.TimeToStr(
-                    this=exp.CurrentTimestamp(),
+                    this=_current_datetime_expression("DATETIME", modifier),
                     format=exp.Literal.string(mysql_format),
                 )
         return node

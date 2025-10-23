@@ -1146,6 +1146,18 @@ class TestSQLite3toMySQL:
         instance._allow_fsp = fsp  # MySQL >= 5.6.4
         return instance
 
+    @staticmethod
+    def _type_instance(
+        mysql_integer_type: str = "INT(11)",
+        mysql_string_type: str = "VARCHAR(255)",
+        mysql_text_type: str = "TEXT",
+    ) -> SQLite3toMySQL:
+        instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+        instance._mysql_integer_type = mysql_integer_type
+        instance._mysql_string_type = mysql_string_type
+        instance._mysql_text_type = mysql_text_type
+        return instance
+
     @pytest.mark.parametrize(
         "col, default, flags, expected",
         [
@@ -1206,6 +1218,16 @@ class TestSQLite3toMySQL:
         instance = self._mk(expr=False, ts_dt=True, fsp=True)
         result = instance._translate_default_for_mysql("VARCHAR(32)", "strftime('%Y-%m-%d', 'now', 'utc')")
         assert result == "strftime('%Y-%m-%d', 'now', 'utc')"
+
+    def test_translate_type_from_sqlite_to_mysql_sqlglot_normalizes_spacing(self):
+        proc = self._type_instance()
+        assert proc._translate_type_from_sqlite_to_mysql("NUMERIC ( 10 , 5 )") == "DECIMAL(10,5)"
+        assert proc._translate_type_from_sqlite_to_mysql("varchar ( 12 )") == "VARCHAR(12)"
+        assert proc._translate_type_from_sqlite_to_mysql("CHAR ( 7 )") == "CHAR(7)"
+
+    def test_translate_type_from_sqlite_to_mysql_sqlglot_preserves_unsigned(self):
+        proc = self._type_instance()
+        assert proc._translate_type_from_sqlite_to_mysql("numeric(8, 3) unsigned") == "DECIMAL(8,3) UNSIGNED"
 
     def test_translate_sqlite_view_definition_current_timestamp(self):
         instance = SQLite3toMySQL.__new__(SQLite3toMySQL)

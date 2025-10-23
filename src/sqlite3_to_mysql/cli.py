@@ -55,7 +55,7 @@ _copyright_header: str = f"sqlite3mysql version {package_version} Copyright (c) 
     "-A",
     "--sqlite-views-as-tables",
     is_flag=True,
-    help="Materialize SQLite views as tables in MySQL instead of creating matching MySQL views.",
+    help="Materialize SQLite views as tables in MySQL instead of creating matching MySQL views (legacy behavior).",
 )
 @click.option("-X", "--without-foreign-keys", is_flag=True, help="Do not transfer foreign keys.")
 @click.option(

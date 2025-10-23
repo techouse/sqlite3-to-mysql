@@ -456,6 +456,8 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                     n = None
                 if n is not None and 0 < n <= 6:
                     fsp = f"({n})"
+            if "utc" in s.lower():
+                return f"UTC_TIMESTAMP{fsp}"
             return f"CURRENT_TIMESTAMP{fsp}"
 
         # DATETIME: require server support, otherwise omit the DEFAULT
@@ -475,6 +477,8 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                     n = None
                 if n is not None and 0 < n <= 6:
                     fsp = f"({n})"
+            if "utc" in s.lower():
+                return f"UTC_TIMESTAMP{fsp}"
             return f"CURRENT_TIMESTAMP{fsp}"
 
         # DATE
@@ -512,7 +516,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                     n = None
                 if n is not None and 0 < n <= 6:
                     fsp = f"({n})"
-            return f"CURRENT_TIME{fsp}"
+            return f"UTC_TIME{fsp}" if "utc" in s.lower() else f"CURRENT_TIME{fsp}"
 
         # Booleans (store as 0/1)
         if base in {"BOOL", "BOOLEAN"} or base.startswith("TINYINT"):

@@ -534,6 +534,19 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
             return s
 
         # Fallback: return stripped expression (MySQL 8.0.13+ allows expression defaults)
+        if self._allow_expr_defaults:
+            try:
+                expr = sqlglot.parse_one(s, read="sqlite")
+            except sqlglot_errors.ParseError:
+                return s
+
+            expr = expr.transform(self._rewrite_sqlite_view_functions)
+
+            try:
+                return expr.sql(dialect="mysql")
+            except sqlglot_errors.SqlglotError:
+                return s
+
         return s
 
     @classmethod

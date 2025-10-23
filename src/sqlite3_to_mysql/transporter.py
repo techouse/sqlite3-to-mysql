@@ -701,6 +701,10 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
             }:
                 raise
 
+        # Ensure a stale VIEW does not block creation
+        self._mysql_cur.execute(f"DROP VIEW IF EXISTS `{safe_name}`")
+        self._mysql.commit()
+
         self._logger.info("Creating view %s", safe_name)
         self._mysql_cur.execute(view_sql)
         self._mysql.commit()

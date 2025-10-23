@@ -179,8 +179,9 @@ def test_create_mysql_view_success(mocker: MockFixture) -> None:
     instance._create_mysql_view("foo", "CREATE VIEW foo AS SELECT 1")
 
     assert cursor.execute.call_args_list[0][0][0] == "DROP TABLE IF EXISTS `foo`"
-    assert cursor.execute.call_args_list[1][0][0] == "CREATE VIEW foo AS SELECT 1"
-    assert mysql_conn.commit.call_count == 2
+    assert cursor.execute.call_args_list[1][0][0] == "DROP VIEW IF EXISTS `foo`"
+    assert cursor.execute.call_args_list[2][0][0] == "CREATE VIEW foo AS SELECT 1"
+    assert mysql_conn.commit.call_count == 3
     logger.info.assert_called_once()
 
 
@@ -195,12 +196,15 @@ def test_create_mysql_view_ignores_known_drop_errors(mocker: MockFixture) -> Non
     cursor.execute.side_effect = [
         mysql.connector.Error(msg="not a table", errno=errorcode.ER_WRONG_OBJECT),
         None,
+        None,
     ]
 
     instance._create_mysql_view("foo", "CREATE VIEW foo AS SELECT 1")
 
-    assert cursor.execute.call_args_list[1][0][0] == "CREATE VIEW foo AS SELECT 1"
-    assert mysql_conn.commit.call_count == 1
+    assert cursor.execute.call_args_list[0][0][0] == "DROP TABLE IF EXISTS `foo`"
+    assert cursor.execute.call_args_list[1][0][0] == "DROP VIEW IF EXISTS `foo`"
+    assert cursor.execute.call_args_list[2][0][0] == "CREATE VIEW foo AS SELECT 1"
+    assert mysql_conn.commit.call_count == 2
 
 
 def test_create_mysql_view_raises_unexpected_drop_errors(mocker: MockFixture) -> None:

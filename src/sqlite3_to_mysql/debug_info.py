@@ -14,6 +14,7 @@ import click
 import mysql.connector
 import pytimeparse2
 import simplejson
+import sqlglot
 import tabulate
 import tqdm
 
@@ -86,6 +87,7 @@ def info() -> t.List[t.List[str]]:
         ["mysql-connector-python", mysql.connector.__version__],
         ["pytimeparse2", pytimeparse2.__version__],
         ["simplejson", simplejson.__version__],  # type: ignore
+        ["sqlglot", sqlglot.__version__],
         ["tabulate", tabulate.__version__],
         ["tqdm", tqdm.__version__],
     ]

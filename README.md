@@ -45,6 +45,9 @@ Options:
                                   Implies --without-foreign-keys which
                                   inhibits the transfer of foreign keys. Can
                                   not be used together with --sqlite-tables.
+  -A, --sqlite-views-as-tables    Materialize SQLite views as tables in MySQL
+                                  instead of creating matching MySQL views
+                                  (legacy behavior).
   -X, --without-foreign-keys      Do not transfer foreign keys.
   -W, --ignore-duplicate-keys     Ignore duplicate keys. The default behavior
                                   is to create new ones with a numerical

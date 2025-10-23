@@ -45,6 +45,7 @@ dependencies = [
     "pytimeparse2",
     "python-dateutil>=2.9.0.post0",
     "simplejson>=3.19.1",
+    "sqlglot>=27.27.0",
     "tqdm>=4.65.0",
     "tabulate",
     "Unidecode>=1.3.6",

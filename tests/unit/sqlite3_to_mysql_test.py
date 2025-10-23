@@ -1,19 +1,498 @@
+import importlib
 import logging
 import re
+import sys
+import types
 import typing as t
 from random import choice
 
 import mysql.connector
 import pytest
 from _pytest.logging import LogCaptureFixture
+from click.testing import CliRunner, Result
 from faker import Faker
 from mysql.connector import errorcode
 from pytest_mock import MockerFixture, MockFixture
 from sqlalchemy import Connection, CursorResult, Engine, Inspector, TextClause, create_engine, inspect, text
 from sqlalchemy.dialects.sqlite import __all__ as sqlite_column_types
+from sqlglot import errors as sqlglot_errors
+from sqlglot import expressions as exp
 
 from sqlite3_to_mysql import SQLite3toMySQL
+from sqlite3_to_mysql.cli import cli as sqlite3mysql
 from tests.conftest import MySQLCredentials
+
+
+def test_cli_sqlite_views_flag_propagates(
+    cli_runner: CliRunner,
+    sqlite_database: str,
+    mysql_credentials: MySQLCredentials,
+    mocker: MockerFixture,
+) -> None:
+    transporter_ctor = mocker.patch("sqlite3_to_mysql.cli.SQLite3toMySQL", autospec=True)
+    transporter_instance = transporter_ctor.return_value
+    transporter_instance.transfer.return_value = None
+
+    common_args = [
+        "-f",
+        sqlite_database,
+        "-d",
+        mysql_credentials.database,
+        "-u",
+        mysql_credentials.user,
+        "--mysql-password",
+        mysql_credentials.password,
+        "-h",
+        mysql_credentials.host,
+        "-P",
+        str(mysql_credentials.port),
+    ]
+
+    result: Result = cli_runner.invoke(sqlite3mysql, common_args)
+    assert result.exit_code == 0
+    assert transporter_ctor.call_count == 1
+    assert transporter_ctor.call_args.kwargs["sqlite_views_as_tables"] is False
+
+    transporter_ctor.reset_mock()
+    transporter_instance = transporter_ctor.return_value
+    transporter_instance.transfer.return_value = None
+
+    result = cli_runner.invoke(sqlite3mysql, common_args + ["--sqlite-views-as-tables"])
+    assert result.exit_code == 0
+    assert transporter_ctor.call_count == 1
+    assert transporter_ctor.call_args.kwargs["sqlite_views_as_tables"] is True
+
+
+def test_cli_collation_validation(
+    cli_runner: CliRunner,
+    sqlite_database: str,
+    mysql_credentials: MySQLCredentials,
+    mocker: MockerFixture,
+) -> None:
+    mocker.patch(
+        "sqlite3_to_mysql.cli.mysql_supported_character_sets",
+        return_value=[types.SimpleNamespace(collation="utf8_general_ci")],
+    )
+
+    result = cli_runner.invoke(
+        sqlite3mysql,
+        [
+            "-f",
+            sqlite_database,
+            "-d",
+            mysql_credentials.database,
+            "-u",
+            mysql_credentials.user,
+            "--mysql-password",
+            mysql_credentials.password,
+            "-h",
+            mysql_credentials.host,
+            "-P",
+            str(mysql_credentials.port),
+            "--mysql-charset",
+            "utf8mb4",
+            "--mysql-collation",
+            "utf8mb4_unicode_ci",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "Invalid value for '--collation'" in result.output
+
+
+def test_types_typed_dict_fallback(monkeypatch: pytest.MonkeyPatch) -> None:
+    import typing
+
+    import sqlite3_to_mysql.types as original_module
+
+    monkeypatch.delattr(typing, "TypedDict", raising=False)
+    monkeypatch.setitem(sys.modules, "typing_extensions", types.SimpleNamespace(TypedDict=object))
+    sys.modules.pop("sqlite3_to_mysql.types", None)
+
+    fallback_module = importlib.import_module("sqlite3_to_mysql.types")
+    assert fallback_module.TypedDict is object
+
+    sys.modules["sqlite3_to_mysql.types"] = original_module
+
+
+def test_fetch_sqlite_master_rows_with_inclusion_filter(mocker: MockFixture) -> None:
+    instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+    instance._sqlite_tables = ("kept",)
+    instance._exclude_sqlite_tables = tuple()
+    cursor = mocker.MagicMock()
+    cursor.fetchall.return_value = [{"name": "kept", "type": "table", "sql": "CREATE TABLE kept (id INTEGER)"}]
+    instance._sqlite_cur = cursor
+
+    rows = instance._fetch_sqlite_master_rows(("table", "view"), include_sql=True)
+
+    query, params = cursor.execute.call_args[0]
+    flattened_query = " ".join(query.split())
+    assert "type IN (?, ?)" in flattened_query
+    assert "name IN (?)" in flattened_query
+    assert params[-1] == "kept"
+    assert rows == [{"name": "kept", "type": "table", "sql": "CREATE TABLE kept (id INTEGER)"}]
+
+
+def test_fetch_sqlite_master_rows_with_exclusion_filter(mocker: MockFixture) -> None:
+    instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+    instance._sqlite_tables = tuple()
+    instance._exclude_sqlite_tables = ("skip_me",)
+    cursor = mocker.MagicMock()
+    cursor.fetchall.return_value = [{"name": "other", "type": "view"}]
+    instance._sqlite_cur = cursor
+
+    instance._fetch_sqlite_master_rows(("view",), include_sql=False)
+
+    query, params = cursor.execute.call_args[0]
+    flattened_query = " ".join(query.split())
+    assert "name NOT IN (?)" in flattened_query
+    assert params[-1] == "skip_me"
+
+
+def test_sqlite_table_has_rowid_quotes(mocker: MockFixture) -> None:
+    instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+    cursor = mocker.MagicMock()
+    cursor.fetchall.return_value = []
+    instance._sqlite_cur = cursor
+
+    assert instance._sqlite_table_has_rowid('weird"name')
+    cursor.execute.assert_called_once_with('SELECT rowid FROM "weird""name" LIMIT 1')
+
+
+def test_fetch_sqlite_master_rows_without_types_returns_empty(mocker: MockFixture) -> None:
+    instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+    instance._sqlite_cur = mocker.MagicMock()
+    result = instance._fetch_sqlite_master_rows(tuple())
+    assert result == []
+    instance._sqlite_cur.execute.assert_not_called()
+
+
+def test_create_mysql_view_success(mocker: MockFixture) -> None:
+    instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+    cursor = mocker.MagicMock()
+    mysql_conn = mocker.MagicMock()
+    logger = mocker.MagicMock()
+    instance._mysql_cur = cursor
+    instance._mysql = mysql_conn
+    instance._logger = logger
+
+    instance._create_mysql_view("foo", "CREATE VIEW foo AS SELECT 1")
+
+    assert cursor.execute.call_args_list[0][0][0] == "DROP TABLE IF EXISTS `foo`"
+    assert cursor.execute.call_args_list[1][0][0] == "DROP VIEW IF EXISTS `foo`"
+    assert cursor.execute.call_args_list[2][0][0] == "CREATE VIEW foo AS SELECT 1"
+    assert mysql_conn.commit.call_count == 3
+    logger.info.assert_called_once()
+
+
+def test_create_mysql_view_ignores_known_drop_errors(mocker: MockFixture) -> None:
+    instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+    cursor = mocker.MagicMock()
+    mysql_conn = mocker.MagicMock()
+    instance._mysql_cur = cursor
+    instance._mysql = mysql_conn
+    instance._logger = mocker.MagicMock()
+
+    cursor.execute.side_effect = [
+        mysql.connector.Error(msg="not a table", errno=errorcode.ER_WRONG_OBJECT),
+        None,
+        None,
+    ]
+
+    instance._create_mysql_view("foo", "CREATE VIEW foo AS SELECT 1")
+
+    assert cursor.execute.call_args_list[0][0][0] == "DROP TABLE IF EXISTS `foo`"
+    assert cursor.execute.call_args_list[1][0][0] == "DROP VIEW IF EXISTS `foo`"
+    assert cursor.execute.call_args_list[2][0][0] == "CREATE VIEW foo AS SELECT 1"
+    assert mysql_conn.commit.call_count == 2
+
+
+def test_create_mysql_view_raises_unexpected_drop_errors(mocker: MockFixture) -> None:
+    instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+    cursor = mocker.MagicMock()
+    mysql_conn = mocker.MagicMock()
+    instance._mysql_cur = cursor
+    instance._mysql = mysql_conn
+    instance._logger = mocker.MagicMock()
+
+    cursor.execute.side_effect = mysql.connector.Error(msg="boom", errno=errorcode.CR_UNKNOWN_ERROR)
+
+    with pytest.raises(mysql.connector.Error):
+        instance._create_mysql_view("foo", "CREATE VIEW foo AS SELECT 1")
+
+    cursor.execute.assert_called_once_with("DROP TABLE IF EXISTS `foo`")
+    mysql_conn.commit.assert_not_called()
+
+
+def test_translate_sqlite_view_definition_invalid_sql(mocker: MockFixture) -> None:
+    instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+    mocker.patch(
+        "sqlite3_to_mysql.transporter.sqlglot.parse_one",
+        side_effect=sqlglot_errors.ParseError("boom"),
+    )
+    with pytest.raises(ValueError):
+        instance._translate_sqlite_view_definition("broken", "CREATE VIEW broken AS SELECT")
+
+
+def test_translate_sqlite_view_definition_render_error(mocker: MockFixture) -> None:
+    instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+    fake_expression = mocker.MagicMock()
+    fake_expression.set.return_value = fake_expression
+    fake_expression.transform.return_value = fake_expression
+    fake_expression.sql.side_effect = sqlglot_errors.SqlglotError("render fail")
+
+    mocker.patch("sqlite3_to_mysql.transporter.sqlglot.parse_one", return_value=fake_expression)
+
+    with pytest.raises(ValueError):
+        instance._translate_sqlite_view_definition("v", "CREATE VIEW v AS SELECT 1")
+
+
+def test_rewrite_sqlite_view_functions_datetime_now() -> None:
+    node = exp.Anonymous(this=exp.Identifier(this="DATETIME"), expressions=[exp.Literal.string("now")])
+    transformed = SQLite3toMySQL._rewrite_sqlite_view_functions(node)
+    assert isinstance(transformed, exp.CurrentTimestamp)
+
+
+def test_rewrite_sqlite_view_functions_datetime_now_utc() -> None:
+    node = exp.Anonymous(
+        this=exp.Identifier(this="DATETIME"),
+        expressions=[exp.Literal.string("now"), exp.Literal.string("utc")],
+    )
+    transformed = SQLite3toMySQL._rewrite_sqlite_view_functions(node)
+    assert isinstance(transformed, exp.UtcTimestamp)
+    assert transformed.sql(dialect="mysql") == "UTC_TIMESTAMP()"
+
+
+def test_rewrite_sqlite_view_functions_datetime_now_localtime() -> None:
+    node = exp.Anonymous(
+        this=exp.Identifier(this="DATETIME"),
+        expressions=[exp.Literal.string("now"), exp.Literal.string("localtime")],
+    )
+    transformed = SQLite3toMySQL._rewrite_sqlite_view_functions(node)
+    assert isinstance(transformed, exp.CurrentTimestamp)
+    assert transformed.sql(dialect="mysql") == "CURRENT_TIMESTAMP()"
+
+
+def test_rewrite_sqlite_view_functions_strftime_now() -> None:
+    node = exp.Anonymous(
+        this=exp.Identifier(this="STRFTIME"),
+        expressions=[exp.Literal.string("%H:%M:%S"), exp.Literal.string("now")],
+    )
+    transformed = SQLite3toMySQL._rewrite_sqlite_view_functions(node)
+    assert isinstance(transformed, exp.TimeToStr)
+    assert transformed.args["format"].this == "%H:%i:%s"
+    assert "'%H:%i:%s')" in transformed.sql(dialect="mysql")
+
+
+def test_rewrite_sqlite_view_functions_strftime_now_utc() -> None:
+    node = exp.Anonymous(
+        this=exp.Identifier(this="STRFTIME"),
+        expressions=[
+            exp.Literal.string("%Y-%m-%d"),
+            exp.Literal.string("now"),
+            exp.Literal.string("utc"),
+        ],
+    )
+    transformed = SQLite3toMySQL._rewrite_sqlite_view_functions(node)
+    assert isinstance(transformed, exp.TimeToStr)
+    assert isinstance(transformed.this, exp.UtcTimestamp)
+    assert "UTC_TIMESTAMP()" in transformed.sql(dialect="mysql")
+
+
+def test_rewrite_sqlite_view_functions_strftime_now_localtime() -> None:
+    node = exp.Anonymous(
+        this=exp.Identifier(this="STRFTIME"),
+        expressions=[
+            exp.Literal.string("%Y-%m-%d"),
+            exp.Literal.string("now"),
+            exp.Literal.string("localtime"),
+        ],
+    )
+    transformed = SQLite3toMySQL._rewrite_sqlite_view_functions(node)
+    assert isinstance(transformed, exp.TimeToStr)
+    assert isinstance(transformed.this, exp.CurrentTimestamp)
+    assert "CURRENT_TIMESTAMP()" in transformed.sql(dialect="mysql")
+
+
+def test_rewrite_sqlite_view_functions_time_to_str() -> None:
+    node = exp.TimeToStr(
+        this=exp.TsOrDsToTimestamp(this=exp.Literal.string("now")),
+        format=exp.Literal.string("%H:%M"),
+    )
+    transformed = SQLite3toMySQL._rewrite_sqlite_view_functions(node)
+    assert isinstance(transformed, exp.TimeToStr)
+    assert transformed.args["format"].this == "%H:%i"
+
+
+def _make_transfer_stub(mocker: MockFixture) -> SQLite3toMySQL:
+    instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+    instance._sqlite_tables = tuple()
+    instance._exclude_sqlite_tables = tuple()
+    instance._sqlite_views_as_tables = False
+    instance._mysql_create_tables = True
+    instance._mysql_transfer_data = False
+    instance._mysql_truncate_tables = False
+    instance._mysql_insert_method = "IGNORE"
+    instance._mysql_version = "8.0.30"
+    instance._without_foreign_keys = True
+    instance._use_fulltext = False
+    instance._mysql_fulltext_support = False
+    instance._with_rowid = False
+    instance._sqlite_cur = mocker.MagicMock()
+    instance._sqlite_table_has_rowid = mocker.MagicMock(return_value=False)
+    instance._mysql_cur = mocker.MagicMock()
+    instance._mysql_cur.fetchall.return_value = []
+    instance._mysql_cur.execute.return_value = None
+    instance._mysql_cur.executemany.return_value = None
+    instance._mysql = mocker.MagicMock()
+    instance._logger = mocker.MagicMock()
+    instance._create_table = mocker.MagicMock()
+    instance._truncate_table = mocker.MagicMock()
+    instance._add_indices = mocker.MagicMock()
+    instance._add_foreign_keys = mocker.MagicMock()
+    instance._transfer_table_data = mocker.MagicMock()
+    instance._create_mysql_view = mocker.MagicMock()
+    instance._translate_sqlite_view_definition = mocker.MagicMock(return_value="CREATE VIEW translated AS SELECT 1")
+    instance._sqlite_cur.fetchall.return_value = []
+    instance._sqlite_cur.execute.return_value = None
+    return instance
+
+
+def test_transfer_creates_mysql_views(mocker: MockFixture) -> None:
+    instance = _make_transfer_stub(mocker)
+
+    def fetch_rows(object_types, include_sql=False):
+        if include_sql:
+            return [{"name": "v1", "type": "view", "sql": "CREATE VIEW v1 AS SELECT 1"}]
+        return [{"name": "t1", "type": "table"}]
+
+    instance._fetch_sqlite_master_rows = mocker.MagicMock(side_effect=fetch_rows)
+
+    instance.transfer()
+
+    instance._create_table.assert_called_once_with("t1", transfer_rowid=False)
+    instance._translate_sqlite_view_definition.assert_called_once_with("v1", "CREATE VIEW v1 AS SELECT 1")
+    instance._create_mysql_view.assert_called_once_with("v1", "CREATE VIEW translated AS SELECT 1")
+
+
+def test_transfer_handles_views_as_tables_when_requested(mocker: MockFixture) -> None:
+    instance = _make_transfer_stub(mocker)
+    instance._sqlite_views_as_tables = True
+
+    def fetch_rows(object_types, include_sql=False):
+        assert include_sql is False
+        return [{"name": "view_as_table", "type": "view"}]
+
+    instance._fetch_sqlite_master_rows = mocker.MagicMock(side_effect=fetch_rows)
+
+    instance.transfer()
+
+    instance._create_table.assert_called_once_with("view_as_table", transfer_rowid=False)
+    instance._create_mysql_view.assert_not_called()
+
+
+def test_transfer_with_data_invokes_transfer_table_data(mocker: MockFixture) -> None:
+    instance = _make_transfer_stub(mocker)
+    instance._mysql_transfer_data = True
+    instance._sqlite_cur.fetchone.return_value = {"total_records": 1}
+    instance._sqlite_cur.fetchall.return_value = [(1, 2)]
+
+    def execute_side_effect(sql, *params):
+        if sql.startswith("SELECT ") and "FROM" in sql and "COUNT" not in sql.upper():
+            instance._sqlite_cur.description = [("c1",), ("c2",)]
+
+    instance._sqlite_cur.execute.side_effect = execute_side_effect
+    instance._fetch_sqlite_master_rows = mocker.MagicMock(side_effect=[[{"name": "tbl", "type": "table"}], []])
+
+    instance.transfer()
+
+    assert instance._transfer_table_data.called
+    sql_arg = instance._transfer_table_data.call_args.kwargs["sql"]
+    assert "INSERT" in sql_arg
+
+
+def test_transfer_escapes_sqlite_identifiers(mocker: MockFixture) -> None:
+    instance = _make_transfer_stub(mocker)
+    instance._mysql_transfer_data = True
+    instance._sqlite_cur.fetchone.return_value = {"total_records": 1}
+    instance._sqlite_cur.fetchall.return_value = [(1,)]
+
+    def execute_side_effect(sql, *params):
+        if sql.startswith("SELECT ") and "FROM" in sql and "COUNT" not in sql.upper():
+            instance._sqlite_cur.description = [("c1",)]
+        return None
+
+    instance._sqlite_cur.execute.side_effect = execute_side_effect
+    instance._fetch_sqlite_master_rows = mocker.MagicMock(side_effect=[[{"name": 'tbl"quote', "type": "table"}], []])
+
+    instance.transfer()
+
+    executed_sqls = [call.args[0] for call in instance._sqlite_cur.execute.call_args_list]
+    assert 'SELECT COUNT(*) AS total_records FROM "tbl""quote"' in executed_sqls
+    assert 'SELECT * FROM "tbl""quote"' in executed_sqls
+
+
+def test_translate_sqlite_view_definition_strftime_weekday() -> None:
+    instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+    result = instance._translate_sqlite_view_definition(
+        "v_week", "CREATE VIEW v_week AS SELECT strftime('%W %w', 'now') AS w"
+    )
+    assert "DATE_FORMAT(CURRENT_TIMESTAMP(), '%u %w')" in result
+
+
+def test_translate_sqlite_view_definition_strftime_literal_percent() -> None:
+    instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+    result = instance._translate_sqlite_view_definition(
+        "v_literal", "CREATE VIEW v_literal AS SELECT strftime('%%Y %Y', 'now') AS f"
+    )
+    assert "DATE_FORMAT(CURRENT_TIMESTAMP(), '%%Y %Y')" in result
+
+
+def test_transfer_skips_views_without_sql(mocker: MockFixture) -> None:
+    instance = _make_transfer_stub(mocker)
+    instance._fetch_sqlite_master_rows = mocker.MagicMock(
+        side_effect=[
+            [{"name": "tbl", "type": "table"}],
+            [{"name": "v_bad", "type": "view", "sql": None}],
+        ]
+    )
+
+    instance.transfer()
+
+    instance._translate_sqlite_view_definition.assert_not_called()
+    instance._create_mysql_view.assert_not_called()
+    assert instance._logger.warning.called
+
+
+def test_transfer_table_data_without_chunk(mocker: MockFixture) -> None:
+    instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+    instance._chunk_size = None
+    instance._quiet = True
+    instance._sqlite_cur = mocker.MagicMock()
+    instance._sqlite_cur.fetchall.return_value = [(1, 2), (3, 4)]
+    instance._mysql_cur = mocker.MagicMock()
+    instance._mysql = mocker.MagicMock()
+
+    instance._transfer_table_data("INSERT", total_records=2)
+
+    instance._mysql_cur.executemany.assert_called_once()
+    instance._mysql.commit.assert_called_once()
+
+
+def test_transfer_table_data_with_chunking(mocker: MockFixture) -> None:
+    instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+    instance._chunk_size = 1
+    instance._quiet = True
+    instance._sqlite_cur = mocker.MagicMock()
+    instance._sqlite_cur.fetchmany.side_effect = [[(1,)], [(2,)]]
+    instance._mysql_cur = mocker.MagicMock()
+    instance._mysql = mocker.MagicMock()
+
+    instance._transfer_table_data("INSERT", total_records=2)
+
+    assert instance._sqlite_cur.fetchmany.call_count == 2
+    assert instance._mysql_cur.executemany.call_count == 2
+    instance._mysql.commit.assert_called_once()
 
 
 @pytest.mark.usefixtures("sqlite_database", "mysql_instance")
@@ -717,3 +1196,90 @@ class TestSQLite3toMySQL:
             self._mk(expr=True, ts_dt=False, fsp=False)._translate_default_for_mysql("TIME(2)", "time('now')")
             == "CURRENT_TIME"
         )
+
+    def test_translate_sqlite_view_definition_current_timestamp(self):
+        instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+        result = instance._translate_sqlite_view_definition(
+            "v_now", "CREATE VIEW v_now AS SELECT datetime('now') AS stamp"
+        )
+        assert result == "CREATE OR REPLACE VIEW `v_now` AS SELECT CURRENT_TIMESTAMP() AS `stamp`"
+
+    def test_translate_sqlite_view_definition_current_timestamp_utc_modifier(self):
+        instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+        result = instance._translate_sqlite_view_definition(
+            "v_utc", "CREATE VIEW v_utc AS SELECT datetime('now','utc') AS stamp"
+        )
+        assert "UTC_TIMESTAMP()" in result
+
+    def test_translate_sqlite_view_definition_current_timestamp_localtime_modifier(self):
+        instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+        result = instance._translate_sqlite_view_definition(
+            "v_local", "CREATE VIEW v_local AS SELECT datetime('now','localtime') AS stamp"
+        )
+        assert "CURRENT_TIMESTAMP()" in result
+
+    def test_translate_sqlite_view_definition_strftime_now(self):
+        instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+        result = instance._translate_sqlite_view_definition(
+            "v_fmt", "CREATE VIEW v_fmt AS SELECT strftime('%Y-%m-%d', 'now') AS d"
+        )
+        assert "DATE_FORMAT(CURRENT_TIMESTAMP(), '%Y-%m-%d')" in result
+
+    def test_translate_sqlite_view_definition_strftime_now_utc_modifier(self):
+        instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+        result = instance._translate_sqlite_view_definition(
+            "v_fmt_utc", "CREATE VIEW v_fmt_utc AS SELECT strftime('%Y-%m-%d', 'now', 'utc') AS d"
+        )
+        assert "DATE_FORMAT(UTC_TIMESTAMP(), '%Y-%m-%d')" in result
+
+    def test_translate_sqlite_view_definition_strftime_now_localtime_modifier(self):
+        instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+        result = instance._translate_sqlite_view_definition(
+            "v_fmt_local", "CREATE VIEW v_fmt_local AS SELECT strftime('%Y-%m-%d', 'now', 'localtime') AS d"
+        )
+        assert "DATE_FORMAT(CURRENT_TIMESTAMP(), '%Y-%m-%d')" in result
+
+    def test_translate_sqlite_view_definition_strftime_minutes_seconds(self):
+        instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+        result = instance._translate_sqlite_view_definition(
+            "v_time", "CREATE VIEW v_time AS SELECT strftime('%H:%M:%S', 'now') AS t"
+        )
+        assert "DATE_FORMAT(CURRENT_TIMESTAMP(), '%H:%i:%s')" in result
+
+    def test_translate_sqlite_view_definition_truncates_name(self):
+        instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+        long_name = "view_" + ("x" * 70)
+        result = instance._translate_sqlite_view_definition(long_name, f"CREATE VIEW {long_name} AS SELECT 1")
+        expected = long_name[:64]
+        assert result == f"CREATE OR REPLACE VIEW `{expected}` AS SELECT 1"
+
+    def test_init_chunk_parameter_conversion(
+        self,
+        sqlite_database: str,
+        mysql_credentials: MySQLCredentials,
+        mocker: MockFixture,
+    ) -> None:
+        """Verify chunk parameter is correctly converted to integer _chunk_size."""
+        # Chunk=2 should yield _chunk_size == 2
+        instance = SQLite3toMySQL(
+            sqlite_file=sqlite_database,
+            mysql_user=mysql_credentials.user,
+            mysql_password=mysql_credentials.password,
+            mysql_host=mysql_credentials.host,
+            mysql_port=mysql_credentials.port,
+            mysql_database=mysql_credentials.database,
+            chunk=2,
+        )
+        assert instance._chunk_size == 2
+
+        # Chunk=None should yield _chunk_size == None
+        instance = SQLite3toMySQL(
+            sqlite_file=sqlite_database,
+            mysql_user=mysql_credentials.user,
+            mysql_password=mysql_credentials.password,
+            mysql_host=mysql_credentials.host,
+            mysql_port=mysql_credentials.port,
+            mysql_database=mysql_credentials.database,
+            chunk=None,
+        )
+        assert instance._chunk_size is None

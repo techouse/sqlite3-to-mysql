@@ -51,6 +51,12 @@ _copyright_header: str = f"sqlite3mysql version {package_version} Copyright (c) 
     "Implies --without-foreign-keys which inhibits the transfer of foreign keys. "
     "Can not be used together with --sqlite-tables.",
 )
+@click.option(
+    "-A",
+    "--sqlite-views-as-tables",
+    is_flag=True,
+    help="Materialize SQLite views as tables in MySQL instead of creating matching MySQL views.",
+)
 @click.option("-X", "--without-foreign-keys", is_flag=True, help="Do not transfer foreign keys.")
 @click.option(
     "-W",
@@ -147,6 +153,7 @@ def cli(
     sqlite_file: t.Union[str, "os.PathLike[t.Any]"],
     sqlite_tables: t.Optional[t.Sequence[str]],
     exclude_sqlite_tables: t.Optional[t.Sequence[str]],
+    sqlite_views_as_tables: bool,
     without_foreign_keys: bool,
     ignore_duplicate_keys: bool,
     mysql_user: str,
@@ -203,6 +210,7 @@ def cli(
             sqlite_file=sqlite_file,
             sqlite_tables=sqlite_tables or tuple(),
             exclude_sqlite_tables=exclude_sqlite_tables or tuple(),
+            sqlite_views_as_tables=sqlite_views_as_tables,
             without_foreign_keys=without_foreign_keys or bool(sqlite_tables) or bool(exclude_sqlite_tables),
             mysql_user=mysql_user,
             mysql_password=mysql_password or prompt_mysql_password,

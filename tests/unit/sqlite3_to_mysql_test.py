@@ -1197,6 +1197,16 @@ class TestSQLite3toMySQL:
             == "CURRENT_TIME"
         )
 
+    def test_translate_default_for_mysql_sqlglot_strftime_modifier(self):
+        instance = self._mk(expr=True, ts_dt=True, fsp=True)
+        result = instance._translate_default_for_mysql("VARCHAR(32)", "strftime('%Y-%m-%d', 'now', 'utc')")
+        assert result == "DATE_FORMAT(UTC_TIMESTAMP(), '%Y-%m-%d')"
+
+    def test_translate_default_for_mysql_sqlglot_requires_expr_support(self):
+        instance = self._mk(expr=False, ts_dt=True, fsp=True)
+        result = instance._translate_default_for_mysql("VARCHAR(32)", "strftime('%Y-%m-%d', 'now', 'utc')")
+        assert result == "strftime('%Y-%m-%d', 'now', 'utc')"
+
     def test_translate_sqlite_view_definition_current_timestamp(self):
         instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
         result = instance._translate_sqlite_view_definition(

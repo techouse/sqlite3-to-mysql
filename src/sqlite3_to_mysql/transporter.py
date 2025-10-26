@@ -541,8 +541,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
             )
             and self._allow_expr_defaults
         ):
-            if not self._allow_expr_defaults:
-                return ""
+            # Too old for expression defaults on DATE → fall back
             return "CURRENT_DATE"
 
         # TIME
@@ -556,8 +555,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
             )
             and self._allow_expr_defaults
         ):
-            if not self._allow_expr_defaults:
-                return ""
+            # Too old for expression defaults on TIME → fall back
             len_match = self.COLUMN_LENGTH_PATTERN.search(column_type)
             fsp = ""
             if self._allow_fsp and len_match:

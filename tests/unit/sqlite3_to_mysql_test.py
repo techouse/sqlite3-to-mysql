@@ -1,6 +1,7 @@
 import importlib
 import logging
 import re
+import sqlite3
 import sys
 import types
 import typing as t
@@ -273,6 +274,15 @@ def test_rewrite_sqlite_view_functions_datetime_now_localtime() -> None:
     assert transformed.sql(dialect="mysql") == "CURRENT_TIMESTAMP()"
 
 
+def test_rewrite_sqlite_view_functions_date_now_defaults() -> None:
+    node = exp.Anonymous(
+        this=exp.Identifier(this="DATE"),
+        expressions=[exp.Literal.string("now")],
+    )
+    transformed = SQLite3toMySQL._rewrite_sqlite_view_functions(node)
+    assert isinstance(transformed, exp.CurrentDate)
+
+
 def test_rewrite_sqlite_view_functions_strftime_now() -> None:
     node = exp.Anonymous(
         this=exp.Identifier(this="STRFTIME"),
@@ -322,6 +332,39 @@ def test_rewrite_sqlite_view_functions_time_to_str() -> None:
     transformed = SQLite3toMySQL._rewrite_sqlite_view_functions(node)
     assert isinstance(transformed, exp.TimeToStr)
     assert transformed.args["format"].this == "%H:%i"
+
+
+def test_rewrite_sqlite_view_functions_date_now_utc() -> None:
+    node = exp.Anonymous(
+        this=exp.Identifier(this="DATE"),
+        expressions=[exp.Literal.string("now"), exp.Literal.string("utc")],
+    )
+    transformed = SQLite3toMySQL._rewrite_sqlite_view_functions(node)
+    assert isinstance(transformed, exp.Anonymous)
+    assert transformed.sql(dialect="mysql") == "UTC_DATE()"
+
+
+def test_rewrite_sqlite_view_functions_time_now_utc() -> None:
+    node = exp.Anonymous(
+        this=exp.Identifier(this="TIME"),
+        expressions=[exp.Literal.string("now"), exp.Literal.string("utc")],
+    )
+    transformed = SQLite3toMySQL._rewrite_sqlite_view_functions(node)
+    assert isinstance(transformed, exp.UtcTime)
+    assert transformed.sql(dialect="mysql") == "UTC_TIME()"
+
+
+def test_rewrite_sqlite_view_functions_time_to_str_with_modifier_list() -> None:
+    node = exp.TimeToStr(
+        this=exp.TsOrDsToTimestamp(
+            this=exp.Literal.string("now"),
+            expressions=[exp.Literal.string("utc")],
+        ),
+        format=exp.Literal.string("%H"),
+    )
+    transformed = SQLite3toMySQL._rewrite_sqlite_view_functions(node)
+    assert isinstance(transformed, exp.TimeToStr)
+    assert isinstance(transformed.this, exp.UtcTimestamp)
 
 
 def _make_transfer_stub(mocker: MockFixture) -> SQLite3toMySQL:
@@ -462,6 +505,22 @@ def test_transfer_skips_views_without_sql(mocker: MockFixture) -> None:
     instance._translate_sqlite_view_definition.assert_not_called()
     instance._create_mysql_view.assert_not_called()
     assert instance._logger.warning.called
+
+
+def test_transfer_truncates_tables_when_requested(mocker: MockFixture) -> None:
+    instance = _make_transfer_stub(mocker)
+    instance._mysql_truncate_tables = True
+    instance._fetch_sqlite_master_rows = mocker.MagicMock(
+        side_effect=[
+            [{"name": "tbl", "type": "table"}],
+            [],
+        ]
+    )
+    instance._sqlite_cur.fetchone.return_value = {"total_records": 0}
+
+    instance.transfer()
+
+    instance._truncate_table.assert_called_once_with("tbl")
 
 
 def test_transfer_table_data_without_chunk(mocker: MockFixture) -> None:
@@ -774,6 +833,56 @@ class TestSQLite3toMySQL:
 
         sqlite_engine.dispose()
 
+    def test_init_mysql_socket_missing_raises(self, sqlite_database: str) -> None:
+        with pytest.raises(FileNotFoundError):
+            SQLite3toMySQL(  # type: ignore[call-arg]
+                sqlite_file=sqlite_database,
+                mysql_user="user",
+                mysql_password="pass",
+                mysql_socket="/tmp/definitely_missing.sock",
+            )
+
+    def test_init_conflicting_table_filters_raises(self, sqlite_database: str) -> None:
+        with pytest.raises(ValueError):
+            SQLite3toMySQL(  # type: ignore[call-arg]
+                sqlite_file=sqlite_database,
+                mysql_user="user",
+                mysql_password="pass",
+                sqlite_tables=("include",),
+                exclude_sqlite_tables=("exclude",),
+            )
+
+    def test_init_normalizes_insert_method_text_type_and_collation(
+        self,
+        sqlite_database: str,
+        mocker: MockFixture,
+    ) -> None:
+        fake_cursor = mocker.MagicMock()
+        fake_cursor.fetchone.return_value = ("version", "8.0.30")
+        fake_connection = mocker.MagicMock(spec=mysql.connector.MySQLConnection)
+        fake_connection.cursor.return_value = fake_cursor
+        fake_connection.is_connected.return_value = True
+
+        mocker.patch("sqlite3_to_mysql.transporter.mysql.connector.connect", return_value=fake_connection)
+        mocker.patch(
+            "sqlite3_to_mysql.transporter.CharacterSet.get_default_collation",
+            return_value=["utf8mb4_0900_ai_ci"],
+        )
+
+        proc = SQLite3toMySQL(  # type: ignore[call-arg]
+            sqlite_file=sqlite_database,
+            mysql_user="user",
+            mysql_password="pass",
+            mysql_database="demo",
+            mysql_insert_method="unsupported",
+            mysql_text_type="customtext",
+            mysql_charset="utf8mb4",
+        )
+
+        assert proc._mysql_insert_method == "IGNORE"
+        assert proc._mysql_text_type == "TEXT"
+        assert proc._mysql_collation == "utf8mb4_unicode_ci"
+
     @pytest.mark.parametrize("quiet", [False, True])
     def test_process_cursor_error(
         self,
@@ -852,6 +961,313 @@ class TestSQLite3toMySQL:
         assert any(str(errorcode.CR_UNKNOWN_ERROR) in message for message in caplog.messages)
 
         sqlite_engine.dispose()
+
+    def test_create_table_skips_hidden_columns(self, mocker: MockerFixture) -> None:
+        instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+        instance._sqlite_table_xinfo_support = True
+        instance._sqlite_quote_ident = lambda name: name.replace('"', '""')
+        instance._mysql_charset = "utf8mb4"
+        instance._mysql_collation = "utf8mb4_unicode_ci"
+        instance._logger = mocker.MagicMock()
+
+        rows = [
+            {"name": "id", "type": "INTEGER", "notnull": 1, "dflt_value": None, "pk": 1, "hidden": 0},
+            {"name": "secret", "type": "TEXT", "notnull": 0, "dflt_value": "0", "pk": 0, "hidden": 1},
+        ]
+
+        sqlite_cursor = mocker.MagicMock()
+        sqlite_cursor.fetchall.return_value = rows
+        instance._sqlite_cur = sqlite_cursor
+
+        instance._translate_type_from_sqlite_to_mysql = mocker.MagicMock(return_value="INT(11)")
+        instance._translate_default_for_mysql = mocker.MagicMock(return_value="")
+
+        mysql_cursor = mocker.MagicMock()
+        instance._mysql_cur = mysql_cursor
+        instance._mysql = mocker.MagicMock()
+
+        instance._create_table("demo")
+
+        executed_sql = mysql_cursor.execute.call_args[0][0]
+        assert "`secret`" not in executed_sql
+        assert "`id` INT(11)" in executed_sql
+
+    def test_create_table_invalid_default_retries_without_defaults(self, mocker: MockerFixture) -> None:
+        instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+        instance._sqlite_table_xinfo_support = False
+        instance._sqlite_quote_ident = lambda name: name.replace('"', '""')
+        instance._mysql_charset = "utf8mb4"
+        instance._mysql_collation = "utf8mb4_unicode_ci"
+        instance._logger = mocker.MagicMock()
+
+        rows = [
+            {"name": "created_at", "type": "DATETIME", "notnull": 0, "dflt_value": "CURRENT_TIMESTAMP", "pk": 0},
+        ]
+
+        sqlite_cursor = mocker.MagicMock()
+        sqlite_cursor.fetchall.side_effect = [rows, rows]
+        instance._sqlite_cur = sqlite_cursor
+
+        instance._translate_type_from_sqlite_to_mysql = mocker.MagicMock(return_value="DATETIME")
+        instance._translate_default_for_mysql = mocker.MagicMock(return_value="CURRENT_TIMESTAMP")
+
+        mysql_cursor = mocker.MagicMock()
+        mysql_cursor.execute.side_effect = [
+            mysql.connector.Error(msg="bad default", errno=errorcode.ER_INVALID_DEFAULT),
+            None,
+        ]
+        instance._mysql_cur = mysql_cursor
+        instance._mysql = mocker.MagicMock()
+
+        instance._create_table("events")
+
+        assert mysql_cursor.execute.call_count == 2
+        retry_sql = mysql_cursor.execute.call_args_list[1][0][0]
+        assert "DEFAULT CURRENT_TIMESTAMP" not in retry_sql
+        instance._logger.warning.assert_called_once()
+
+    def test_truncate_table_executes_when_table_exists(self, mocker: MockerFixture) -> None:
+        instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+        cursor = mocker.MagicMock()
+        cursor.fetchall.return_value = [("demo",)]
+        instance._mysql_cur = cursor
+        instance._mysql_database = "test_db"
+        instance._logger = mocker.MagicMock()
+
+        instance._truncate_table("demo")
+
+        assert cursor.execute.call_count == 2
+        assert cursor.execute.call_args_list[1][0][0].startswith("TRUNCATE TABLE")
+        instance._logger.info.assert_called_once()
+
+    def test_add_indices_uses_fulltext_when_supported(self, mocker: MockFixture) -> None:
+        instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+        instance._sqlite_quote_ident = lambda name: name.replace('"', '""')
+        instance._use_fulltext = True
+        instance._mysql_fulltext_support = True
+        instance._logger = mocker.MagicMock()
+
+        sqlite_cursor = mocker.MagicMock()
+        sqlite_cursor.fetchall.side_effect = [
+            [{"name": "textcol", "type": "TEXT"}],
+            [{"name": "idx_text", "unique": 0, "origin": "c"}],
+            [{"name": "textcol"}],
+        ]
+        instance._sqlite_cur = sqlite_cursor
+
+        add_index = mocker.patch.object(instance, "_add_index")
+
+        instance._add_indices("demo")
+
+        assert add_index.call_count == 1
+        kwargs = add_index.call_args.kwargs
+        assert kwargs["index_type"] == "FULLTEXT"
+        assert "`textcol`" in kwargs["index_columns"]
+
+    def test_add_indices_handles_missing_column_metadata(self, mocker: MockFixture) -> None:
+        instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+        instance._sqlite_quote_ident = lambda name: name.replace('"', '""')
+        instance._use_fulltext = False
+        instance._mysql_fulltext_support = False
+        instance._logger = mocker.MagicMock()
+
+        sqlite_cursor = mocker.MagicMock()
+        sqlite_cursor.fetchall.side_effect = [
+            [],
+            [{"name": "idx_missing", "unique": 0, "origin": "c"}],
+            [{"name": "missing"}],
+        ]
+        instance._sqlite_cur = sqlite_cursor
+
+        add_index = mocker.patch.object(instance, "_add_index")
+
+        instance._add_indices("demo")
+
+        add_index.assert_not_called()
+        instance._logger.warning.assert_called_once()
+
+    def test_add_indices_retries_without_fulltext_on_bad_column(self, mocker: MockFixture) -> None:
+        instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+        instance._sqlite_quote_ident = lambda name: name.replace('"', '""')
+        instance._use_fulltext = True
+        instance._mysql_fulltext_support = True
+        instance._logger = mocker.MagicMock()
+
+        sqlite_cursor = mocker.MagicMock()
+        sqlite_cursor.fetchall.side_effect = [
+            [{"name": "textcol", "type": "TEXT"}],
+            [{"name": "idx_text", "unique": 0, "origin": "c"}],
+            [{"name": "textcol"}],
+        ]
+        instance._sqlite_cur = sqlite_cursor
+
+        add_index = mocker.patch.object(
+            instance,
+            "_add_index",
+            side_effect=[
+                mysql.connector.Error(msg="bad ft column", errno=errorcode.ER_BAD_FT_COLUMN),
+                None,
+            ],
+        )
+
+        instance._add_indices("demo")
+
+        assert add_index.call_count == 2
+        assert add_index.call_args_list[0].kwargs["index_type"] == "FULLTEXT"
+        assert add_index.call_args_list[1].kwargs["index_type"] == "INDEX"
+
+    def test_get_mysql_version_missing_row_raises(self, mocker: MockFixture) -> None:
+        instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+        cursor = mocker.MagicMock()
+        cursor.fetchone.return_value = None
+        instance._mysql_cur = cursor
+        instance._logger = mocker.MagicMock()
+
+        with pytest.raises(mysql.connector.Error):
+            instance._get_mysql_version()
+
+        instance._logger.error.assert_called()
+
+    def test_get_sqlite_version_error_raises(self, mocker: MockFixture) -> None:
+        instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+        cursor = mocker.MagicMock()
+        cursor.execute.side_effect = sqlite3.Error("boom")
+        instance._sqlite_cur = cursor
+        instance._logger = mocker.MagicMock()
+
+        with pytest.raises(sqlite3.Error):
+            instance._get_sqlite_version()
+
+        instance._logger.error.assert_called()
+
+    def test_sqlite_table_has_rowid_handles_operational_error(self, mocker: MockFixture) -> None:
+        instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+        cursor = mocker.MagicMock()
+        cursor.execute.side_effect = sqlite3.OperationalError("no rowid")
+        instance._sqlite_cur = cursor
+
+        assert instance._sqlite_table_has_rowid("problematic") is False
+
+    def test_translate_type_recovers_from_normalized_failure(self, mocker: MockFixture) -> None:
+        instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+        instance._logger = mocker.MagicMock()
+        mocker.patch.object(instance, "_normalize_sqlite_column_type", return_value="NUMERIC(5)")
+        mocker.patch.object(
+            SQLite3toMySQL,
+            "_translate_type_from_sqlite_to_mysql_legacy",
+            side_effect=[ValueError("bad type"), "VARCHAR(255)"],
+        )
+
+        result = instance._translate_type_from_sqlite_to_mysql("numeric")
+
+        assert result == "VARCHAR(255)"
+
+    def test_add_index_duplicate_keyname_retries_with_suffix(self, mocker: MockFixture) -> None:
+        instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+        instance._mysql_cur = mocker.MagicMock()
+        instance._mysql_cur.execute.side_effect = [
+            mysql.connector.Error(msg="dup key", errno=errorcode.ER_DUP_KEYNAME),
+            None,
+        ]
+        instance._mysql = mocker.MagicMock()
+        instance._logger = mocker.MagicMock()
+        instance._ignore_duplicate_keys = False
+
+        index = {"name": "idx_demo", "unique": 0}
+        index_infos = ({"name": "col"},)
+
+        SQLite3toMySQL._add_index(
+            instance,
+            table_name="demo",
+            index_type="INDEX",
+            index=index,
+            index_columns="`col`",
+            index_infos=index_infos,
+        )
+
+        assert instance._mysql_cur.execute.call_count == 2
+        instance._logger.warning.assert_called_with(
+            'Duplicate key "%s" in table %s detected! Trying to create new key "%s_%s" ...',
+            "idx_demo",
+            "demo",
+            "idx_demo",
+            1,
+        )
+
+    def test_add_index_duplicate_keyname_ignored_when_configured(self, mocker: MockFixture) -> None:
+        instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+        instance._mysql_cur = mocker.MagicMock()
+        instance._mysql_cur.execute.side_effect = mysql.connector.Error(
+            msg="dup key",
+            errno=errorcode.ER_DUP_KEYNAME,
+        )
+        instance._mysql = mocker.MagicMock()
+        instance._logger = mocker.MagicMock()
+        instance._ignore_duplicate_keys = True
+
+        index = {"name": "idx_demo", "unique": 0}
+        index_infos = ({"name": "col"},)
+
+        SQLite3toMySQL._add_index(
+            instance,
+            table_name="demo",
+            index_type="INDEX",
+            index=index,
+            index_columns="`col`",
+            index_infos=index_infos,
+        )
+
+        instance._logger.warning.assert_called_with(
+            'Ignoring duplicate key "%s" in table %s!',
+            "idx_demo",
+            "demo",
+        )
+
+    @pytest.mark.parametrize(
+        "errno, log_method, message_fragment, expect_raise",
+        [
+            (errorcode.ER_DUP_ENTRY, "warning", "duplicate entry", False),
+            (errorcode.ER_DUP_FIELDNAME, "warning", "Duplicate field name", False),
+            (errorcode.ER_TOO_MANY_KEYS, "warning", "Too many keys", False),
+            (errorcode.ER_TOO_LONG_KEY, "warning", "Key length too long", False),
+            (errorcode.ER_BAD_FT_COLUMN, "warning", "Retrying without FULLTEXT", True),
+        ],
+    )
+    def test_add_index_error_handling(
+        self,
+        mocker: MockFixture,
+        errno: int,
+        log_method: str,
+        message_fragment: str,
+        expect_raise: bool,
+    ) -> None:
+        instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+        instance._mysql_cur = mocker.MagicMock()
+        instance._mysql_cur.execute.side_effect = mysql.connector.Error(msg="fail", errno=errno)
+        instance._mysql = mocker.MagicMock()
+        instance._logger = mocker.MagicMock()
+        instance._ignore_duplicate_keys = False
+
+        index = {"name": "idx_demo", "unique": 0}
+        index_infos = ({"name": "col"},)
+
+        call = lambda: SQLite3toMySQL._add_index(  # noqa: E731
+            instance,
+            table_name="demo",
+            index_type="FULLTEXT" if errno == errorcode.ER_BAD_FT_COLUMN else "INDEX",
+            index=index,
+            index_columns="`col`",
+            index_infos=index_infos,
+        )
+
+        if expect_raise:
+            with pytest.raises(mysql.connector.Error):
+                call()
+        else:
+            call()
+
+        log_mock = getattr(instance._logger, log_method)
+        assert any(message_fragment in args[0] for args, _ in log_mock.call_args_list)
 
     @pytest.mark.parametrize("quiet", [False, True])
     def test_add_foreign_keys_error(
@@ -1197,6 +1613,119 @@ class TestSQLite3toMySQL:
             == "CURRENT_TIME"
         )
 
+    def test_translate_default_for_mysql_sqlglot_strftime_modifier(self):
+        instance = self._mk(expr=True, ts_dt=True, fsp=True)
+        result = instance._translate_default_for_mysql("VARCHAR(32)", "strftime('%Y-%m-%d', 'now', 'utc')")
+        assert result == "DATE_FORMAT(UTC_TIMESTAMP(), '%Y-%m-%d')"
+
+    def test_translate_default_for_mysql_sqlglot_requires_expr_support(self):
+        instance = self._mk(expr=False, ts_dt=True, fsp=True)
+        result = instance._translate_default_for_mysql("VARCHAR(32)", "strftime('%Y-%m-%d', 'now', 'utc')")
+        assert result == "strftime('%Y-%m-%d', 'now', 'utc')"
+
+    def test_translate_default_for_mysql_preserves_empty_string(self) -> None:
+        instance = self._mk(expr=True, ts_dt=True, fsp=True)
+        assert instance._translate_default_for_mysql("VARCHAR(10)", "   ") == ""
+
+    def test_translate_default_for_mysql_preserves_null_literal(self) -> None:
+        instance = self._mk(expr=True, ts_dt=True, fsp=True)
+        assert instance._translate_default_for_mysql("INTEGER", "NULL") == "NULL"
+
+    def test_translate_default_for_mysql_timestamp_handles_invalid_precision_and_utc(self) -> None:
+        instance = self._mk(expr=False, ts_dt=True, fsp=True)
+
+        class FakeMatch:
+            def group(self, *_: t.Any) -> str:
+                return "()"
+
+        instance.COLUMN_LENGTH_PATTERN = types.SimpleNamespace(search=lambda _: FakeMatch())  # type: ignore[attr-defined]
+        result = instance._translate_default_for_mysql("TIMESTAMP(foo)", "datetime('now','utc')")
+        assert result == "UTC_TIMESTAMP"
+
+    def test_translate_default_for_mysql_datetime_without_support_returns_empty(self) -> None:
+        instance = self._mk(expr=False, ts_dt=False, fsp=True)
+        assert instance._translate_default_for_mysql("DATETIME(6)", "CURRENT_TIMESTAMP") == ""
+
+    def test_translate_default_for_mysql_datetime_utc_handles_invalid_precision(self) -> None:
+        instance = self._mk(expr=False, ts_dt=True, fsp=True)
+
+        class FakeMatch:
+            def group(self, *_: t.Any) -> str:
+                return "()"
+
+        instance.COLUMN_LENGTH_PATTERN = types.SimpleNamespace(search=lambda _: FakeMatch())  # type: ignore[attr-defined]
+        result = instance._translate_default_for_mysql("DATETIME(foo)", "datetime('now','utc')")
+        assert result == "UTC_TIMESTAMP"
+
+    def test_translate_default_for_mysql_time_utc_handles_invalid_precision(self) -> None:
+        instance = self._mk(expr=True, ts_dt=False, fsp=True)
+
+        class FakeMatch:
+            def group(self, *_: t.Any) -> str:
+                return "()"
+
+        instance.COLUMN_LENGTH_PATTERN = types.SimpleNamespace(search=lambda _: FakeMatch())  # type: ignore[attr-defined]
+        result = instance._translate_default_for_mysql("TIME(foo)", "time('now','utc')")
+        assert result == "UTC_TIME"
+
+    def test_translate_default_for_mysql_sqlglot_parse_error_returns_original(self, mocker: MockerFixture) -> None:
+        instance = self._mk(expr=True, ts_dt=True, fsp=True)
+        mocker.patch(
+            "sqlite3_to_mysql.transporter.sqlglot.parse_one",
+            side_effect=sqlglot_errors.ParseError("boom", "expr"),
+        )
+
+        original = "json_extract(payload, '$.foo')"
+        assert instance._translate_default_for_mysql("VARCHAR(255)", original) == original
+
+    def test_translate_default_for_mysql_sqlglot_render_error_returns_original(self, mocker: MockerFixture) -> None:
+        instance = self._mk(expr=True, ts_dt=True, fsp=True)
+
+        fake_expression = mocker.MagicMock()
+        fake_expression.transform.side_effect = lambda fn: fake_expression
+        fake_expression.sql.side_effect = sqlglot_errors.SqlglotError("render fail")
+
+        mocker.patch("sqlite3_to_mysql.transporter.sqlglot.parse_one", return_value=fake_expression)
+
+        original = "(SELECT 1)"
+        assert instance._translate_default_for_mysql("VARCHAR(255)", original) == "SELECT 1"
+
+    def test_translate_type_from_sqlite_to_mysql_sqlglot_normalizes_spacing(
+        self,
+        sqlite_database: str,
+        mysql_database: Engine,
+        mysql_credentials: MySQLCredentials,
+    ) -> None:
+        proc: SQLite3toMySQL = SQLite3toMySQL(
+            sqlite_file=sqlite_database,
+            mysql_user=mysql_credentials.user,
+            mysql_password=mysql_credentials.password,
+            mysql_host=mysql_credentials.host,
+            mysql_port=mysql_credentials.port,
+            mysql_database=mysql_credentials.database,
+            quiet=True,
+        )
+        assert proc._translate_type_from_sqlite_to_mysql("NUMERIC ( 10 , 5 )") == "DECIMAL(10,5)"
+        assert proc._translate_type_from_sqlite_to_mysql("varchar ( 12 )") == "VARCHAR(12)"
+        assert proc._translate_type_from_sqlite_to_mysql("CHAR ( 7 )") == "CHAR(7)"
+
+    def test_translate_type_from_sqlite_to_mysql_sqlglot_preserves_unsigned(
+        self,
+        sqlite_database: str,
+        mysql_database: Engine,
+        mysql_credentials: MySQLCredentials,
+    ):
+        proc: SQLite3toMySQL = SQLite3toMySQL(
+            sqlite_file=sqlite_database,
+            mysql_user=mysql_credentials.user,
+            mysql_password=mysql_credentials.password,
+            mysql_host=mysql_credentials.host,
+            mysql_port=mysql_credentials.port,
+            mysql_database=mysql_credentials.database,
+            quiet=True,
+        )
+        assert proc._translate_type_from_sqlite_to_mysql("numeric(8, 3) unsigned") == "DECIMAL(8,3) UNSIGNED"
+
     def test_translate_sqlite_view_definition_current_timestamp(self):
         instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
         result = instance._translate_sqlite_view_definition(
@@ -1257,7 +1786,6 @@ class TestSQLite3toMySQL:
         self,
         sqlite_database: str,
         mysql_credentials: MySQLCredentials,
-        mocker: MockFixture,
     ) -> None:
         """Verify chunk parameter is correctly converted to integer _chunk_size."""
         # Chunk=2 should yield _chunk_size == 2

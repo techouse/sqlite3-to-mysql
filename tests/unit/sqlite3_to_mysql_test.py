@@ -1153,9 +1153,9 @@ class TestSQLite3toMySQL:
         mysql_text_type: str = "TEXT",
     ) -> SQLite3toMySQL:
         instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
-        instance._mysql_integer_type = mysql_integer_type
-        instance._mysql_string_type = mysql_string_type
-        instance._mysql_text_type = mysql_text_type
+        instance._mysql_integer_type = mysql_integer_type.upper()
+        instance._mysql_string_type = mysql_string_type.upper()
+        instance._mysql_text_type = mysql_text_type.upper()
         return instance
 
     @pytest.mark.parametrize(

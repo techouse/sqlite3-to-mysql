@@ -332,6 +332,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
     def _translate_type_from_sqlite_to_mysql(self, column_type: str) -> str:
         normalized: t.Optional[str] = self._normalize_sqlite_column_type(column_type)
         if normalized and normalized.upper() != column_type.upper():
+            self._logger.info("Normalised SQLite column type %r -> %r", column_type, normalized)
             try:
                 return self._translate_type_from_sqlite_to_mysql_legacy(normalized)
             except ValueError:
@@ -347,7 +348,12 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
         try:
             expression = sqlglot.parse_one(f"SELECT CAST(NULL AS {normalized_for_parse})", read="sqlite")
         except sqlglot_errors.ParseError:
-            return None
+            # Retry: strip UNSIGNED to aid parsing; we'll re-attach it below if present.
+            try:
+                no_unsigned = re.sub(r"\bUNSIGNED\b", "", normalized_for_parse).strip()
+                expression = sqlglot.parse_one(f"SELECT CAST(NULL AS {no_unsigned})", read="sqlite")
+            except sqlglot_errors.ParseError:
+                return None
 
         cast: t.Optional[exp.Cast] = expression.find(exp.Cast)
         if not cast or not isinstance(cast.to, exp.DataType):
@@ -535,7 +541,8 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
             )
             and self._allow_expr_defaults
         ):
-            # Too old for expression defaults on DATE → fall back
+            if not self._allow_expr_defaults:
+                return ""
             return "CURRENT_DATE"
 
         # TIME
@@ -549,7 +556,8 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
             )
             and self._allow_expr_defaults
         ):
-            # Too old for expression defaults on TIME → fall back
+            if not self._allow_expr_defaults:
+                return ""
             len_match = self.COLUMN_LENGTH_PATTERN.search(column_type)
             fsp = ""
             if self._allow_fsp and len_match:

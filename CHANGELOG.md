@@ -1,3 +1,9 @@
+# 2.5.2
+
+* [FEAT] transfer SQLite views as MySQL native views
+* [CHORE] improve type and default value translation logic
+* [CHORE] add Python 3.14 support
+
 # 2.5.1
 
 * [FEAT] enhance table creation logic to handle default values and improve error handling

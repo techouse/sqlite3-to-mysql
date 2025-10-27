@@ -35,6 +35,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Programming Language :: Python :: Implementation :: CPython",
     "Typing :: Typed",
     "Topic :: Database",
@@ -114,7 +115,7 @@ sqlite3mysql = "sqlite3_to_mysql.cli:cli"
 
 [tool.black]
 line-length = 120
-target-version = ["py39", "py310", "py311", "py312", "py313"]
+target-version = ["py39", "py310", "py311", "py312", "py313", "py314"]
 include = '\.pyi?$'
 exclude = '''
 (

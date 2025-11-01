@@ -46,7 +46,6 @@ from sqlite3_to_mysql.sqlite_utils import (
 from .mysql_utils import (
     MYSQL_BLOB_COLUMN_TYPES,
     MYSQL_COLUMN_TYPES,
-    MYSQL_COLUMN_TYPES_WITHOUT_DEFAULT,
     MYSQL_INSERT_METHOD,
     MYSQL_TEXT_COLUMN_TYPES,
     MYSQL_TEXT_COLUMN_TYPES_WITH_JSON,
@@ -108,6 +107,8 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
         self._mysql_host = str(kwargs.get("mysql_host", "localhost"))
 
         self._mysql_port = kwargs.get("mysql_port", 3306) or 3306
+
+        self._is_mariadb = False
 
         if kwargs.get("mysql_socket") is not None:
             if not os.path.exists(str(kwargs.get("mysql_socket"))):
@@ -231,6 +232,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                     raise
 
             self._mysql_version = self._get_mysql_version()
+            self._is_mariadb = "-mariadb" in self._mysql_version.lower()
             self._mysql_json_support = check_mysql_json_support(self._mysql_version)
             self._mysql_fulltext_support = check_mysql_fulltext_support(self._mysql_version)
             self._allow_expr_defaults = check_mysql_expression_defaults_support(self._mysql_version)
@@ -328,6 +330,69 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
     @classmethod
     def _valid_column_type(cls, column_type: str) -> t.Optional[t.Match[str]]:
         return cls.COLUMN_PATTERN.match(column_type.strip())
+
+    @classmethod
+    def _base_mysql_column_type(cls, column_type: str) -> str:
+        stripped: str = column_type.strip()
+        if not stripped:
+            return ""
+        match = cls._valid_column_type(stripped)
+        if match:
+            return match.group(0).strip().upper()
+        return stripped.split("(", 1)[0].strip().upper()
+
+    def _column_type_supports_default(self, base_type: str, allow_expr_defaults: bool) -> bool:
+        normalized: str = base_type.upper()
+        if not normalized:
+            return True
+        if normalized == "GEOMETRY":
+            return False
+        if normalized in MYSQL_BLOB_COLUMN_TYPES:
+            return False
+        if normalized in MYSQL_TEXT_COLUMN_TYPES_WITH_JSON:
+            return allow_expr_defaults
+        return True
+
+    @staticmethod
+    def _parse_sql_expression(value: str) -> t.Optional[exp.Expression]:
+        stripped: str = value.strip()
+        if not stripped:
+            return None
+        for dialect in ("mysql", "sqlite"):
+            try:
+                return sqlglot.parse_one(stripped, read=dialect)
+            except sqlglot_errors.ParseError:
+                continue
+        return None
+
+    def _format_textual_default(
+        self,
+        default_sql: str,
+        allow_expr_defaults: bool,
+        is_mariadb: bool,
+    ) -> str:
+        """Normalise textual DEFAULT expressions and wrap for MySQL via sqlglot."""
+        stripped: str = default_sql.strip()
+        if not stripped or stripped.upper() == "NULL":
+            return stripped
+        if not allow_expr_defaults:
+            return stripped
+
+        expr: t.Optional[exp.Expression] = self._parse_sql_expression(stripped)
+        if expr is None:
+            if is_mariadb or stripped.startswith("("):
+                return stripped
+            return f"({stripped})"
+
+        formatted: str = expr.sql(dialect="mysql")
+        if is_mariadb:
+            return formatted
+
+        if isinstance(expr, exp.Paren):
+            return formatted
+
+        wrapped = exp.Paren(this=expr.copy())
+        return wrapped.sql(dialect="mysql")
 
     def _translate_type_from_sqlite_to_mysql(self, column_type: str) -> str:
         normalized: t.Optional[str] = self._normalize_sqlite_column_type(column_type)
@@ -804,16 +869,25 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                 column["pk"] > 0 and column_type.startswith(("INT", "BIGINT")) and not compound_primary_key
             )
 
+            allow_expr_defaults: bool = getattr(self, "_allow_expr_defaults", False)
+            is_mariadb: bool = getattr(self, "_is_mariadb", False)
+            base_type: str = self._base_mysql_column_type(column_type)
+
             # Build DEFAULT clause safely (preserve falsy defaults like 0/'')
             default_clause: str = ""
             if (
                 not skip_default
                 and column["dflt_value"] is not None
-                and column_type not in MYSQL_COLUMN_TYPES_WITHOUT_DEFAULT
+                and self._column_type_supports_default(base_type, allow_expr_defaults)
                 and not auto_increment
             ):
                 td: str = self._translate_default_for_mysql(column_type, str(column["dflt_value"]))
                 if td != "":
+                    stripped_td: str = td.strip()
+                    if base_type in MYSQL_TEXT_COLUMN_TYPES_WITH_JSON and stripped_td.upper() != "NULL":
+                        td = self._format_textual_default(stripped_td, allow_expr_defaults, is_mariadb)
+                    else:
+                        td = stripped_td
                     default_clause = "DEFAULT " + td
             sql += " `{name}` {type} {notnull} {default} {auto_increment}, ".format(
                 name=mysql_safe_name,

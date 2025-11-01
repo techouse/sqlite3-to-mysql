@@ -1,6 +1,8 @@
 # 2.5.3
 
 * [FIX] transfer `TEXT` default
+* [FIX] removed the Hatch `sources = ["src"]` rewrite so `sdists` now keep the `src/sqlite3_to_mysql` tree, letting
+  wheels built from the sdist include the actual package
 
 # 2.5.2
 

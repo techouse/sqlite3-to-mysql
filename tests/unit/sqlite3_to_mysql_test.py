@@ -1026,6 +1026,201 @@ class TestSQLite3toMySQL:
         assert "DEFAULT CURRENT_TIMESTAMP" not in retry_sql
         instance._logger.warning.assert_called_once()
 
+    def test_create_table_text_default_mariadb(self, mocker: MockerFixture) -> None:
+        instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+        instance._sqlite_table_xinfo_support = False
+        instance._sqlite_quote_ident = lambda name: name.replace('"', '""')
+        instance._mysql_charset = "utf8mb4"
+        instance._mysql_collation = "utf8mb4_unicode_ci"
+        instance._logger = mocker.MagicMock()
+        instance._allow_expr_defaults = True
+        instance._is_mariadb = True
+
+        rows = [
+            {"name": "body", "type": "TEXT", "notnull": 1, "dflt_value": "'[]'", "pk": 0},
+        ]
+
+        sqlite_cursor = mocker.MagicMock()
+        sqlite_cursor.fetchall.return_value = rows
+        instance._sqlite_cur = sqlite_cursor
+
+        instance._translate_type_from_sqlite_to_mysql = mocker.MagicMock(return_value="TEXT")
+
+        mysql_cursor = mocker.MagicMock()
+        instance._mysql_cur = mysql_cursor
+        instance._mysql = mocker.MagicMock()
+
+        instance._create_table("demo")
+
+        executed_sql = mysql_cursor.execute.call_args[0][0]
+        assert "DEFAULT '[]'" in executed_sql
+        assert "DEFAULT ('[]')" not in executed_sql
+
+    def test_create_table_text_default_mysql_expression(self, mocker: MockerFixture) -> None:
+        instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+        instance._sqlite_table_xinfo_support = False
+        instance._sqlite_quote_ident = lambda name: name.replace('"', '""')
+        instance._mysql_charset = "utf8mb4"
+        instance._mysql_collation = "utf8mb4_unicode_ci"
+        instance._logger = mocker.MagicMock()
+        instance._allow_expr_defaults = True
+        instance._is_mariadb = False
+
+        rows = [
+            {"name": "body", "type": "TEXT", "notnull": 1, "dflt_value": "'[]'", "pk": 0},
+        ]
+
+        sqlite_cursor = mocker.MagicMock()
+        sqlite_cursor.fetchall.return_value = rows
+        instance._sqlite_cur = sqlite_cursor
+
+        instance._translate_type_from_sqlite_to_mysql = mocker.MagicMock(return_value="TEXT")
+
+        mysql_cursor = mocker.MagicMock()
+        instance._mysql_cur = mysql_cursor
+        instance._mysql = mocker.MagicMock()
+
+        instance._create_table("demo")
+
+        executed_sql = mysql_cursor.execute.call_args[0][0]
+        assert "DEFAULT ('[]')" in executed_sql
+
+    def test_create_table_text_default_mysql_function_expression(self, mocker: MockerFixture) -> None:
+        instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+        instance._sqlite_table_xinfo_support = False
+        instance._sqlite_quote_ident = lambda name: name.replace('"', '""')
+        instance._mysql_charset = "utf8mb4"
+        instance._mysql_collation = "utf8mb4_unicode_ci"
+        instance._logger = mocker.MagicMock()
+        instance._allow_expr_defaults = True
+        instance._is_mariadb = False
+
+        rows = [
+            {"name": "body", "type": "TEXT", "notnull": 1, "dflt_value": "json_array()", "pk": 0},
+        ]
+
+        sqlite_cursor = mocker.MagicMock()
+        sqlite_cursor.fetchall.return_value = rows
+        instance._sqlite_cur = sqlite_cursor
+
+        instance._translate_type_from_sqlite_to_mysql = mocker.MagicMock(return_value="TEXT")
+        instance._translate_default_for_mysql = mocker.MagicMock(return_value="JSON_ARRAY()")
+
+        mysql_cursor = mocker.MagicMock()
+        instance._mysql_cur = mysql_cursor
+        instance._mysql = mocker.MagicMock()
+
+        instance._create_table("demo")
+
+        executed_sql = mysql_cursor.execute.call_args[0][0]
+        assert "DEFAULT (JSON_ARRAY())" in executed_sql
+
+    def test_parse_sql_expression_falls_back_to_sqlite(self, mocker: MockerFixture) -> None:
+        instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+        sqlite_expr = exp.Literal.string("ok")
+        parse_mock = mocker.patch(
+            "sqlite3_to_mysql.transporter.sqlglot.parse_one",
+            side_effect=[sqlglot_errors.ParseError("mysql"), sqlite_expr],
+        )
+
+        result = instance._parse_sql_expression("value")
+
+        assert result is sqlite_expr
+        assert parse_mock.call_args_list[0].kwargs["read"] == "mysql"
+        assert parse_mock.call_args_list[1].kwargs["read"] == "sqlite"
+
+    def test_parse_sql_expression_returns_none_when_unparseable(self, mocker: MockerFixture) -> None:
+        instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+        parse_mock = mocker.patch(
+            "sqlite3_to_mysql.transporter.sqlglot.parse_one",
+            side_effect=[
+                sqlglot_errors.ParseError("mysql"),
+                sqlglot_errors.ParseError("sqlite"),
+            ],
+        )
+
+        result = instance._parse_sql_expression("value")
+
+        assert result is None
+        assert parse_mock.call_count == 2
+
+    def test_format_textual_default_wraps_when_unparseable_mysql(self, mocker: MockerFixture) -> None:
+        instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+        mocker.patch.object(instance, "_parse_sql_expression", return_value=None)
+
+        result = instance._format_textual_default("raw_json()", True, False)
+
+        assert result == "(raw_json())"
+
+    def test_format_textual_default_mariadb_uses_literal_output(self, mocker: MockerFixture) -> None:
+        instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+        literal_expr = exp.Literal.string("[]")
+        mocker.patch.object(instance, "_parse_sql_expression", return_value=literal_expr)
+
+        result = instance._format_textual_default("'[]'", True, True)
+
+        assert result == "'[]'"
+
+    def test_format_textual_default_preserves_existing_parens(self, mocker: MockerFixture) -> None:
+        instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+        paren_expr = exp.Paren(this=exp.Literal.string("[]"))
+        mocker.patch.object(instance, "_parse_sql_expression", return_value=paren_expr)
+
+        result = instance._format_textual_default("('[]')", True, False)
+
+        assert result == "('[]')"
+
+    def test_format_textual_default_respects_disabled_expression_defaults(self) -> None:
+        instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+
+        result = instance._format_textual_default("'[]'", False, False)
+
+        assert result == "'[]'"
+
+    def test_base_mysql_column_type_handles_whitespace_and_unknown(self) -> None:
+        instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+
+        assert instance._base_mysql_column_type("  TEXT(255) ") == "TEXT"
+        assert instance._base_mysql_column_type("custom_type") == "CUSTOM_TYPE"
+        assert instance._base_mysql_column_type("(TEXT)") == ""
+        assert instance._base_mysql_column_type("   ") == ""
+
+    def test_column_type_supports_default_branches(self) -> None:
+        instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+
+        assert not instance._column_type_supports_default("GEOMETRY", True)
+        assert not instance._column_type_supports_default("BLOB", True)
+        assert not instance._column_type_supports_default("TEXT", False)
+        assert instance._column_type_supports_default("", True)
+        assert instance._column_type_supports_default("VARCHAR", False)
+
+    def test_parse_sql_expression_returns_none_for_blank(self) -> None:
+        instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+
+        assert instance._parse_sql_expression("   ") is None
+
+    def test_format_textual_default_handles_blank_and_null(self) -> None:
+        instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+
+        assert instance._format_textual_default("   ", True, False) == ""
+        assert instance._format_textual_default("NULL", True, False) == "NULL"
+
+    def test_format_textual_default_mariadb_preserves_unparseable(self, mocker: MockerFixture) -> None:
+        instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+        mocker.patch.object(instance, "_parse_sql_expression", return_value=None)
+
+        result = instance._format_textual_default("json_array()", True, True)
+
+        assert result == "json_array()"
+
+    def test_format_textual_default_preserves_parenthesised_unparseable(self, mocker: MockerFixture) -> None:
+        instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+        mocker.patch.object(instance, "_parse_sql_expression", return_value=None)
+
+        result = instance._format_textual_default("(select 1)", True, False)
+
+        assert result == "(select 1)"
+
     def test_truncate_table_executes_when_table_exists(self, mocker: MockerFixture) -> None:
         instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
         cursor = mocker.MagicMock()

@@ -87,6 +87,7 @@ class SQLite3toMySQLAttributes:
     _mysql: MySQLConnection
     _mysql_cur: MySQLCursor
     _mysql_version: str
+    _is_mariadb: bool
     _mysql_json_support: bool
     _mysql_fulltext_support: bool
     _allow_expr_defaults: bool

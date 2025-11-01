@@ -1,3 +1,7 @@
+# 2.5.3
+
+* [FIX] transfer `TEXT` default
+
 # 2.5.2
 
 * [FEAT] transfer SQLite views as MySQL native views

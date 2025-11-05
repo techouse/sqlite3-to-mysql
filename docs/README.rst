@@ -96,6 +96,5 @@ If you’re on macOS, you can install the tool using
 
 .. code:: bash
 
-   brew tap techouse/sqlite3-to-mysql
    brew install sqlite3-to-mysql
    sqlite3mysql --help

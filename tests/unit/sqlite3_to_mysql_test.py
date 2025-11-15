@@ -1519,6 +1519,99 @@ class TestSQLite3toMySQL:
         sqlite_cnx.close()
         sqlite_engine.dispose()
 
+    def test_add_foreign_keys_shorthand_references_primary_key(
+        self,
+        sqlite_database: str,
+        mysql_database: Engine,
+        mysql_credentials: MySQLCredentials,
+        mocker: MockFixture,
+    ) -> None:
+        proc = SQLite3toMySQL(  # type: ignore[call-arg]
+            sqlite_file=sqlite_database,
+            mysql_user=mysql_credentials.user,
+            mysql_password=mysql_credentials.password,
+            mysql_host=mysql_credentials.host,
+            mysql_port=mysql_credentials.port,
+            mysql_database=mysql_credentials.database,
+        )
+        sqlite_cursor = mocker.MagicMock()
+        sqlite_cursor.fetchall.side_effect = [
+            [
+                {
+                    "id": 0,
+                    "seq": 0,
+                    "table": "parent",
+                    "from": "parent_id",
+                    "to": "",
+                    "on_delete": "NO ACTION",
+                    "on_update": "NO ACTION",
+                }
+            ],
+            [
+                {"name": "id", "pk": 1, "hidden": 0},
+            ],
+        ]
+        proc._sqlite_cur = sqlite_cursor
+        proc._sqlite_table_xinfo_support = False
+        proc._mysql_cur = mocker.MagicMock()
+        proc._mysql = mocker.MagicMock()
+        proc._logger = mocker.MagicMock()
+
+        proc._add_foreign_keys("child")
+
+        assert proc._mysql_cur.execute.call_count == 1
+        executed_sql: str = proc._mysql_cur.execute.call_args[0][0]
+        assert "FOREIGN KEY (`parent_id`)" in executed_sql
+        assert "REFERENCES `parent`(`id`)" in executed_sql
+        proc._mysql.commit.assert_called_once()
+
+    def test_add_foreign_keys_shorthand_pk_mismatch_is_skipped(
+        self,
+        sqlite_database: str,
+        mysql_database: Engine,
+        mysql_credentials: MySQLCredentials,
+        mocker: MockFixture,
+    ) -> None:
+        proc = SQLite3toMySQL(  # type: ignore[call-arg]
+            sqlite_file=sqlite_database,
+            mysql_user=mysql_credentials.user,
+            mysql_password=mysql_credentials.password,
+            mysql_host=mysql_credentials.host,
+            mysql_port=mysql_credentials.port,
+            mysql_database=mysql_credentials.database,
+        )
+        sqlite_cursor = mocker.MagicMock()
+        sqlite_cursor.fetchall.side_effect = [
+            [
+                {
+                    "id": 1,
+                    "seq": 0,
+                    "table": "parent",
+                    "from": "parent_id",
+                    "to": "",
+                    "on_delete": "NO ACTION",
+                    "on_update": "NO ACTION",
+                }
+            ],
+            [
+                {"name": "id", "pk": 1, "hidden": 0},
+                {"name": "second", "pk": 2, "hidden": 0},
+            ],
+        ]
+        proc._sqlite_cur = sqlite_cursor
+        proc._sqlite_table_xinfo_support = False
+        proc._mysql_cur = mocker.MagicMock()
+        proc._mysql = mocker.MagicMock()
+        proc._logger = mocker.MagicMock()
+
+        proc._add_foreign_keys("child")
+
+        proc._mysql_cur.execute.assert_not_called()
+        assert any(
+            "unable to resolve referenced primary key columns" in call.args[0]
+            for call in proc._logger.warning.call_args_list
+        )
+
     @pytest.mark.parametrize("quiet", [False, True])
     def test_add_index_duplicate_key_error(
         self,

@@ -1,3 +1,8 @@
+# 2.5.5
+
+* [FEAT] add support for SQLite `JSONB` column type
+* [FIX] enhance the translation of SQLite timestamp expressions that use `current_timestamp` within date/time functions
+
 # 2.5.4
 
 * [FEAT] add support for SQLite shorthand foreign key references that implicitly reference primary keys

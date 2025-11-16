@@ -36,6 +36,7 @@ except ImportError:
 from sqlite3_to_mysql.sqlite_utils import (
     adapt_decimal,
     adapt_timedelta,
+    check_sqlite_jsonb_support,
     check_sqlite_table_xinfo_support,
     convert_date,
     convert_decimal,
@@ -189,6 +190,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
 
         self._sqlite_version = self._get_sqlite_version()
         self._sqlite_table_xinfo_support = check_sqlite_table_xinfo_support(self._sqlite_version)
+        self._sqlite_jsonb_support = check_sqlite_jsonb_support(self._sqlite_version)
 
         self._mysql_create_tables = bool(kwargs.get("mysql_create_tables", True))
         self._mysql_transfer_data = bool(kwargs.get("mysql_transfer_data", True))
@@ -1337,11 +1339,15 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                     visible_columns: t.List[t.Dict[str, t.Any]] = [
                         column for column in table_column_info if column.get("hidden", 0) != 1
                     ]
-                    jsonb_columns: t.Set[str] = {
-                        str(column["name"])
-                        for column in visible_columns
-                        if column.get("name") and self._declared_type_is_jsonb(column.get("type"))
-                    }
+                    jsonb_columns: t.Set[str]
+                    if self._sqlite_jsonb_support:
+                        jsonb_columns = {
+                            str(column["name"])
+                            for column in visible_columns
+                            if column.get("name") and self._declared_type_is_jsonb(column.get("type"))
+                        }
+                    else:
+                        jsonb_columns = set()
 
                     select_parts: t.List[str] = []
                     if transfer_rowid:

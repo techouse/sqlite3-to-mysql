@@ -1,3 +1,7 @@
+# 2.5.4
+
+* [FEAT] add support for SQLite shorthand foreign key references that implicitly reference primary keys
+
 # 2.5.3
 
 * [FIX] transfer `TEXT` default

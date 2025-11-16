@@ -82,6 +82,10 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
         r"^(datetime|date|time)\s*\(\s*'now'(?:\s*,\s*'(localtime|utc)')?\s*\)$",
         re.IGNORECASE,
     )
+    SQLITE_CURRENT_TS_FUNC: t.Pattern[str] = re.compile(
+        r"^(datetime|date|time)\s*\(\s*current_timestamp(?:\s*,\s*'(localtime|utc)')?\s*\)$",
+        re.IGNORECASE,
+    )
     STRFTIME_NOW: t.Pattern[str] = re.compile(
         r"^strftime\s*\(\s*'([^']+)'\s*,\s*'now'(?:\s*,\s*'(localtime|utc)')?\s*\)$",
         re.IGNORECASE,
@@ -577,6 +581,10 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
 
         s: str = self._strip_wrapping_parentheses(raw)
         u: str = s.upper()
+        sqlite_current_ts_match: t.Optional[re.Match[str]] = self.SQLITE_CURRENT_TS_FUNC.match(s)
+        sqlite_current_ts_func: t.Optional[str] = (
+            sqlite_current_ts_match.group(1).lower() if sqlite_current_ts_match else None
+        )
 
         # NULL passthrough
         if u == "NULL":
@@ -590,6 +598,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
         if base.startswith("TIMESTAMP") and (
             self.CURRENT_TS.match(s)
             or (self.SQLITE_NOW_FUNC.match(s) and s.lower().startswith("datetime"))
+            or sqlite_current_ts_func == "datetime"
             or self.STRFTIME_NOW.match(s)
         ):
             len_match: t.Optional[re.Match[str]] = self.COLUMN_LENGTH_PATTERN.search(column_type)
@@ -609,6 +618,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
         if base.startswith("DATETIME") and (
             self.CURRENT_TS.match(s)
             or (self.SQLITE_NOW_FUNC.match(s) and s.lower().startswith("datetime"))
+            or sqlite_current_ts_func == "datetime"
             or self.STRFTIME_NOW.match(s)
         ):
             if not self._allow_current_ts_dt:
@@ -633,6 +643,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                 self.CURRENT_DATE.match(s)
                 or self.CURRENT_TS.match(s)  # map CURRENT_TIMESTAMP → CURRENT_DATE for DATE
                 or (self.SQLITE_NOW_FUNC.match(s) and s.lower().startswith("date"))
+                or sqlite_current_ts_func == "date"
                 or self.STRFTIME_NOW.match(s)
             )
             and self._allow_expr_defaults
@@ -647,6 +658,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                 self.CURRENT_TIME.match(s)
                 or self.CURRENT_TS.match(s)  # map CURRENT_TIMESTAMP → CURRENT_TIME for TIME
                 or (self.SQLITE_NOW_FUNC.match(s) and s.lower().startswith("time"))
+                or sqlite_current_ts_func == "time"
                 or self.STRFTIME_NOW.match(s)
             )
             and self._allow_expr_defaults

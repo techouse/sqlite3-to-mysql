@@ -406,6 +406,7 @@ def _make_transfer_stub(mocker: MockFixture) -> SQLite3toMySQL:
             {"name": "c1", "type": "TEXT", "hidden": 0},
         ]
     )
+    instance._sqlite_jsonb_support = True
     return instance
 
 
@@ -529,6 +530,32 @@ def test_transfer_selects_jsonb_columns_via_json_function(mocker: MockFixture) -
     assert json_selects
 
 
+def test_transfer_leaves_jsonb_columns_when_sqlite_lacks_support(mocker: MockFixture) -> None:
+    instance = _make_transfer_stub(mocker)
+    instance._sqlite_jsonb_support = False
+    instance._mysql_transfer_data = True
+    instance._sqlite_cur.fetchone.return_value = {"total_records": 1}
+    instance._sqlite_cur.fetchall.return_value = [(1, b"blob")]
+    instance._get_table_info.return_value = [
+        {"name": "id", "type": "INTEGER", "hidden": 0},
+        {"name": "payload", "type": "JSONB", "hidden": 0},
+    ]
+
+    def execute_side_effect(sql, *params):
+        del params
+        if sql.startswith("SELECT ") and "FROM" in sql and "COUNT" not in sql.upper():
+            instance._sqlite_cur.description = [("id",), ("payload",)]
+        return None
+
+    instance._sqlite_cur.execute.side_effect = execute_side_effect
+    instance._fetch_sqlite_master_rows = mocker.MagicMock(side_effect=[[{"name": "tbl", "type": "table"}], []])
+
+    instance.transfer()
+
+    executed_sqls = [call.args[0] for call in instance._sqlite_cur.execute.call_args_list]
+    assert all('json("payload")' not in sql for sql in executed_sqls)
+
+
 @pytest.mark.skipif(not SQLITE_SUPPORTS_JSONB, reason="SQLite 3.45+ required for JSONB tests")
 def test_transfer_converts_jsonb_values_to_textual_json(mocker: MockFixture) -> None:
     sqlite_connection = sqlite3.connect(":memory:", detect_types=sqlite3.PARSE_DECLTYPES)
@@ -546,6 +573,7 @@ def test_transfer_converts_jsonb_values_to_textual_json(mocker: MockFixture) -> 
     instance._exclude_sqlite_tables = tuple()
     instance._sqlite_views_as_tables = False
     instance._sqlite_table_xinfo_support = True
+    instance._sqlite_jsonb_support = SQLITE_SUPPORTS_JSONB
     instance._mysql_create_tables = False
     instance._mysql_transfer_data = True
     instance._mysql_truncate_tables = False

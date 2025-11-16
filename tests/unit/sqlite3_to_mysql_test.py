@@ -2014,6 +2014,19 @@ class TestSQLite3toMySQL:
             ("TIMESTAMP(3)", "CURRENT_TIMESTAMP", {"expr": False, "ts_dt": True, "fsp": True}, "CURRENT_TIMESTAMP(3)"),
             # SQLite-style now -> map to CURRENT_TIMESTAMP (with FSP when allowed)
             ("DATETIME(2)", "datetime('now')", {"expr": False, "ts_dt": True, "fsp": True}, "CURRENT_TIMESTAMP(2)"),
+            # datetime(current_timestamp, ...) should also map to CURRENT/UTC TIMESTAMP
+            (
+                "DATETIME",
+                "datetime(current_timestamp, 'localtime')",
+                {"expr": False, "ts_dt": True, "fsp": False},
+                "CURRENT_TIMESTAMP",
+            ),
+            (
+                "DATETIME(3)",
+                "datetime(current_timestamp, 'utc')",
+                {"expr": False, "ts_dt": True, "fsp": True},
+                "UTC_TIMESTAMP(3)",
+            ),
             # --- DATE mapping (from 'now' forms or CURRENT_TIMESTAMP) ---
             # Only map when expression defaults are allowed
             ("DATE", "datetime('now')", {"expr": True, "ts_dt": False, "fsp": False}, "CURRENT_DATE"),

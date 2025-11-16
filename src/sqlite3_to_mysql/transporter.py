@@ -36,10 +36,12 @@ except ImportError:
 from sqlite3_to_mysql.sqlite_utils import (
     adapt_decimal,
     adapt_timedelta,
+    check_sqlite_jsonb_support,
     check_sqlite_table_xinfo_support,
     convert_date,
     convert_decimal,
     convert_timedelta,
+    sqlite_jsonb_column_expression,
     unicase_compare,
 )
 
@@ -188,6 +190,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
 
         self._sqlite_version = self._get_sqlite_version()
         self._sqlite_table_xinfo_support = check_sqlite_table_xinfo_support(self._sqlite_version)
+        self._sqlite_jsonb_support = check_sqlite_jsonb_support(self._sqlite_version)
 
         self._mysql_create_tables = bool(kwargs.get("mysql_create_tables", True))
         self._mysql_transfer_data = bool(kwargs.get("mysql_transfer_data", True))
@@ -303,6 +306,13 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
         pragma: str = "table_xinfo" if self._sqlite_table_xinfo_support else "table_info"
         self._sqlite_cur.execute(f'PRAGMA {pragma}("{quoted_table_name}")')
         return [dict(row) for row in self._sqlite_cur.fetchall()]
+
+    @staticmethod
+    def _declared_type_is_jsonb(column_type: t.Optional[str]) -> bool:
+        """Return True when a SQLite column is declared as JSONB."""
+        if not column_type:
+            return False
+        return column_type.strip().upper().startswith("JSONB")
 
     def _get_table_primary_key_columns(self, table_name: str) -> t.List[str]:
         """Return visible primary key columns ordered by their PK sequence."""
@@ -516,6 +526,8 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
             return "TINYINT(1)"
         if data_type.startswith(("REAL", "DOUBLE", "FLOAT", "DECIMAL", "DEC", "FIXED")):
             return full_column_type
+        if data_type == "JSONB" or data_type.startswith("JSONB"):
+            return "JSON" if self._mysql_json_support else self._mysql_text_type
         if data_type not in MYSQL_COLUMN_TYPES:
             return self._mysql_string_type
         return full_column_type
@@ -1323,8 +1335,36 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                         "view" if object_type == "view" else "table",
                         table_name,
                     )
+                    table_column_info: t.List[t.Dict[str, t.Any]] = self._get_table_info(table_name)
+                    visible_columns: t.List[t.Dict[str, t.Any]] = [
+                        column for column in table_column_info if column.get("hidden", 0) != 1
+                    ]
+                    jsonb_columns: t.Set[str]
+                    if self._sqlite_jsonb_support:
+                        jsonb_columns = {
+                            str(column["name"])
+                            for column in visible_columns
+                            if column.get("name") and self._declared_type_is_jsonb(column.get("type"))
+                        }
+                    else:
+                        jsonb_columns = set()
+
+                    select_parts: t.List[str] = []
                     if transfer_rowid:
-                        select_list: str = 'rowid as "rowid", *'
+                        select_parts.append('rowid AS "rowid"')
+
+                    for column in visible_columns:
+                        column_name: t.Optional[str] = column.get("name")
+                        if not column_name:
+                            continue
+                        quoted_column: str = self._sqlite_quote_ident(column_name)
+                        if column_name in jsonb_columns:
+                            select_parts.append(sqlite_jsonb_column_expression(quoted_column))
+                        else:
+                            select_parts.append(f'"{quoted_column}"')
+
+                    if select_parts:
+                        select_list = ", ".join(select_parts)
                     else:
                         select_list = "*"
                     self._sqlite_cur.execute(f'SELECT {select_list} FROM "{quoted_table_name}"')

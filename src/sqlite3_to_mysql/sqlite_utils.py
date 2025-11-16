@@ -53,3 +53,14 @@ def check_sqlite_table_xinfo_support(version_string: str) -> bool:
     """Check for SQLite table_xinfo support."""
     sqlite_version: Version = version.parse(version_string)
     return sqlite_version.major > 3 or (sqlite_version.major == 3 and sqlite_version.minor >= 26)
+
+
+def check_sqlite_jsonb_support(version_string: str) -> bool:
+    """Check for SQLite JSONB support."""
+    sqlite_version: Version = version.parse(version_string)
+    return sqlite_version.major > 3 or (sqlite_version.major == 3 and sqlite_version.minor >= 45)
+
+
+def sqlite_jsonb_column_expression(quoted_column_name: str) -> str:
+    """Return a SELECT expression that converts JSONB blobs to textual JSON while preserving NULLs."""
+    return 'CASE WHEN "{name}" IS NULL THEN NULL ELSE json("{name}") END AS "{name}"'.format(name=quoted_column_name)

@@ -24,6 +24,9 @@ from sqlite3_to_mysql.cli import cli as sqlite3mysql
 from tests.conftest import MySQLCredentials
 
 
+SQLITE_SUPPORTS_JSONB: bool = sqlite3.sqlite_version_info >= (3, 45, 0)
+
+
 def test_cli_sqlite_views_flag_propagates(
     cli_runner: CliRunner,
     sqlite_database: str,
@@ -398,7 +401,33 @@ def _make_transfer_stub(mocker: MockFixture) -> SQLite3toMySQL:
     instance._translate_sqlite_view_definition = mocker.MagicMock(return_value="CREATE VIEW translated AS SELECT 1")
     instance._sqlite_cur.fetchall.return_value = []
     instance._sqlite_cur.execute.return_value = None
+    instance._get_table_info = mocker.MagicMock(
+        return_value=[
+            {"name": "c1", "type": "TEXT", "hidden": 0},
+        ]
+    )
+    instance._sqlite_jsonb_support = True
     return instance
+
+
+class RecordingMySQLCursor:
+    def __init__(self) -> None:
+        self.executed_sql: t.List[str] = []
+        self.inserted_batches: t.List[t.List[t.Tuple[t.Any, ...]]] = []
+
+    def execute(self, sql: str, params: t.Optional[t.Tuple[t.Any, ...]] = None) -> None:
+        del params
+        self.executed_sql.append(sql)
+
+    def fetchall(self) -> t.List[t.Any]:
+        return []
+
+    def fetchone(self) -> t.Optional[t.Any]:
+        return None
+
+    def executemany(self, sql: str, rows: t.Iterable[t.Tuple[t.Any, ...]]) -> None:
+        self.executed_sql.append(sql)
+        self.inserted_batches.append([tuple(row) for row in rows])
 
 
 def test_transfer_creates_mysql_views(mocker: MockFixture) -> None:
@@ -472,7 +501,112 @@ def test_transfer_escapes_sqlite_identifiers(mocker: MockFixture) -> None:
 
     executed_sqls = [call.args[0] for call in instance._sqlite_cur.execute.call_args_list]
     assert 'SELECT COUNT(*) AS total_records FROM "tbl""quote"' in executed_sqls
-    assert 'SELECT * FROM "tbl""quote"' in executed_sqls
+    assert 'SELECT "c1" FROM "tbl""quote"' in executed_sqls
+
+
+def test_transfer_selects_jsonb_columns_via_json_function(mocker: MockFixture) -> None:
+    instance = _make_transfer_stub(mocker)
+    instance._mysql_transfer_data = True
+    instance._sqlite_cur.fetchone.return_value = {"total_records": 1}
+    instance._sqlite_cur.fetchall.return_value = [(1, b"blob")]
+    instance._get_table_info.return_value = [
+        {"name": "id", "type": "INTEGER", "hidden": 0},
+        {"name": "payload", "type": "JSONB", "hidden": 0},
+    ]
+
+    def execute_side_effect(sql, *params):
+        del params
+        if 'json("payload")' in sql:
+            instance._sqlite_cur.description = [("id",), ("payload",)]
+        return None
+
+    instance._sqlite_cur.execute.side_effect = execute_side_effect
+    instance._fetch_sqlite_master_rows = mocker.MagicMock(side_effect=[[{"name": "tbl", "type": "table"}], []])
+
+    instance.transfer()
+
+    executed_sqls = [call.args[0] for call in instance._sqlite_cur.execute.call_args_list]
+    json_selects = [sql for sql in executed_sqls if 'json("payload")' in sql]
+    assert json_selects
+
+
+def test_transfer_leaves_jsonb_columns_when_sqlite_lacks_support(mocker: MockFixture) -> None:
+    instance = _make_transfer_stub(mocker)
+    instance._sqlite_jsonb_support = False
+    instance._mysql_transfer_data = True
+    instance._sqlite_cur.fetchone.return_value = {"total_records": 1}
+    instance._sqlite_cur.fetchall.return_value = [(1, b"blob")]
+    instance._get_table_info.return_value = [
+        {"name": "id", "type": "INTEGER", "hidden": 0},
+        {"name": "payload", "type": "JSONB", "hidden": 0},
+    ]
+
+    def execute_side_effect(sql, *params):
+        del params
+        if sql.startswith("SELECT ") and "FROM" in sql and "COUNT" not in sql.upper():
+            instance._sqlite_cur.description = [("id",), ("payload",)]
+        return None
+
+    instance._sqlite_cur.execute.side_effect = execute_side_effect
+    instance._fetch_sqlite_master_rows = mocker.MagicMock(side_effect=[[{"name": "tbl", "type": "table"}], []])
+
+    instance.transfer()
+
+    executed_sqls = [call.args[0] for call in instance._sqlite_cur.execute.call_args_list]
+    assert all('json("payload")' not in sql for sql in executed_sqls)
+
+
+@pytest.mark.skipif(not SQLITE_SUPPORTS_JSONB, reason="SQLite 3.45+ required for JSONB tests")
+def test_transfer_converts_jsonb_values_to_textual_json(mocker: MockFixture) -> None:
+    sqlite_connection = sqlite3.connect(":memory:", detect_types=sqlite3.PARSE_DECLTYPES)
+    sqlite_connection.row_factory = sqlite3.Row
+    sqlite_cursor = sqlite_connection.cursor()
+    sqlite_cursor.execute("CREATE TABLE data (id INTEGER PRIMARY KEY, payload JSONB)")
+    sqlite_cursor.execute("INSERT INTO data(payload) VALUES (jsonb(?))", ('{"foo":"bar"}',))
+    sqlite_cursor.execute("INSERT INTO data(payload) VALUES (NULL)")
+    sqlite_connection.commit()
+
+    instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+    instance._sqlite = sqlite_connection
+    instance._sqlite_cur = sqlite_connection.cursor()
+    instance._sqlite_tables = tuple()
+    instance._exclude_sqlite_tables = tuple()
+    instance._sqlite_views_as_tables = False
+    instance._sqlite_table_xinfo_support = True
+    instance._sqlite_jsonb_support = SQLITE_SUPPORTS_JSONB
+    instance._mysql_create_tables = False
+    instance._mysql_transfer_data = True
+    instance._mysql_truncate_tables = False
+    instance._mysql_insert_method = "IGNORE"
+    instance._mysql_version = "8.0.32"
+    instance._without_foreign_keys = True
+    instance._use_fulltext = False
+    instance._mysql_fulltext_support = False
+    instance._with_rowid = False
+    instance._chunk_size = None
+    instance._quiet = True
+    instance._mysql_charset = "utf8mb4"
+    instance._mysql_collation = "utf8mb4_unicode_ci"
+    instance._mysql_cur = RecordingMySQLCursor()
+    instance._mysql = mocker.MagicMock()
+    instance._mysql.commit = mocker.MagicMock()
+    instance._logger = mocker.MagicMock()
+    instance._create_table = mocker.MagicMock()
+    instance._truncate_table = mocker.MagicMock()
+    instance._add_indices = mocker.MagicMock()
+    instance._add_foreign_keys = mocker.MagicMock()
+    instance._create_mysql_view = mocker.MagicMock()
+    instance._translate_sqlite_view_definition = mocker.MagicMock()
+    instance._sqlite_table_has_rowid = lambda _table: False
+    instance._fetch_sqlite_master_rows = mocker.MagicMock(side_effect=[[{"name": "data", "type": "table"}], []])
+
+    instance.transfer()
+
+    assert instance._mysql_cur.inserted_batches, "expected captured MySQL inserts"
+    inserted_rows = instance._mysql_cur.inserted_batches[0]
+    payload_by_id = {row[0]: row[1] for row in inserted_rows}
+    assert payload_by_id[1] == '{"foo":"bar"}'
+    assert payload_by_id[2] is None
 
 
 def test_translate_sqlite_view_definition_strftime_weekday() -> None:
@@ -552,6 +686,24 @@ def test_transfer_table_data_with_chunking(mocker: MockFixture) -> None:
     assert instance._sqlite_cur.fetchmany.call_count == 2
     assert instance._mysql_cur.executemany.call_count == 2
     instance._mysql.commit.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    "json_support,expected",
+    [
+        (True, "JSON"),
+        (False, "TEXT"),
+    ],
+)
+def test_translate_type_from_sqlite_maps_jsonb_to_json(json_support: bool, expected: str) -> None:
+    instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
+    instance._mysql_text_type = "TEXT"
+    instance._mysql_string_type = "VARCHAR(255)"
+    instance._mysql_integer_type = "INT"
+    instance._mysql_json_support = json_support
+
+    assert instance._translate_type_from_sqlite_to_mysql("JSONB") == expected
+    assert instance._translate_type_from_sqlite_to_mysql("jsonb(16)") == expected
 
 
 @pytest.mark.usefixtures("sqlite_database", "mysql_instance")

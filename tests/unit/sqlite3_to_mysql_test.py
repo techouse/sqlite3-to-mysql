@@ -67,6 +67,65 @@ def test_cli_sqlite_views_flag_propagates(
     assert transporter_ctor.call_args.kwargs["sqlite_views_as_tables"] is True
 
 
+def test_cli_mysql_table_prefix_passed_to_transporter(
+    cli_runner: CliRunner,
+    sqlite_database: str,
+    mysql_credentials: MySQLCredentials,
+    mocker: MockerFixture,
+) -> None:
+    transporter_ctor = mocker.patch("sqlite3_to_mysql.cli.SQLite3toMySQL", autospec=True)
+    transporter_instance = transporter_ctor.return_value
+    transporter_instance.transfer.return_value = None
+
+    common_args = [
+        "-f",
+        sqlite_database,
+        "-d",
+        mysql_credentials.database,
+        "-u",
+        mysql_credentials.user,
+        "--mysql-password",
+        mysql_credentials.password,
+        "-h",
+        mysql_credentials.host,
+        "-P",
+        str(mysql_credentials.port),
+    ]
+
+    result: Result = cli_runner.invoke(sqlite3mysql, common_args + ["--mysql-table-prefix", "stage_"])
+    assert result.exit_code == 0
+    assert transporter_ctor.call_args.kwargs["mysql_table_prefix"] == "stage_"
+
+
+def test_cli_mysql_table_prefix_validation(
+    cli_runner: CliRunner,
+    sqlite_database: str,
+    mysql_credentials: MySQLCredentials,
+    mocker: MockerFixture,
+) -> None:
+    transporter_ctor = mocker.patch("sqlite3_to_mysql.cli.SQLite3toMySQL", autospec=True)
+
+    common_args = [
+        "-f",
+        sqlite_database,
+        "-d",
+        mysql_credentials.database,
+        "-u",
+        mysql_credentials.user,
+        "--mysql-password",
+        mysql_credentials.password,
+        "-h",
+        mysql_credentials.host,
+        "-P",
+        str(mysql_credentials.port),
+    ]
+
+    result: Result = cli_runner.invoke(sqlite3mysql, common_args + ["--mysql-table-prefix", "123bad"])
+    assert result.exit_code != 0
+    assert "Table prefix" in result.output
+    transporter_ctor.assert_not_called()
+
+
 def test_cli_collation_validation(
     cli_runner: CliRunner,
     sqlite_database: str,
@@ -401,6 +460,7 @@ def _make_transfer_stub(mocker: MockFixture) -> SQLite3toMySQL:
     instance._translate_sqlite_view_definition = mocker.MagicMock(return_value="CREATE VIEW translated AS SELECT 1")
     instance._sqlite_cur.fetchall.return_value = []
     instance._sqlite_cur.execute.return_value = None
+    instance._mysql_table_prefix = ""
     instance._get_table_info = mocker.MagicMock(
         return_value=[
             {"name": "c1", "type": "TEXT", "hidden": 0},
@@ -481,6 +541,27 @@ def test_transfer_with_data_invokes_transfer_table_data(mocker: MockFixture) -> 
     assert instance._transfer_table_data.called
     sql_arg = instance._transfer_table_data.call_args.kwargs["sql"]
     assert "INSERT" in sql_arg
+
+
+def test_transfer_applies_mysql_table_prefix(mocker: MockFixture) -> None:
+    instance = _make_transfer_stub(mocker)
+    instance._mysql_table_prefix = "pre_"
+    instance._mysql_transfer_data = True
+    instance._sqlite_cur.fetchone.return_value = {"total_records": 1}
+    instance._sqlite_cur.fetchall.return_value = [(1,)]
+
+    def execute_side_effect(sql, *params):
+        if sql.startswith("SELECT ") and "FROM" in sql and "COUNT" not in sql.upper():
+            instance._sqlite_cur.description = [("c1",)]
+        return None
+
+    instance._sqlite_cur.execute.side_effect = execute_side_effect
+    instance._fetch_sqlite_master_rows = mocker.MagicMock(side_effect=[[{"name": "tbl", "type": "table"}], []])
+
+    instance.transfer()
+
+    sql_arg = instance._transfer_table_data.call_args.kwargs["sql"]
+    assert "INTO `pre_tbl`" in sql_arg
 
 
 def test_transfer_escapes_sqlite_identifiers(mocker: MockFixture) -> None:
@@ -1715,6 +1796,34 @@ class TestSQLite3toMySQL:
         executed_sql: str = proc._mysql_cur.execute.call_args[0][0]
         assert "FOREIGN KEY (`parent_id`)" in executed_sql
         assert "REFERENCES `parent`(`id`)" in executed_sql
+        proc._mysql.commit.assert_called_once()
+
+    def test_add_foreign_keys_apply_mysql_table_prefix(self, mocker: MockFixture) -> None:
+        proc = SQLite3toMySQL.__new__(SQLite3toMySQL)
+        sqlite_cursor = mocker.MagicMock()
+        sqlite_cursor.fetchall.return_value = [
+            {
+                "id": 0,
+                "seq": 0,
+                "table": "parent",
+                "from": "parent_id",
+                "to": "id",
+                "on_delete": "NO ACTION",
+                "on_update": "NO ACTION",
+            }
+        ]
+        proc._sqlite_cur = sqlite_cursor
+        proc._sqlite_table_xinfo_support = False
+        proc._mysql_cur = mocker.MagicMock()
+        proc._mysql = mocker.MagicMock()
+        proc._logger = mocker.MagicMock()
+        proc._mysql_table_prefix = "pre_"
+
+        proc._add_foreign_keys("child")
+
+        executed_sql = proc._mysql_cur.execute.call_args[0][0]
+        assert "ALTER TABLE `pre_child`" in executed_sql
+        assert "REFERENCES `pre_parent`" in executed_sql
         proc._mysql.commit.assert_called_once()
 
     def test_add_foreign_keys_shorthand_pk_mismatch_is_skipped(

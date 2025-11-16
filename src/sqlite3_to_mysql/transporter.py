@@ -930,8 +930,6 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                 column["pk"] > 0 and column_type.startswith(("INT", "BIGINT")) and not compound_primary_key
             )
 
-            allow_expr_defaults: bool = getattr(self, "_allow_expr_defaults", False)
-            is_mariadb: bool = getattr(self, "_is_mariadb", False)
             base_type: str = self._base_mysql_column_type(column_type)
 
             # Build DEFAULT clause safely (preserve falsy defaults like 0/'')
@@ -939,14 +937,14 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
             if (
                 not skip_default
                 and column["dflt_value"] is not None
-                and self._column_type_supports_default(base_type, allow_expr_defaults)
+                and self._column_type_supports_default(base_type, self._allow_expr_defaults)
                 and not auto_increment
             ):
                 td: str = self._translate_default_for_mysql(column_type, str(column["dflt_value"]))
                 if td != "":
                     stripped_td: str = td.strip()
                     if base_type in MYSQL_TEXT_COLUMN_TYPES_WITH_JSON and stripped_td.upper() != "NULL":
-                        td = self._format_textual_default(stripped_td, allow_expr_defaults, is_mariadb)
+                        td = self._format_textual_default(stripped_td, self._allow_expr_defaults, self._is_mariadb)
                     else:
                         td = stripped_td
                     default_clause = "DEFAULT " + td

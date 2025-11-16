@@ -134,7 +134,8 @@ def _validate_mysql_table_prefix(_: t.Any, __: t.Any, value: t.Optional[str]) ->
     "--mysql-table-prefix",
     default="",
     callback=_validate_mysql_table_prefix,
-    help="Prefix to prepend to every created MySQL table (letters/numbers/underscores, must start with a letter).",
+    help="MySQL table prefix must start with a letter and contain only letters, numbers, or underscores "
+    "with a maximum length of 32 characters.",
 )
 @click.option(
     "--mysql-charset",

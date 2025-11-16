@@ -66,6 +66,7 @@ SQLGLOT_MYSQL_INVERSE_TIME_MAPPING: t.Dict[str, str] = {
     key: value for key, value in sqlglot_mysql.MySQL.INVERSE_TIME_MAPPING.items() if key != "%H:%M:%S"
 }
 SQLGLOT_MYSQL_INVERSE_TIME_TRIE: t.Dict[str, t.Any] = new_trie(SQLGLOT_MYSQL_INVERSE_TIME_MAPPING)
+MYSQL_TABLE_PREFIX_PATTERN: t.Pattern[str] = re.compile(r"^[A-Za-z][A-Za-z0-9_]{0,31}$")
 
 
 class SQLite3toMySQL(SQLite3toMySQLAttributes):
@@ -91,6 +92,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
         re.IGNORECASE,
     )
     NUMERIC_LITERAL_PATTERN: t.Pattern[str] = re.compile(r"^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$")
+    TABLE_PREFIX_PATTERN: t.Pattern[str] = MYSQL_TABLE_PREFIX_PATTERN
 
     MYSQL_CONNECTOR_VERSION: version.Version = version.parse(mysql_connector_version_string)
 
@@ -173,6 +175,14 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
         )
         if not kwargs.get("mysql_collation") and self._mysql_collation == "utf8mb4_0900_ai_ci":
             self._mysql_collation = "utf8mb4_unicode_ci"
+
+        mysql_table_prefix: str = str(kwargs.get("mysql_table_prefix", "") or "")
+        if mysql_table_prefix and not self.TABLE_PREFIX_PATTERN.match(mysql_table_prefix):
+            raise ValueError(
+                "MySQL table prefix must start with a letter and contain only letters, numbers, or underscores "
+                "with a maximum length of 32 characters."
+            )
+        self._mysql_table_prefix = mysql_table_prefix
 
         self._ignore_duplicate_keys = kwargs.get("ignore_duplicate_keys", False) or False
 
@@ -338,6 +348,13 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
             return True
         except sqlite3.OperationalError:
             return False
+
+    def _mysql_table_name(self, table_name: str) -> str:
+        """Return the MySQL table name with any configured prefix applied."""
+        prefix: str = getattr(self, "_mysql_table_prefix", "")
+        if prefix:
+            return safe_identifier_length(f"{prefix}{table_name}")
+        return safe_identifier_length(table_name)
 
     def _create_database(self) -> None:
         try:
@@ -881,8 +898,9 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
 
     def _create_table(self, table_name: str, transfer_rowid: bool = False, skip_default: bool = False) -> None:
         primary_keys: t.List[t.Dict[str, str]] = []
+        mysql_table_name: str = self._mysql_table_name(table_name)
 
-        sql: str = f"CREATE TABLE IF NOT EXISTS `{safe_identifier_length(table_name)}` ( "
+        sql: str = f"CREATE TABLE IF NOT EXISTS `{mysql_table_name}` ( "
 
         if transfer_rowid:
             sql += " `rowid` BIGINT NOT NULL, "
@@ -960,7 +978,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
             )
 
         if transfer_rowid:
-            sql += f", CONSTRAINT `{safe_identifier_length(table_name)}_rowid` UNIQUE (`rowid`)"
+            sql += f", CONSTRAINT `{mysql_table_name}_rowid` UNIQUE (`rowid`)"
 
         sql += f" ) ENGINE=InnoDB DEFAULT CHARSET={self._mysql_charset} COLLATE={self._mysql_collation}"
 
@@ -971,19 +989,20 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
             if err.errno == errorcode.ER_INVALID_DEFAULT and not skip_default:
                 self._logger.warning(
                     "MySQL failed creating table %s with DEFAULT values: %s. Retrying without DEFAULT values ...",
-                    safe_identifier_length(table_name),
+                    mysql_table_name,
                     err,
                 )
                 return self._create_table(table_name, transfer_rowid, skip_default=True)
             else:
                 self._logger.error(
                     "MySQL failed creating table %s: %s",
-                    safe_identifier_length(table_name),
+                    mysql_table_name,
                     err,
                 )
                 raise
 
     def _truncate_table(self, table_name: str) -> None:
+        mysql_table_name: str = self._mysql_table_name(table_name)
         self._mysql_cur.execute(
             """
             SELECT `TABLE_NAME`
@@ -992,14 +1011,15 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
             AND `TABLE_NAME` = %s
             LIMIT 1
             """,
-            (self._mysql_database, safe_identifier_length(table_name)),
+            (self._mysql_database, mysql_table_name),
         )
         if len(self._mysql_cur.fetchall()) > 0:
-            self._logger.info("Truncating table %s", safe_identifier_length(table_name))
-            self._mysql_cur.execute(f"TRUNCATE TABLE `{safe_identifier_length(table_name)}`")
+            self._logger.info("Truncating table %s", mysql_table_name)
+            self._mysql_cur.execute(f"TRUNCATE TABLE `{mysql_table_name}`")
 
     def _add_indices(self, table_name: str) -> None:
         quoted_table_name: str = self._sqlite_quote_ident(table_name)
+        mysql_table_name: str = self._mysql_table_name(table_name)
 
         self._sqlite_cur.execute(f'PRAGMA table_info("{quoted_table_name}")')
         table_columns: t.Dict[str, str] = {}
@@ -1063,7 +1083,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                 self._logger.warning(
                     """Failed adding index to column "%s" in table %s: Column not found!""",
                     ", ".join(safe_identifier_length(index_info["name"]) for index_info in index_infos),
-                    safe_identifier_length(table_name),
+                    mysql_table_name,
                 )
                 continue
 
@@ -1107,12 +1127,13 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
         index_infos: t.Tuple[t.Dict[str, t.Any], ...],
         index_iteration: int = 0,
     ) -> None:
+        mysql_table_name: str = self._mysql_table_name(table_name)
         sql: str = (
             """
             ALTER TABLE `{table}`
             ADD {index_type} `{name}`({columns})
         """.format(
-                table=safe_identifier_length(table_name),
+                table=mysql_table_name,
                 index_type=index_type,
                 name=(
                     safe_identifier_length(index["name"])
@@ -1128,14 +1149,13 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                 """Adding %s to column "%s" in table %s""",
                 "unique index" if int(index["unique"]) == 1 else "index",
                 ", ".join(safe_identifier_length(index_info["name"]) for index_info in index_infos),
-                safe_identifier_length(table_name),
+                mysql_table_name,
             )
             self._mysql_cur.execute(sql)
             self._mysql.commit()
         except mysql.connector.Error as err:
             if err.errno == errorcode.ER_DUP_KEYNAME:
                 if not self._ignore_duplicate_keys:
-                    # handle a duplicate key name
                     self._add_index(
                         table_name=table_name,
                         index_type=index_type,
@@ -1147,7 +1167,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                     self._logger.warning(
                         """Duplicate key "%s" in table %s detected! Trying to create new key "%s_%s" ...""",
                         safe_identifier_length(index["name"]),
-                        safe_identifier_length(table_name),
+                        mysql_table_name,
                         safe_identifier_length(index["name"]),
                         index_iteration + 1,
                     )
@@ -1155,51 +1175,51 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                     self._logger.warning(
                         """Ignoring duplicate key "%s" in table %s!""",
                         safe_identifier_length(index["name"]),
-                        safe_identifier_length(table_name),
+                        mysql_table_name,
                     )
             elif err.errno == errorcode.ER_DUP_ENTRY:
                 self._logger.warning(
                     """Ignoring duplicate entry when adding index to column "%s" in table %s!""",
                     ", ".join(safe_identifier_length(index_info["name"]) for index_info in index_infos),
-                    safe_identifier_length(table_name),
+                    mysql_table_name,
                 )
             elif err.errno == errorcode.ER_DUP_FIELDNAME:
                 self._logger.warning(
                     """Failed adding index to column "%s" in table %s: Duplicate field name! Ignoring...""",
                     ", ".join(safe_identifier_length(index_info["name"]) for index_info in index_infos),
-                    safe_identifier_length(table_name),
+                    mysql_table_name,
                 )
             elif err.errno == errorcode.ER_TOO_MANY_KEYS:
                 self._logger.warning(
                     """Failed adding index to column "%s" in table %s: Too many keys! Ignoring...""",
                     ", ".join(safe_identifier_length(index_info["name"]) for index_info in index_infos),
-                    safe_identifier_length(table_name),
+                    mysql_table_name,
                 )
             elif err.errno == errorcode.ER_TOO_LONG_KEY:
                 self._logger.warning(
                     """Failed adding index to column "%s" in table %s: Key length too long! Ignoring...""",
                     ", ".join(safe_identifier_length(index_info["name"]) for index_info in index_infos),
-                    safe_identifier_length(table_name),
+                    mysql_table_name,
                 )
             elif err.errno == errorcode.ER_BAD_FT_COLUMN:
-                # handle bad FULLTEXT index
                 self._logger.warning(
                     """Failed adding FULLTEXT index to column "%s" in table %s. Retrying without FULLTEXT ...""",
                     ", ".join(safe_identifier_length(index_info["name"]) for index_info in index_infos),
-                    safe_identifier_length(table_name),
+                    mysql_table_name,
                 )
                 raise
             else:
                 self._logger.error(
                     """MySQL failed adding index to column "%s" in table %s: %s""",
                     ", ".join(safe_identifier_length(index_info["name"]) for index_info in index_infos),
-                    safe_identifier_length(table_name),
+                    mysql_table_name,
                     err,
                 )
                 raise
 
     def _add_foreign_keys(self, table_name: str) -> None:
         quoted_table_name: str = self._sqlite_quote_ident(table_name)
+        mysql_table_name: str = self._mysql_table_name(table_name)
         self._sqlite_cur.execute(f'PRAGMA foreign_key_list("{quoted_table_name}")')
 
         foreign_keys: t.Dict[int, t.List[t.Dict[str, t.Any]]] = {}
@@ -1219,7 +1239,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                     self._logger.warning(
                         'Skipping foreign key "%s" in table %s: partially defined reference columns.',
                         safe_identifier_length(fk_rows[0]["from"]),
-                        safe_identifier_length(table_name),
+                        mysql_table_name,
                     )
                     continue
 
@@ -1228,14 +1248,15 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                     self._logger.warning(
                         'Skipping foreign key "%s" in table %s: unable to resolve referenced primary key columns from table %s.',
                         safe_identifier_length(fk_rows[0]["from"]),
-                        safe_identifier_length(table_name),
-                        safe_identifier_length(ref_table),
+                        mysql_table_name,
+                        self._mysql_table_name(ref_table),
                     )
                     continue
                 referenced_columns = primary_keys
             else:
                 referenced_columns = [safe_identifier_length(fk_row["to"]) for fk_row in fk_rows]
 
+            mysql_ref_table_name: str = self._mysql_table_name(ref_table)
             sql = """
                 ALTER TABLE `{table}`
                 ADD CONSTRAINT `{table}_FK_{id}_{seq}`
@@ -1246,9 +1267,9 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
             """.format(
                 id=fk_id,
                 seq=fk_rows[0]["seq"],
-                table=safe_identifier_length(table_name),
+                table=mysql_table_name,
                 columns=", ".join(f"`{column}`" for column in from_columns),
-                ref_table=safe_identifier_length(ref_table),
+                ref_table=mysql_ref_table_name,
                 ref_columns=", ".join(f"`{column}`" for column in referenced_columns),
                 on_delete=(
                     fk_rows[0]["on_delete"].upper() if fk_rows[0]["on_delete"].upper() != "SET DEFAULT" else "NO ACTION"
@@ -1261,9 +1282,9 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
             try:
                 self._logger.info(
                     "Adding foreign key to %s.(%s) referencing %s.(%s)",
-                    safe_identifier_length(table_name),
+                    mysql_table_name,
                     ", ".join(from_columns),
-                    safe_identifier_length(ref_table),
+                    mysql_ref_table_name,
                     ", ".join(referenced_columns),
                 )
                 self._mysql_cur.execute(sql)
@@ -1271,9 +1292,9 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
             except mysql.connector.Error as err:
                 self._logger.error(
                     "MySQL failed adding foreign key to %s.(%s) referencing %s.(%s): %s",
-                    safe_identifier_length(table_name),
+                    mysql_table_name,
                     ", ".join(from_columns),
-                    safe_identifier_length(ref_table),
+                    mysql_ref_table_name,
                     ", ".join(referenced_columns),
                     err,
                 )
@@ -1320,6 +1341,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                 table_name: str = table["name"]
                 object_type: str = table.get("type", "table")
                 quoted_table_name: str = self._sqlite_quote_ident(table_name)
+                mysql_table_name: str = self._mysql_table_name(table_name)
 
                 # check if we're transferring rowid
                 transfer_rowid: bool = self._with_rowid and self._sqlite_table_has_rowid(table_name)
@@ -1391,7 +1413,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                             {values_clause}
                             ON DUPLICATE KEY UPDATE {field_updates}
                         """.format(
-                            table=safe_identifier_length(table_name),
+                            table=mysql_table_name,
                             fields=("`{}`, " * len(columns)).rstrip(" ,").format(*columns),
                             values_clause=(
                                 "VALUES ({placeholders}) AS `__new__`"
@@ -1411,7 +1433,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                             VALUES ({placeholders})
                         """.format(
                             ignore="IGNORE" if self._mysql_insert_method.upper() == "IGNORE" else "",
-                            table=safe_identifier_length(table_name),
+                            table=mysql_table_name,
                             fields=("`{}`, " * len(columns)).rstrip(" ,").format(*columns),
                             placeholders=("%s, " * len(columns)).rstrip(" ,"),
                         )
@@ -1421,7 +1443,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
                         self._logger.error(
                             "MySQL transfer failed inserting data into %s %s: %s",
                             "view" if object_type == "view" else "table",
-                            safe_identifier_length(table_name),
+                            mysql_table_name,
                             err,
                         )
                         raise

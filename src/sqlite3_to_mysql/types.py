@@ -47,6 +47,7 @@ class SQLite3toMySQLParams(TypedDict):
     mysql_insert_method: t.Optional[str]
     mysql_string_type: t.Optional[str]
     mysql_text_type: t.Optional[str]
+    mysql_table_prefix: t.Optional[str]
 
 
 class SQLite3toMySQLAttributes:
@@ -75,6 +76,7 @@ class SQLite3toMySQLAttributes:
     _mysql_integer_type: str
     _mysql_string_type: str
     _mysql_text_type: str
+    _mysql_table_prefix: str
     _mysql_charset: str
     _mysql_collation: str
     _ignore_duplicate_keys: bool

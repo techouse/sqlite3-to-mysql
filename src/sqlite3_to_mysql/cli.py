@@ -14,9 +14,22 @@ from . import __version__ as package_version
 from .click_utils import OptionEatAll, prompt_password
 from .debug_info import info
 from .mysql_utils import MYSQL_INSERT_METHOD, MYSQL_TEXT_COLUMN_TYPES, mysql_supported_character_sets
+from .transporter import MYSQL_TABLE_PREFIX_PATTERN
 
 
 _copyright_header: str = f"sqlite3mysql version {package_version} Copyright (c) 2018-{datetime.now().year} Klemen Tusar"
+
+
+def _validate_mysql_table_prefix(_: t.Any, __: t.Any, value: t.Optional[str]) -> str:
+    """Validate the optional MySQL table prefix supplied via CLI."""
+    if not value:
+        return ""
+    if not MYSQL_TABLE_PREFIX_PATTERN.match(value):
+        raise click.BadParameter(
+            "Table prefix must start with a letter, contain only letters, numbers, or underscores, "
+            "and be at most 32 characters long."
+        )
+    return value
 
 
 @click.command(
@@ -117,6 +130,13 @@ _copyright_header: str = f"sqlite3mysql version {package_version} Copyright (c) 
     help="MySQL default text field type. Defaults to TEXT.",
 )
 @click.option(
+    "-b",
+    "--mysql-table-prefix",
+    default="",
+    callback=_validate_mysql_table_prefix,
+    help="Prefix to prepend to every created MySQL table (letters/numbers/underscores, must start with a letter).",
+)
+@click.option(
     "--mysql-charset",
     metavar="TEXT",
     type=click.Choice(list(CharacterSet().get_supported()), case_sensitive=False),
@@ -169,6 +189,7 @@ def cli(
     mysql_integer_type: str,
     mysql_string_type: str,
     mysql_text_type: str,
+    mysql_table_prefix: str,
     mysql_charset: str,
     mysql_collation: str,
     use_fulltext: bool,
@@ -224,6 +245,7 @@ def cli(
             mysql_integer_type=mysql_integer_type,
             mysql_string_type=mysql_string_type,
             mysql_text_type=mysql_text_type,
+            mysql_table_prefix=mysql_table_prefix,
             mysql_charset=mysql_charset.lower() if mysql_charset else "utf8mb4",
             mysql_collation=mysql_collation.lower() if mysql_collation else None,
             ignore_duplicate_keys=ignore_duplicate_keys,

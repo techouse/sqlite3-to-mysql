@@ -524,8 +524,8 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
             return "TINYINT(1)"
         if data_type.startswith(("REAL", "DOUBLE", "FLOAT", "DECIMAL", "DEC", "FIXED")):
             return full_column_type
-        if data_type in {"JSONB"} or data_type.startswith("JSONB"):
-            return "JSON"
+        if data_type == "JSONB" or data_type.startswith("JSONB"):
+            return "JSON" if self._mysql_json_support else self._mysql_text_type
         if data_type not in MYSQL_COLUMN_TYPES:
             return self._mysql_string_type
         return full_column_type

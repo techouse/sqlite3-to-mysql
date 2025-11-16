@@ -569,7 +569,7 @@ def test_transfer_converts_jsonb_values_to_textual_json(mocker: MockFixture) -> 
     instance._add_foreign_keys = mocker.MagicMock()
     instance._create_mysql_view = mocker.MagicMock()
     instance._translate_sqlite_view_definition = mocker.MagicMock()
-    instance._sqlite_table_has_rowid = lambda table: False
+    instance._sqlite_table_has_rowid = lambda _table: False
     instance._fetch_sqlite_master_rows = mocker.MagicMock(side_effect=[[{"name": "data", "type": "table"}], []])
 
     instance.transfer()
@@ -660,14 +660,22 @@ def test_transfer_table_data_with_chunking(mocker: MockFixture) -> None:
     instance._mysql.commit.assert_called_once()
 
 
-def test_translate_type_from_sqlite_maps_jsonb_to_json() -> None:
+@pytest.mark.parametrize(
+    "json_support,expected",
+    [
+        (True, "JSON"),
+        (False, "TEXT"),
+    ],
+)
+def test_translate_type_from_sqlite_maps_jsonb_to_json(json_support: bool, expected: str) -> None:
     instance = SQLite3toMySQL.__new__(SQLite3toMySQL)
     instance._mysql_text_type = "TEXT"
     instance._mysql_string_type = "VARCHAR(255)"
     instance._mysql_integer_type = "INT"
+    instance._mysql_json_support = json_support
 
-    assert instance._translate_type_from_sqlite_to_mysql("JSONB") == "JSON"
-    assert instance._translate_type_from_sqlite_to_mysql("jsonb(16)") == "JSON"
+    assert instance._translate_type_from_sqlite_to_mysql("JSONB") == expected
+    assert instance._translate_type_from_sqlite_to_mysql("jsonb(16)") == expected
 
 
 @pytest.mark.usefixtures("sqlite_database", "mysql_instance")

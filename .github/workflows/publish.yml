@@ -30,7 +30,7 @@ jobs:
       group: publish-${{ github.ref }}
       cancel-in-progress: false
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Compare package version with ref/tag
         id: compare
         run: |

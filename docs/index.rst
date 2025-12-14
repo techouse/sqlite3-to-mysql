@@ -60,7 +60,7 @@ Indices and tables
    :target: https://www.codacy.com/manual/techouse/sqlite3-to-mysql?utm_source=github.com&utm_medium=referral&utm_content=techouse/sqlite3-to-mysql&utm_campaign=Badge_Grade
 .. |Test Status| image:: https://github.com/techouse/sqlite3-to-mysql/actions/workflows/test.yml/badge.svg
    :target: https://github.com/techouse/sqlite3-to-mysql/actions/workflows/test.yml
-.. |CodeQL Status| image:: https://github.com/techouse/sqlite3-to-mysql/actions/workflows/codeql-analysis.yml/badge.svg
+.. |CodeQL Status| image:: https://github.com/techouse/sqlite3-to-mysql/actions/workflows/github-code-scanning/codeql/badge.svg
    :target: https://github.com/techouse/sqlite3-to-mysql/actions/workflows/codeql-analysis.yml
 .. |Publish PyPI Package Status| image:: https://github.com/techouse/sqlite3-to-mysql/actions/workflows/publish.yml/badge.svg
    :target: https://github.com/techouse/sqlite3-to-mysql/actions/workflows/publish.yml

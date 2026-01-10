@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>sqlite3_to_mysql package &#8212; sqlite3-to-mysql 2.5.5 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=27fed22d" />
+    <script src="_static/documentation_options.js?v=644f8b71"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="sqlite3_to_mysql" href="modules.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="sqlite3-to-mysql-package">
+<h1>sqlite3_to_mysql package<a class="headerlink" href="#sqlite3-to-mysql-package" title="Link to this heading">¶</a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading">¶</a></h2>
+</section>
+<section id="module-sqlite3_to_mysql.cli">
+<span id="sqlite3-to-mysql-cli-module"></span><h2>sqlite3_to_mysql.cli module<a class="headerlink" href="#module-sqlite3_to_mysql.cli" title="Link to this heading">¶</a></h2>
+<p>The command line interface of SQLite3toMySQL.</p>
+</section>
+<section id="module-sqlite3_to_mysql.click_utils">
+<span id="sqlite3-to-mysql-click-utils-module"></span><h2>sqlite3_to_mysql.click_utils module<a class="headerlink" href="#module-sqlite3_to_mysql.click_utils" title="Link to this heading">¶</a></h2>
+<p>Click utilities.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.click_utils.OptionEatAll">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sqlite3_to_mysql.click_utils.</span></span><span class="sig-name descname"><span class="pre">OptionEatAll</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sqlite3_to_mysql/click_utils.html#OptionEatAll"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sqlite3_to_mysql.click_utils.OptionEatAll" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Option</span></code></p>
+<p>Taken from <a class="reference external" href="https://stackoverflow.com/questions/48391777/nargs-equivalent-for-options-in-click#answer-48394004">https://stackoverflow.com/questions/48391777/nargs-equivalent-for-options-in-click#answer-48394004</a>.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.click_utils.OptionEatAll.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sqlite3_to_mysql/click_utils.html#OptionEatAll.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sqlite3_to_mysql.click_utils.OptionEatAll.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>Override.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.click_utils.OptionEatAll.add_to_parser">
+<span class="sig-name descname"><span class="pre">add_to_parser</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parser</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/sqlite3_to_mysql/click_utils.html#OptionEatAll.add_to_parser"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sqlite3_to_mysql.click_utils.OptionEatAll.add_to_parser" title="Link to this definition">¶</a></dt>
+<dd><p>Override.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.click_utils.prompt_password">
+<span class="sig-prename descclassname"><span class="pre">sqlite3_to_mysql.click_utils.</span></span><span class="sig-name descname"><span class="pre">prompt_password</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Context</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_password</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sqlite3_to_mysql/click_utils.html#prompt_password"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sqlite3_to_mysql.click_utils.prompt_password" title="Link to this definition">¶</a></dt>
+<dd><p>Prompt for password.</p>
+</dd></dl>
+
+</section>
+<section id="module-sqlite3_to_mysql.debug_info">
+<span id="sqlite3-to-mysql-debug-info-module"></span><h2>sqlite3_to_mysql.debug_info module<a class="headerlink" href="#module-sqlite3_to_mysql.debug_info" title="Link to this heading">¶</a></h2>
+<p>Module containing bug report helper(s).</p>
+<p>Adapted from <a class="reference external" href="https://github.com/psf/requests/blob/master/requests/help.py">https://github.com/psf/requests/blob/master/requests/help.py</a></p>
+<dl class="py function">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.debug_info.info">
+<span class="sig-prename descclassname"><span class="pre">sqlite3_to_mysql.debug_info.</span></span><span class="sig-name descname"><span class="pre">info</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/sqlite3_to_mysql/debug_info.html#info"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sqlite3_to_mysql.debug_info.info" title="Link to this definition">¶</a></dt>
+<dd><p>Generate information for a bug report.</p>
+</dd></dl>
+
+</section>
+<section id="module-sqlite3_to_mysql.mysql_utils">
+<span id="sqlite3-to-mysql-mysql-utils-module"></span><h2>sqlite3_to_mysql.mysql_utils module<a class="headerlink" href="#module-sqlite3_to_mysql.mysql_utils" title="Link to this heading">¶</a></h2>
+<p>MySQL helpers.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.mysql_utils.CharSet">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sqlite3_to_mysql.mysql_utils.</span></span><span class="sig-name descname"><span class="pre">CharSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">charset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">collation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sqlite3_to_mysql/mysql_utils.html#CharSet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sqlite3_to_mysql.mysql_utils.CharSet" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">NamedTuple</span></code></p>
+<p>MySQL character set as a named tuple.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.mysql_utils.CharSet.charset">
+<span class="sig-name descname"><span class="pre">charset</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#sqlite3_to_mysql.mysql_utils.CharSet.charset" title="Link to this definition">¶</a></dt>
+<dd><p>Alias for field number 1</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.mysql_utils.CharSet.collation">
+<span class="sig-name descname"><span class="pre">collation</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#sqlite3_to_mysql.mysql_utils.CharSet.collation" title="Link to this definition">¶</a></dt>
+<dd><p>Alias for field number 2</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.mysql_utils.CharSet.id">
+<span class="sig-name descname"><span class="pre">id</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#sqlite3_to_mysql.mysql_utils.CharSet.id" title="Link to this definition">¶</a></dt>
+<dd><p>Alias for field number 0</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.mysql_utils.check_mysql_current_timestamp_datetime_support">
+<span class="sig-prename descclassname"><span class="pre">sqlite3_to_mysql.mysql_utils.</span></span><span class="sig-name descname"><span class="pre">check_mysql_current_timestamp_datetime_support</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">version_string</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="_modules/sqlite3_to_mysql/mysql_utils.html#check_mysql_current_timestamp_datetime_support"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sqlite3_to_mysql.mysql_utils.check_mysql_current_timestamp_datetime_support" title="Link to this definition">¶</a></dt>
+<dd><p>Check for CURRENT_TIMESTAMP support for DATETIME fields.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.mysql_utils.check_mysql_expression_defaults_support">
+<span class="sig-prename descclassname"><span class="pre">sqlite3_to_mysql.mysql_utils.</span></span><span class="sig-name descname"><span class="pre">check_mysql_expression_defaults_support</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">version_string</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="_modules/sqlite3_to_mysql/mysql_utils.html#check_mysql_expression_defaults_support"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sqlite3_to_mysql.mysql_utils.check_mysql_expression_defaults_support" title="Link to this definition">¶</a></dt>
+<dd><p>Check for expression defaults support.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.mysql_utils.check_mysql_fractional_seconds_support">
+<span class="sig-prename descclassname"><span class="pre">sqlite3_to_mysql.mysql_utils.</span></span><span class="sig-name descname"><span class="pre">check_mysql_fractional_seconds_support</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">version_string</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="_modules/sqlite3_to_mysql/mysql_utils.html#check_mysql_fractional_seconds_support"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sqlite3_to_mysql.mysql_utils.check_mysql_fractional_seconds_support" title="Link to this definition">¶</a></dt>
+<dd><p>Check for fractional seconds support.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.mysql_utils.check_mysql_fulltext_support">
+<span class="sig-prename descclassname"><span class="pre">sqlite3_to_mysql.mysql_utils.</span></span><span class="sig-name descname"><span class="pre">check_mysql_fulltext_support</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">version_string</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="_modules/sqlite3_to_mysql/mysql_utils.html#check_mysql_fulltext_support"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sqlite3_to_mysql.mysql_utils.check_mysql_fulltext_support" title="Link to this definition">¶</a></dt>
+<dd><p>Check for FULLTEXT indexing support.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.mysql_utils.check_mysql_json_support">
+<span class="sig-prename descclassname"><span class="pre">sqlite3_to_mysql.mysql_utils.</span></span><span class="sig-name descname"><span class="pre">check_mysql_json_support</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">version_string</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="_modules/sqlite3_to_mysql/mysql_utils.html#check_mysql_json_support"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sqlite3_to_mysql.mysql_utils.check_mysql_json_support" title="Link to this definition">¶</a></dt>
+<dd><p>Check for MySQL JSON support.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.mysql_utils.check_mysql_values_alias_support">
+<span class="sig-prename descclassname"><span class="pre">sqlite3_to_mysql.mysql_utils.</span></span><span class="sig-name descname"><span class="pre">check_mysql_values_alias_support</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">version_string</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="_modules/sqlite3_to_mysql/mysql_utils.html#check_mysql_values_alias_support"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sqlite3_to_mysql.mysql_utils.check_mysql_values_alias_support" title="Link to this definition">¶</a></dt>
+<dd><p>Check for VALUES alias support.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>True if VALUES alias is supported (MySQL 8.0.19+), False for MariaDB
+or older MySQL versions.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.mysql_utils.get_mysql_version">
+<span class="sig-prename descclassname"><span class="pre">sqlite3_to_mysql.mysql_utils.</span></span><span class="sig-name descname"><span class="pre">get_mysql_version</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">version_string</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Version</span></span></span><a class="reference internal" href="_modules/sqlite3_to_mysql/mysql_utils.html#get_mysql_version"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sqlite3_to_mysql.mysql_utils.get_mysql_version" title="Link to this definition">¶</a></dt>
+<dd><p>Get MySQL version.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.mysql_utils.mysql_supported_character_sets">
+<span class="sig-prename descclassname"><span class="pre">sqlite3_to_mysql.mysql_utils.</span></span><span class="sig-name descname"><span class="pre">mysql_supported_character_sets</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">charset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Iterator</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#sqlite3_to_mysql.mysql_utils.CharSet" title="sqlite3_to_mysql.mysql_utils.CharSet"><span class="pre">CharSet</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/sqlite3_to_mysql/mysql_utils.html#mysql_supported_character_sets"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sqlite3_to_mysql.mysql_utils.mysql_supported_character_sets" title="Link to this definition">¶</a></dt>
+<dd><p>Get supported MySQL character sets.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.mysql_utils.safe_identifier_length">
+<span class="sig-prename descclassname"><span class="pre">sqlite3_to_mysql.mysql_utils.</span></span><span class="sig-name descname"><span class="pre">safe_identifier_length</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">identifier_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_length</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">64</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/sqlite3_to_mysql/mysql_utils.html#safe_identifier_length"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sqlite3_to_mysql.mysql_utils.safe_identifier_length" title="Link to this definition">¶</a></dt>
+<dd><p><a class="reference external" href="https://dev.mysql.com/doc/refman/8.0/en/identifier-length.html">https://dev.mysql.com/doc/refman/8.0/en/identifier-length.html</a>.</p>
+</dd></dl>
+
+</section>
+<section id="module-sqlite3_to_mysql.sqlite_utils">
+<span id="sqlite3-to-mysql-sqlite-utils-module"></span><h2>sqlite3_to_mysql.sqlite_utils module<a class="headerlink" href="#module-sqlite3_to_mysql.sqlite_utils" title="Link to this heading">¶</a></h2>
+<p>SQLite adapters and converters for unsupported data types.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.sqlite_utils.adapt_decimal">
+<span class="sig-prename descclassname"><span class="pre">sqlite3_to_mysql.sqlite_utils.</span></span><span class="sig-name descname"><span class="pre">adapt_decimal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/sqlite3_to_mysql/sqlite_utils.html#adapt_decimal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sqlite3_to_mysql.sqlite_utils.adapt_decimal" title="Link to this definition">¶</a></dt>
+<dd><p>Convert decimal.Decimal to string.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.sqlite_utils.adapt_timedelta">
+<span class="sig-prename descclassname"><span class="pre">sqlite3_to_mysql.sqlite_utils.</span></span><span class="sig-name descname"><span class="pre">adapt_timedelta</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/sqlite3_to_mysql/sqlite_utils.html#adapt_timedelta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sqlite3_to_mysql.sqlite_utils.adapt_timedelta" title="Link to this definition">¶</a></dt>
+<dd><p>Convert datetime.timedelta to %H:%M:%S string.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.sqlite_utils.check_sqlite_jsonb_support">
+<span class="sig-prename descclassname"><span class="pre">sqlite3_to_mysql.sqlite_utils.</span></span><span class="sig-name descname"><span class="pre">check_sqlite_jsonb_support</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">version_string</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="_modules/sqlite3_to_mysql/sqlite_utils.html#check_sqlite_jsonb_support"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sqlite3_to_mysql.sqlite_utils.check_sqlite_jsonb_support" title="Link to this definition">¶</a></dt>
+<dd><p>Check for SQLite JSONB support.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.sqlite_utils.check_sqlite_table_xinfo_support">
+<span class="sig-prename descclassname"><span class="pre">sqlite3_to_mysql.sqlite_utils.</span></span><span class="sig-name descname"><span class="pre">check_sqlite_table_xinfo_support</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">version_string</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="_modules/sqlite3_to_mysql/sqlite_utils.html#check_sqlite_table_xinfo_support"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sqlite3_to_mysql.sqlite_utils.check_sqlite_table_xinfo_support" title="Link to this definition">¶</a></dt>
+<dd><p>Check for SQLite table_xinfo support.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.sqlite_utils.convert_date">
+<span class="sig-prename descclassname"><span class="pre">sqlite3_to_mysql.sqlite_utils.</span></span><span class="sig-name descname"><span class="pre">convert_date</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bytes</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">date</span></span></span><a class="reference internal" href="_modules/sqlite3_to_mysql/sqlite_utils.html#convert_date"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sqlite3_to_mysql.sqlite_utils.convert_date" title="Link to this definition">¶</a></dt>
+<dd><p>Handle SQLite date conversion.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.sqlite_utils.convert_decimal">
+<span class="sig-prename descclassname"><span class="pre">sqlite3_to_mysql.sqlite_utils.</span></span><span class="sig-name descname"><span class="pre">convert_decimal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Decimal</span></span></span><a class="reference internal" href="_modules/sqlite3_to_mysql/sqlite_utils.html#convert_decimal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sqlite3_to_mysql.sqlite_utils.convert_decimal" title="Link to this definition">¶</a></dt>
+<dd><p>Convert string to decimalDecimal.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.sqlite_utils.convert_timedelta">
+<span class="sig-prename descclassname"><span class="pre">sqlite3_to_mysql.sqlite_utils.</span></span><span class="sig-name descname"><span class="pre">convert_timedelta</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">timedelta</span></span></span><a class="reference internal" href="_modules/sqlite3_to_mysql/sqlite_utils.html#convert_timedelta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sqlite3_to_mysql.sqlite_utils.convert_timedelta" title="Link to this definition">¶</a></dt>
+<dd><p>Convert %H:%M:%S string to datetime.timedelta.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.sqlite_utils.sqlite_jsonb_column_expression">
+<span class="sig-prename descclassname"><span class="pre">sqlite3_to_mysql.sqlite_utils.</span></span><span class="sig-name descname"><span class="pre">sqlite_jsonb_column_expression</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">quoted_column_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/sqlite3_to_mysql/sqlite_utils.html#sqlite_jsonb_column_expression"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sqlite3_to_mysql.sqlite_utils.sqlite_jsonb_column_expression" title="Link to this definition">¶</a></dt>
+<dd><p>Return a SELECT expression that converts JSONB blobs to textual JSON while preserving NULLs.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.sqlite_utils.unicase_compare">
+<span class="sig-prename descclassname"><span class="pre">sqlite3_to_mysql.sqlite_utils.</span></span><span class="sig-name descname"><span class="pre">unicase_compare</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">string_1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">string_2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="_modules/sqlite3_to_mysql/sqlite_utils.html#unicase_compare"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sqlite3_to_mysql.sqlite_utils.unicase_compare" title="Link to this definition">¶</a></dt>
+<dd><p>Taken from <a class="reference external" href="https://github.com/patarapolw/ankisync2/issues/3#issuecomment-768687431">https://github.com/patarapolw/ankisync2/issues/3#issuecomment-768687431</a>.</p>
+</dd></dl>
+
+</section>
+<section id="module-sqlite3_to_mysql.transporter">
+<span id="sqlite3-to-mysql-transporter-module"></span><h2>sqlite3_to_mysql.transporter module<a class="headerlink" href="#module-sqlite3_to_mysql.transporter" title="Link to this heading">¶</a></h2>
+<p>Use to transfer an SQLite 3 database to MySQL.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.transporter.SQLite3toMySQL">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sqlite3_to_mysql.transporter.</span></span><span class="sig-name descname"><span class="pre">SQLite3toMySQL</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Unpack</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#sqlite3_to_mysql.types.SQLite3toMySQLParams" title="sqlite3_to_mysql.types.SQLite3toMySQLParams"><span class="pre">SQLite3toMySQLParams</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sqlite3_to_mysql/transporter.html#SQLite3toMySQL"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sqlite3_to_mysql.transporter.SQLite3toMySQL" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#sqlite3_to_mysql.types.SQLite3toMySQLAttributes" title="sqlite3_to_mysql.types.SQLite3toMySQLAttributes"><code class="xref py py-class docutils literal notranslate"><span class="pre">SQLite3toMySQLAttributes</span></code></a></p>
+<p>Use this class to transfer an SQLite 3 database to MySQL.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.transporter.SQLite3toMySQL.COLUMN_LENGTH_PATTERN">
+<span class="sig-name descname"><span class="pre">COLUMN_LENGTH_PATTERN</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Pattern</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">re.compile('\\(\\d+\\)')</span></span><a class="headerlink" href="#sqlite3_to_mysql.transporter.SQLite3toMySQL.COLUMN_LENGTH_PATTERN" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.transporter.SQLite3toMySQL.COLUMN_PATTERN">
+<span class="sig-name descname"><span class="pre">COLUMN_PATTERN</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Pattern</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">re.compile('^[^(]+')</span></span><a class="headerlink" href="#sqlite3_to_mysql.transporter.SQLite3toMySQL.COLUMN_PATTERN" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.transporter.SQLite3toMySQL.COLUMN_PRECISION_AND_SCALE_PATTERN">
+<span class="sig-name descname"><span class="pre">COLUMN_PRECISION_AND_SCALE_PATTERN</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Pattern</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">re.compile('\\(\\d+,\\d+\\)')</span></span><a class="headerlink" href="#sqlite3_to_mysql.transporter.SQLite3toMySQL.COLUMN_PRECISION_AND_SCALE_PATTERN" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.transporter.SQLite3toMySQL.COLUMN_UNSIGNED_PATTERN">
+<span class="sig-name descname"><span class="pre">COLUMN_UNSIGNED_PATTERN</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Pattern</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">re.compile('\\bUNSIGNED\\b',</span> <span class="pre">re.IGNORECASE)</span></span><a class="headerlink" href="#sqlite3_to_mysql.transporter.SQLite3toMySQL.COLUMN_UNSIGNED_PATTERN" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.transporter.SQLite3toMySQL.CURRENT_DATE">
+<span class="sig-name descname"><span class="pre">CURRENT_DATE</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Pattern</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">re.compile('^CURRENT_DATE(?:\\s*\\(\\s*\\))?$',</span> <span class="pre">re.IGNORECASE)</span></span><a class="headerlink" href="#sqlite3_to_mysql.transporter.SQLite3toMySQL.CURRENT_DATE" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.transporter.SQLite3toMySQL.CURRENT_TIME">
+<span class="sig-name descname"><span class="pre">CURRENT_TIME</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Pattern</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">re.compile('^CURRENT_TIME(?:\\s*\\(\\s*\\))?$',</span> <span class="pre">re.IGNORECASE)</span></span><a class="headerlink" href="#sqlite3_to_mysql.transporter.SQLite3toMySQL.CURRENT_TIME" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.transporter.SQLite3toMySQL.CURRENT_TS">
+<span class="sig-name descname"><span class="pre">CURRENT_TS</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Pattern</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">re.compile('^CURRENT_TIMESTAMP(?:\\s*\\(\\s*\\))?$',</span> <span class="pre">re.IGNORECASE)</span></span><a class="headerlink" href="#sqlite3_to_mysql.transporter.SQLite3toMySQL.CURRENT_TS" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.transporter.SQLite3toMySQL.MYSQL_CONNECTOR_VERSION">
+<span class="sig-name descname"><span class="pre">MYSQL_CONNECTOR_VERSION</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Version</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;Version('9.5.0')&gt;</span></span><a class="headerlink" href="#sqlite3_to_mysql.transporter.SQLite3toMySQL.MYSQL_CONNECTOR_VERSION" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.transporter.SQLite3toMySQL.NUMERIC_LITERAL_PATTERN">
+<span class="sig-name descname"><span class="pre">NUMERIC_LITERAL_PATTERN</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Pattern</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">re.compile('^[+-]?(?:\\d+(?:\\.\\d*)?|\\.\\d+)(?:[eE][+-]?\\d+)?$')</span></span><a class="headerlink" href="#sqlite3_to_mysql.transporter.SQLite3toMySQL.NUMERIC_LITERAL_PATTERN" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.transporter.SQLite3toMySQL.SQLITE_CURRENT_TS_FUNC">
+<span class="sig-name descname"><span class="pre">SQLITE_CURRENT_TS_FUNC</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Pattern</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">re.compile(&quot;^(datetime|date|time)\\s*\\(\\s*current_timestamp(?:\\s*,\\s*'(localtime|utc)')?\\s*\\)$&quot;,</span> <span class="pre">re.IGNORECASE)</span></span><a class="headerlink" href="#sqlite3_to_mysql.transporter.SQLite3toMySQL.SQLITE_CURRENT_TS_FUNC" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.transporter.SQLite3toMySQL.SQLITE_NOW_FUNC">
+<span class="sig-name descname"><span class="pre">SQLITE_NOW_FUNC</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Pattern</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">re.compile(&quot;^(datetime|date|time)\\s*\\(\\s*'now'(?:\\s*,\\s*'(localtime|utc)')?\\s*\\)$&quot;,</span> <span class="pre">re.IGNORECASE)</span></span><a class="headerlink" href="#sqlite3_to_mysql.transporter.SQLite3toMySQL.SQLITE_NOW_FUNC" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.transporter.SQLite3toMySQL.STRFTIME_NOW">
+<span class="sig-name descname"><span class="pre">STRFTIME_NOW</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Pattern</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">re.compile(&quot;^strftime\\s*\\(\\s*'([^']+)'\\s*,\\s*'now'(?:\\s*,\\s*'(localtime|utc)')?\\s*\\)$&quot;,</span> <span class="pre">re.IGNORECASE)</span></span><a class="headerlink" href="#sqlite3_to_mysql.transporter.SQLite3toMySQL.STRFTIME_NOW" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.transporter.SQLite3toMySQL.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Unpack</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#sqlite3_to_mysql.types.SQLite3toMySQLParams" title="sqlite3_to_mysql.types.SQLite3toMySQLParams"><span class="pre">SQLite3toMySQLParams</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sqlite3_to_mysql/transporter.html#SQLite3toMySQL.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sqlite3_to_mysql.transporter.SQLite3toMySQL.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>Constructor.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.transporter.SQLite3toMySQL.transfer">
+<span class="sig-name descname"><span class="pre">transfer</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/sqlite3_to_mysql/transporter.html#SQLite3toMySQL.transfer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sqlite3_to_mysql.transporter.SQLite3toMySQL.transfer" title="Link to this definition">¶</a></dt>
+<dd><p>The primary and only method with which we transfer all the data.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-sqlite3_to_mysql.types">
+<span id="sqlite3-to-mysql-types-module"></span><h2>sqlite3_to_mysql.types module<a class="headerlink" href="#module-sqlite3_to_mysql.types" title="Link to this heading">¶</a></h2>
+<p>Types for sqlite3-to-mysql.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.types.SQLite3toMySQLAttributes">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sqlite3_to_mysql.types.</span></span><span class="sig-name descname"><span class="pre">SQLite3toMySQLAttributes</span></span><a class="reference internal" href="_modules/sqlite3_to_mysql/types.html#SQLite3toMySQLAttributes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sqlite3_to_mysql.types.SQLite3toMySQLAttributes" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>SQLite3toMySQL attributes.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.types.SQLite3toMySQLParams">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sqlite3_to_mysql.types.</span></span><span class="sig-name descname"><span class="pre">SQLite3toMySQLParams</span></span><a class="reference internal" href="_modules/sqlite3_to_mysql/types.html#SQLite3toMySQLParams"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sqlite3_to_mysql.types.SQLite3toMySQLParams" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">TypedDict</span></code></p>
+<p>SQLite3toMySQL parameters.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.types.SQLite3toMySQLParams.chunk">
+<span class="sig-name descname"><span class="pre">chunk</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sqlite3_to_mysql.types.SQLite3toMySQLParams.chunk" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.types.SQLite3toMySQLParams.exclude_sqlite_tables">
+<span class="sig-name descname"><span class="pre">exclude_sqlite_tables</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sqlite3_to_mysql.types.SQLite3toMySQLParams.exclude_sqlite_tables" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.types.SQLite3toMySQLParams.ignore_duplicate_keys">
+<span class="sig-name descname"><span class="pre">ignore_duplicate_keys</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sqlite3_to_mysql.types.SQLite3toMySQLParams.ignore_duplicate_keys" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.types.SQLite3toMySQLParams.log_file">
+<span class="sig-name descname"><span class="pre">log_file</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">PathLike</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sqlite3_to_mysql.types.SQLite3toMySQLParams.log_file" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.types.SQLite3toMySQLParams.mysql_charset">
+<span class="sig-name descname"><span class="pre">mysql_charset</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sqlite3_to_mysql.types.SQLite3toMySQLParams.mysql_charset" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.types.SQLite3toMySQLParams.mysql_collation">
+<span class="sig-name descname"><span class="pre">mysql_collation</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sqlite3_to_mysql.types.SQLite3toMySQLParams.mysql_collation" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.types.SQLite3toMySQLParams.mysql_create_tables">
+<span class="sig-name descname"><span class="pre">mysql_create_tables</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sqlite3_to_mysql.types.SQLite3toMySQLParams.mysql_create_tables" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.types.SQLite3toMySQLParams.mysql_database">
+<span class="sig-name descname"><span class="pre">mysql_database</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sqlite3_to_mysql.types.SQLite3toMySQLParams.mysql_database" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.types.SQLite3toMySQLParams.mysql_host">
+<span class="sig-name descname"><span class="pre">mysql_host</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sqlite3_to_mysql.types.SQLite3toMySQLParams.mysql_host" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.types.SQLite3toMySQLParams.mysql_insert_method">
+<span class="sig-name descname"><span class="pre">mysql_insert_method</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sqlite3_to_mysql.types.SQLite3toMySQLParams.mysql_insert_method" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.types.SQLite3toMySQLParams.mysql_integer_type">
+<span class="sig-name descname"><span class="pre">mysql_integer_type</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sqlite3_to_mysql.types.SQLite3toMySQLParams.mysql_integer_type" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.types.SQLite3toMySQLParams.mysql_password">
+<span class="sig-name descname"><span class="pre">mysql_password</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sqlite3_to_mysql.types.SQLite3toMySQLParams.mysql_password" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.types.SQLite3toMySQLParams.mysql_port">
+<span class="sig-name descname"><span class="pre">mysql_port</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sqlite3_to_mysql.types.SQLite3toMySQLParams.mysql_port" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.types.SQLite3toMySQLParams.mysql_socket">
+<span class="sig-name descname"><span class="pre">mysql_socket</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">PathLike</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sqlite3_to_mysql.types.SQLite3toMySQLParams.mysql_socket" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.types.SQLite3toMySQLParams.mysql_ssl_disabled">
+<span class="sig-name descname"><span class="pre">mysql_ssl_disabled</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sqlite3_to_mysql.types.SQLite3toMySQLParams.mysql_ssl_disabled" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.types.SQLite3toMySQLParams.mysql_string_type">
+<span class="sig-name descname"><span class="pre">mysql_string_type</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sqlite3_to_mysql.types.SQLite3toMySQLParams.mysql_string_type" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.types.SQLite3toMySQLParams.mysql_text_type">
+<span class="sig-name descname"><span class="pre">mysql_text_type</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sqlite3_to_mysql.types.SQLite3toMySQLParams.mysql_text_type" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.types.SQLite3toMySQLParams.mysql_transfer_data">
+<span class="sig-name descname"><span class="pre">mysql_transfer_data</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sqlite3_to_mysql.types.SQLite3toMySQLParams.mysql_transfer_data" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.types.SQLite3toMySQLParams.mysql_truncate_tables">
+<span class="sig-name descname"><span class="pre">mysql_truncate_tables</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sqlite3_to_mysql.types.SQLite3toMySQLParams.mysql_truncate_tables" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.types.SQLite3toMySQLParams.mysql_user">
+<span class="sig-name descname"><span class="pre">mysql_user</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sqlite3_to_mysql.types.SQLite3toMySQLParams.mysql_user" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.types.SQLite3toMySQLParams.quiet">
+<span class="sig-name descname"><span class="pre">quiet</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sqlite3_to_mysql.types.SQLite3toMySQLParams.quiet" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.types.SQLite3toMySQLParams.sqlite_file">
+<span class="sig-name descname"><span class="pre">sqlite_file</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">PathLike</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#sqlite3_to_mysql.types.SQLite3toMySQLParams.sqlite_file" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.types.SQLite3toMySQLParams.sqlite_tables">
+<span class="sig-name descname"><span class="pre">sqlite_tables</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sqlite3_to_mysql.types.SQLite3toMySQLParams.sqlite_tables" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.types.SQLite3toMySQLParams.sqlite_views_as_tables">
+<span class="sig-name descname"><span class="pre">sqlite_views_as_tables</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sqlite3_to_mysql.types.SQLite3toMySQLParams.sqlite_views_as_tables" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.types.SQLite3toMySQLParams.use_fulltext">
+<span class="sig-name descname"><span class="pre">use_fulltext</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sqlite3_to_mysql.types.SQLite3toMySQLParams.use_fulltext" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.types.SQLite3toMySQLParams.with_rowid">
+<span class="sig-name descname"><span class="pre">with_rowid</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sqlite3_to_mysql.types.SQLite3toMySQLParams.with_rowid" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sqlite3_to_mysql.types.SQLite3toMySQLParams.without_foreign_keys">
+<span class="sig-name descname"><span class="pre">without_foreign_keys</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#sqlite3_to_mysql.types.SQLite3toMySQLParams.without_foreign_keys" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-sqlite3_to_mysql">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-sqlite3_to_mysql" title="Link to this heading">¶</a></h2>
+<p>Utility to transfer data from SQLite 3 to MySQL.</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">sqlite3-to-mysql</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="README.html">Usage</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">sqlite3_to_mysql</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">sqlite3_to_mysql package</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="modules.html">sqlite3_to_mysql</a><ul>
+      <li>Previous: <a href="modules.html" title="previous chapter">sqlite3_to_mysql</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2026, Klemen Tusar.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.1.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="_sources/sqlite3_to_mysql.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

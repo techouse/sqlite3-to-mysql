@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>SQLite3 to MySQL &#8212; sqlite3-to-mysql 2.5.5 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=27fed22d" />
+    <script src="_static/documentation_options.js?v=644f8b71"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Usage" href="README.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="sqlite3-to-mysql">
+<h1>SQLite3 to MySQL<a class="headerlink" href="#sqlite3-to-mysql" title="Link to this heading">¶</a></h1>
+<p>A simple Python tool to transfer data from SQLite 3 to MySQL</p>
+<p><a class="reference external" href="https://pypi.org/project/sqlite3-to-mysql/"><img alt="PyPI" src="https://img.shields.io/pypi/v/sqlite3-to-mysql?logo=pypi" /></a> <a class="reference external" href="https://pypistats.org/packages/sqlite3-to-mysql"><img alt="PyPI - Downloads" src="https://img.shields.io/pypi/dm/sqlite3-to-mysql?logo=pypi&amp;label=PyPI%20downloads" /></a> <a class="reference external" href="https://formulae.brew.sh/formula/sqlite3-to-mysql"><img alt="Homebrew Formula Downloads" src="https://img.shields.io/homebrew/installs/dm/sqlite3-to-mysql?logo=homebrew&amp;label=Homebrew%20downloads" /></a> <a class="reference external" href="https://pypi.org/project/sqlite3-to-mysql/"><img alt="PyPI - Python Version" src="https://img.shields.io/pypi/pyversions/sqlite3-to-mysql?logo=python" /></a>
+<a class="reference external" href="https://img.shields.io/static/v1?label=MySQL&amp;message=5.6+%7C+5.7+%7C+8.0&amp;color=2b5d80"><img alt="MySQL Support" src="https://img.shields.io/static/v1?logo=mysql&amp;label=MySQL&amp;message=5.5+%7C+5.6+%7C+5.7+%7C+8.0&amp;color=2b5d80" /></a> <a class="reference external" href="https://img.shields.io/static/v1?label=MariaDB&amp;message=10.0+%7C+10.1+%7C+10.2+%7C+10.3+%7C+10.4+%7C+10.5&amp;color=C0765A"><img alt="MariaDB Support" src="https://img.shields.io/static/v1?logo=mariadb&amp;label=MariaDB&amp;message=5.5+%7C+10.0+%7C+10.1+%7C+10.2+%7C+10.3+%7C+10.4+%7C+10.5+%7C+10.6%7C+10.11&amp;color=C0765A" /></a> <a class="reference external" href="https://github.com/techouse/sqlite3-to-mysql/blob/master/LICENSE"><img alt="GitHub license" src="https://img.shields.io/github/license/techouse/sqlite3-to-mysql" /></a> <a class="reference external" href="CODE-OF-CONDUCT.md"><img alt="Contributor Covenant" src="https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg?logo=contributorcovenant" /></a>
+<a class="reference external" href="(https://pypi.org/project/sqlite3-to-mysql/)"><img alt="PyPI - Format" src="https://img.shields.io/pypi/format/sqlite3-to-mysql?logo=python" /></a> <a class="reference external" href="https://github.com/ambv/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg?logo=python" /></a> <a class="reference external" href="https://www.codacy.com/manual/techouse/sqlite3-to-mysql?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=techouse/sqlite3-to-mysql&amp;utm_campaign=Badge_Grade"><img alt="Codacy Badge" src="https://api.codacy.com/project/badge/Grade/d33b59d35b924711aae9418741a923ae" /></a> <a class="reference external" href="https://github.com/techouse/sqlite3-to-mysql/actions/workflows/test.yml"><img alt="Test Status" src="https://github.com/techouse/sqlite3-to-mysql/actions/workflows/test.yml/badge.svg" /></a> <a class="reference external" href="https://github.com/techouse/sqlite3-to-mysql/actions/workflows/codeql-analysis.yml"><img alt="CodeQL Status" src="https://github.com/techouse/sqlite3-to-mysql/actions/workflows/github-code-scanning/codeql/badge.svg" /></a>
+<a class="reference external" href="https://github.com/techouse/sqlite3-to-mysql/actions/workflows/publish.yml"><img alt="Publish PyPI Package Status" src="https://github.com/techouse/sqlite3-to-mysql/actions/workflows/publish.yml/badge.svg" /></a> <a class="reference external" href="https://codecov.io/gh/techouse/sqlite3-to-mysql"><img alt="codecov" src="https://codecov.io/gh/techouse/sqlite3-to-mysql/branch/master/graph/badge.svg" /></a> <a class="reference external" href="https://github.com/sponsors/techouse"><img alt="GitHub Sponsors" src="https://img.shields.io/github/sponsors/techouse?logo=github" /></a> <a class="reference external" href="https://github.com/techouse/sqlite3-to-mysql/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/techouse/sqlite3-to-mysql.svg?style=social&amp;label=Star&amp;maxAge=2592000" /></a></p>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading">¶</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>sqlite3-to-mysql
+</pre></div>
+</div>
+</section>
+<section id="basic-usage">
+<h2>Basic Usage<a class="headerlink" href="#basic-usage" title="Link to this heading">¶</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sqlite3mysql<span class="w"> </span>-f<span class="w"> </span>path/to/foo.sqlite<span class="w"> </span>-d<span class="w"> </span>foo_db<span class="w"> </span>-u<span class="w"> </span>foo_user<span class="w"> </span>-p
+</pre></div>
+</div>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="README.html">Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="README.html#options">Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="README.html#docker">Docker</a></li>
+<li class="toctree-l2"><a class="reference internal" href="README.html#homebrew">Homebrew</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">sqlite3_to_mysql</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="sqlite3_to_mysql.html">sqlite3_to_mysql package</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+</section>
+<section id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Link to this heading">¶</a></h1>
+<ul class="simple">
+<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
+</ul>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="#">sqlite3-to-mysql</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="README.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">sqlite3_to_mysql</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="#">Documentation overview</a><ul>
+      <li>Next: <a href="README.html" title="next chapter">Usage</a></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2026, Klemen Tusar.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.1.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="_sources/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

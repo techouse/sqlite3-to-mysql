@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>sqlite3_to_mysql.sqlite_utils &#8212; sqlite3-to-mysql 2.5.5 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=27fed22d" />
+    <script src="../../_static/documentation_options.js?v=644f8b71"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for sqlite3_to_mysql.sqlite_utils</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;SQLite adapters and converters for unsupported data types.&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">t</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">date</span><span class="p">,</span> <span class="n">timedelta</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">decimal</span><span class="w"> </span><span class="kn">import</span> <span class="n">Decimal</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">dateutil.parser</span><span class="w"> </span><span class="kn">import</span> <span class="n">ParserError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dateutil.parser</span><span class="w"> </span><span class="kn">import</span> <span class="n">parse</span> <span class="k">as</span> <span class="n">dateutil_parse</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">packaging</span><span class="w"> </span><span class="kn">import</span> <span class="n">version</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">packaging.version</span><span class="w"> </span><span class="kn">import</span> <span class="n">Version</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pytimeparse2</span><span class="w"> </span><span class="kn">import</span> <span class="n">parse</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">unidecode</span><span class="w"> </span><span class="kn">import</span> <span class="n">unidecode</span>
+
+
+<div class="viewcode-block" id="adapt_decimal">
+<a class="viewcode-back" href="../../sqlite3_to_mysql.html#sqlite3_to_mysql.sqlite_utils.adapt_decimal">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">adapt_decimal</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert decimal.Decimal to string.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="convert_decimal">
+<a class="viewcode-back" href="../../sqlite3_to_mysql.html#sqlite3_to_mysql.sqlite_utils.convert_decimal">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">convert_decimal</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Decimal</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert string to decimalDecimal.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">Decimal</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">decode</span><span class="p">()))</span></div>
+
+
+
+<div class="viewcode-block" id="adapt_timedelta">
+<a class="viewcode-back" href="../../sqlite3_to_mysql.html#sqlite3_to_mysql.sqlite_utils.adapt_timedelta">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">adapt_timedelta</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert datetime.timedelta to %H:%M:%S string.&quot;&quot;&quot;</span>
+    <span class="n">hours</span><span class="p">,</span> <span class="n">remainder</span> <span class="o">=</span> <span class="nb">divmod</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">(),</span> <span class="mi">3600</span><span class="p">)</span>
+    <span class="n">minutes</span><span class="p">,</span> <span class="n">seconds</span> <span class="o">=</span> <span class="nb">divmod</span><span class="p">(</span><span class="n">remainder</span><span class="p">,</span> <span class="mi">60</span><span class="p">)</span>
+    <span class="k">return</span> <span class="s2">&quot;</span><span class="si">{:02}</span><span class="s2">:</span><span class="si">{:02}</span><span class="s2">:</span><span class="si">{:02}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">hours</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">minutes</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">seconds</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="convert_timedelta">
+<a class="viewcode-back" href="../../sqlite3_to_mysql.html#sqlite3_to_mysql.sqlite_utils.convert_timedelta">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">convert_timedelta</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">timedelta</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert %H:%M:%S string to datetime.timedelta.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="n">parse</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">decode</span><span class="p">()))</span></div>
+
+
+
+<div class="viewcode-block" id="unicase_compare">
+<a class="viewcode-back" href="../../sqlite3_to_mysql.html#sqlite3_to_mysql.sqlite_utils.unicase_compare">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">unicase_compare</span><span class="p">(</span><span class="n">string_1</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">string_2</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Taken from https://github.com/patarapolw/ankisync2/issues/3#issuecomment-768687431.&quot;&quot;&quot;</span>
+    <span class="n">_string_1</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">unidecode</span><span class="p">(</span><span class="n">string_1</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="n">_string_2</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">unidecode</span><span class="p">(</span><span class="n">string_2</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="k">return</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">_string_1</span> <span class="o">&gt;</span> <span class="n">_string_2</span> <span class="k">else</span> <span class="o">-</span><span class="mi">1</span> <span class="k">if</span> <span class="n">_string_1</span> <span class="o">&lt;</span> <span class="n">_string_2</span> <span class="k">else</span> <span class="mi">0</span></div>
+
+
+
+<div class="viewcode-block" id="convert_date">
+<a class="viewcode-back" href="../../sqlite3_to_mysql.html#sqlite3_to_mysql.sqlite_utils.convert_date">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">convert_date</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">t</span><span class="o">.</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">date</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Handle SQLite date conversion.&quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">dateutil_parse</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">)</span> <span class="k">else</span> <span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">date</span><span class="p">()</span>
+    <span class="k">except</span> <span class="n">ParserError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;DATE field contains </span><span class="si">{</span><span class="n">err</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># pylint: disable=W0707</span></div>
+
+
+
+<div class="viewcode-block" id="check_sqlite_table_xinfo_support">
+<a class="viewcode-back" href="../../sqlite3_to_mysql.html#sqlite3_to_mysql.sqlite_utils.check_sqlite_table_xinfo_support">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">check_sqlite_table_xinfo_support</span><span class="p">(</span><span class="n">version_string</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check for SQLite table_xinfo support.&quot;&quot;&quot;</span>
+    <span class="n">sqlite_version</span><span class="p">:</span> <span class="n">Version</span> <span class="o">=</span> <span class="n">version</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">version_string</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">sqlite_version</span><span class="o">.</span><span class="n">major</span> <span class="o">&gt;</span> <span class="mi">3</span> <span class="ow">or</span> <span class="p">(</span><span class="n">sqlite_version</span><span class="o">.</span><span class="n">major</span> <span class="o">==</span> <span class="mi">3</span> <span class="ow">and</span> <span class="n">sqlite_version</span><span class="o">.</span><span class="n">minor</span> <span class="o">&gt;=</span> <span class="mi">26</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="check_sqlite_jsonb_support">
+<a class="viewcode-back" href="../../sqlite3_to_mysql.html#sqlite3_to_mysql.sqlite_utils.check_sqlite_jsonb_support">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">check_sqlite_jsonb_support</span><span class="p">(</span><span class="n">version_string</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check for SQLite JSONB support.&quot;&quot;&quot;</span>
+    <span class="n">sqlite_version</span><span class="p">:</span> <span class="n">Version</span> <span class="o">=</span> <span class="n">version</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">version_string</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">sqlite_version</span><span class="o">.</span><span class="n">major</span> <span class="o">&gt;</span> <span class="mi">3</span> <span class="ow">or</span> <span class="p">(</span><span class="n">sqlite_version</span><span class="o">.</span><span class="n">major</span> <span class="o">==</span> <span class="mi">3</span> <span class="ow">and</span> <span class="n">sqlite_version</span><span class="o">.</span><span class="n">minor</span> <span class="o">&gt;=</span> <span class="mi">45</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="sqlite_jsonb_column_expression">
+<a class="viewcode-back" href="../../sqlite3_to_mysql.html#sqlite3_to_mysql.sqlite_utils.sqlite_jsonb_column_expression">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">sqlite_jsonb_column_expression</span><span class="p">(</span><span class="n">quoted_column_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a SELECT expression that converts JSONB blobs to textual JSON while preserving NULLs.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="s1">&#39;CASE WHEN &quot;</span><span class="si">{name}</span><span class="s1">&quot; IS NULL THEN NULL ELSE json(&quot;</span><span class="si">{name}</span><span class="s1">&quot;) END AS &quot;</span><span class="si">{name}</span><span class="s1">&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">quoted_column_name</span><span class="p">)</span></div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">sqlite3-to-mysql</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../README.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">sqlite3_to_mysql</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2026, Klemen Tusar.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.1.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

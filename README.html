@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Usage &#8212; sqlite3-to-mysql 2.5.5 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=27fed22d" />
+    <script src="_static/documentation_options.js?v=644f8b71"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="sqlite3_to_mysql" href="modules.html" />
+    <link rel="prev" title="SQLite3 to MySQL" href="index.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="usage">
+<h1>Usage<a class="headerlink" href="#usage" title="Link to this heading">¶</a></h1>
+<section id="options">
+<h2>Options<a class="headerlink" href="#options" title="Link to this heading">¶</a></h2>
+<p>The command line options for the <code class="docutils literal notranslate"><span class="pre">sqlite3mysql</span></code> tool are as follows:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sqlite3mysql<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<section id="required-options">
+<h3>Required Options<a class="headerlink" href="#required-options" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">-f,</span> <span class="pre">--sqlite-file</span> <span class="pre">PATH</span></code>: SQLite3 database file  [required]</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-d,</span> <span class="pre">--mysql-database</span> <span class="pre">TEXT</span></code>: MySQL database name  [required]</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-u,</span> <span class="pre">--mysql-user</span> <span class="pre">TEXT</span></code>: MySQL user  [required]</p></li>
+</ul>
+</section>
+<section id="password-options">
+<h3>Password Options<a class="headerlink" href="#password-options" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">-p,</span> <span class="pre">--prompt-mysql-password</span></code>: Prompt for MySQL password</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--mysql-password</span> <span class="pre">TEXT</span></code>: MySQL password</p></li>
+</ul>
+</section>
+<section id="connection-options">
+<h3>Connection Options<a class="headerlink" href="#connection-options" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">-h,</span> <span class="pre">--mysql-host</span> <span class="pre">TEXT</span></code>: MySQL host. Defaults to localhost.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-P,</span> <span class="pre">--mysql-port</span> <span class="pre">INTEGER</span></code>: MySQL port. Defaults to 3306.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-S,</span> <span class="pre">--skip-ssl</span></code>: Disable MySQL connection encryption.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--mysql-socket</span> <span class="pre">TEXT</span></code>: Path to MySQL unix socket file.</p></li>
+</ul>
+</section>
+<section id="transfer-options">
+<h3>Transfer Options<a class="headerlink" href="#transfer-options" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">-t,</span> <span class="pre">--sqlite-tables</span> <span class="pre">TUPLE</span></code>: Transfer only these specific tables (space separated table names). Implies <code class="docutils literal notranslate"><span class="pre">--without-foreign-keys</span></code> which inhibits the transfer of foreign keys. Can not be used together with <code class="docutils literal notranslate"><span class="pre">--exclude-sqlite-tables</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-e,</span> <span class="pre">--exclude-sqlite-tables</span> <span class="pre">TUPLE</span></code>: Exclude these specific tables (space separated table names). Implies <code class="docutils literal notranslate"><span class="pre">--without-foreign-keys</span></code> which inhibits the transfer of foreign keys. Can not be used together with <code class="docutils literal notranslate"><span class="pre">--sqlite-tables</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-A,</span> <span class="pre">--sqlite-views-as-tables</span></code>: Materialize SQLite views as tables in MySQL instead of creating matching MySQL views (legacy behavior).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-E,</span> <span class="pre">--mysql-truncate-tables</span></code>: Truncates existing tables before inserting data.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-K,</span> <span class="pre">--mysql-skip-create-tables</span></code>: Skip creating tables in MySQL.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-i,</span> <span class="pre">--mysql-insert-method</span> <span class="pre">[UPDATE|IGNORE|DEFAULT]</span></code>: MySQL insert method. DEFAULT will throw errors when encountering duplicate records; UPDATE will update existing rows; IGNORE will ignore insert errors. Defaults to IGNORE.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-J,</span> <span class="pre">--mysql-skip-transfer-data</span></code>: Skip transferring data to MySQL.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--mysql-integer-type</span> <span class="pre">TEXT</span></code>: MySQL default integer field type. Defaults to INT(11).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--mysql-string-type</span> <span class="pre">TEXT</span></code>: MySQL default string field type. Defaults to VARCHAR(255).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--mysql-text-type</span> <span class="pre">[LONGTEXT|MEDIUMTEXT|TEXT|TINYTEXT]</span></code>: MySQL default text field type. Defaults to TEXT.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--mysql-charset</span> <span class="pre">TEXT</span></code>: MySQL database and table character set. Defaults to utf8mb4.</p></li>
+</ul>
+<p>` <code class="docutils literal notranslate"><span class="pre">--mysql-collation</span> <span class="pre">TEXT</span></code>: MySQL database and table collation
+- <code class="docutils literal notranslate"><span class="pre">-T,</span> <span class="pre">--use-fulltext</span></code>: Use FULLTEXT indexes on TEXT columns. Will throw an error if your MySQL version does not support InnoDB FULLTEXT indexes!
+- <code class="docutils literal notranslate"><span class="pre">-X,</span> <span class="pre">--without-foreign-keys</span></code>: Do not transfer foreign keys.
+- <code class="docutils literal notranslate"><span class="pre">-W,</span> <span class="pre">--ignore-duplicate-keys</span></code>: Ignore duplicate keys. The default behavior is to create new ones with a numerical suffix, e.g. ‘existing_key’ -&gt; ‘existing_key_1’
+- <code class="docutils literal notranslate"><span class="pre">--with-rowid</span></code>: Transfer rowid columns.
+- <code class="docutils literal notranslate"><span class="pre">-c,</span> <span class="pre">--chunk</span> <span class="pre">INTEGER</span></code>: Chunk reading/writing SQL records</p>
+</section>
+<section id="other-options">
+<h3>Other Options<a class="headerlink" href="#other-options" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">-l,</span> <span class="pre">--log-file</span> <span class="pre">PATH</span></code>: Log file</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-q,</span> <span class="pre">--quiet</span></code>: Quiet. Display only errors.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--debug</span></code>: Debug mode. Will throw exceptions.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--version</span></code>: Show the version and exit.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--help</span></code>: Show help message and exit.</p></li>
+</ul>
+</section>
+</section>
+<section id="docker">
+<h2>Docker<a class="headerlink" href="#docker" title="Link to this heading">¶</a></h2>
+<p>If you don’t want to install the tool on your system, you can use the
+Docker image instead.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>docker<span class="w"> </span>run<span class="w"> </span>-it<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--workdir<span class="w"> </span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--volume<span class="w"> </span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>:<span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--rm<span class="w"> </span>ghcr.io/techouse/sqlite3-to-mysql:latest<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--sqlite-file<span class="w"> </span>baz.db<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--mysql-user<span class="w"> </span>foo<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--mysql-password<span class="w"> </span>bar<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--mysql-database<span class="w"> </span>baz<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--mysql-host<span class="w"> </span>host.docker.internal
+</pre></div>
+</div>
+<p>This will mount your host current working directory (pwd) inside the
+Docker container as the current working directory. Any files Docker
+would write to the current working directory are written to the host
+directory where you did docker run. Note that you have to also use a
+<a class="reference external" href="https://docs.docker.com/desktop/networking/#use-cases-and-workarounds-for-all-platforms">special
+hostname</a>
+<code class="docutils literal notranslate"><span class="pre">host.docker.internal</span></code> to access your host machine from inside the
+Docker container.</p>
+</section>
+<section id="homebrew">
+<h2>Homebrew<a class="headerlink" href="#homebrew" title="Link to this heading">¶</a></h2>
+<p>If you’re on macOS, you can install the tool using
+<a class="reference external" href="https://brew.sh/">Homebrew</a>.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>brew<span class="w"> </span>install<span class="w"> </span>sqlite3-to-mysql
+sqlite3mysql<span class="w"> </span>--help
+</pre></div>
+</div>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">sqlite3-to-mysql</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#options">Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#docker">Docker</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#homebrew">Homebrew</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">sqlite3_to_mysql</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">SQLite3 to MySQL</a></li>
+      <li>Next: <a href="modules.html" title="next chapter">sqlite3_to_mysql</a></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2026, Klemen Tusar.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.1.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="_sources/README.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

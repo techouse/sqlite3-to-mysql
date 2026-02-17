@@ -25,7 +25,6 @@ from sqlglot.time import format_time as sqlglot_format_time
 from sqlglot.trie import new_trie
 from tqdm import tqdm, trange
 
-
 try:
     # Python 3.11+
     from typing import Unpack  # type: ignore[attr-defined]
@@ -60,7 +59,6 @@ from .mysql_utils import (
     safe_identifier_length,
 )
 from .types import SQLite3toMySQLAttributes, SQLite3toMySQLParams
-
 
 SQLGLOT_MYSQL_INVERSE_TIME_MAPPING: t.Dict[str, str] = {
     key: value for key, value in sqlglot_mysql.MySQL.INVERSE_TIME_MAPPING.items() if key != "%H:%M:%S"
@@ -341,13 +339,11 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
 
     def _create_database(self) -> None:
         try:
-            self._mysql_cur.execute(
-                f"""
+            self._mysql_cur.execute(f"""
                 CREATE DATABASE IF NOT EXISTS `{self._mysql_database}`
                 DEFAULT CHARACTER SET {self._mysql_charset}
                 DEFAULT COLLATE {self._mysql_collation}
-            """
-            )
+            """)
             self._mysql_cur.close()
             self._mysql.commit()
             self._mysql.database = self._mysql_database
@@ -744,16 +740,14 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
             columns.append("sql")
 
         object_placeholders: str = ", ".join("?" * len(object_types))
-        query: str = (
-            """
+        query: str = """
             SELECT {columns}
             FROM sqlite_master
             WHERE type IN ({object_types})
             AND name NOT LIKE 'sqlite_%'
         """.format(
-                columns=", ".join(columns),
-                object_types=object_placeholders,
-            )
+            columns=", ".join(columns),
+            object_types=object_placeholders,
         )
         params: t.List[t.Any] = list(object_types)
 
@@ -1107,20 +1101,18 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
         index_infos: t.Tuple[t.Dict[str, t.Any], ...],
         index_iteration: int = 0,
     ) -> None:
-        sql: str = (
-            """
+        sql: str = """
             ALTER TABLE `{table}`
             ADD {index_type} `{name}`({columns})
         """.format(
-                table=safe_identifier_length(table_name),
-                index_type=index_type,
-                name=(
-                    safe_identifier_length(index["name"])
-                    if index_iteration == 0
-                    else f'{safe_identifier_length(index["name"], max_length=60)}_{index_iteration}'
-                ),
-                columns=index_columns,
-            )
+            table=safe_identifier_length(table_name),
+            index_type=index_type,
+            name=(
+                safe_identifier_length(index["name"])
+                if index_iteration == 0
+                else f'{safe_identifier_length(index["name"], max_length=60)}_{index_iteration}'
+            ),
+            columns=index_columns,
         )
 
         try:

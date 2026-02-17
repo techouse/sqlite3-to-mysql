@@ -7,7 +7,6 @@ from mysql.connector import CharacterSet
 from mysql.connector.charsets import MYSQL_CHARACTER_SETS
 from packaging import version
 
-
 # Shamelessly copied from SQLAlchemy's dialects/mysql/__init__.py
 MYSQL_COLUMN_TYPES: t.Tuple[str, ...] = (
     "BIGINT",

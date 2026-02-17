@@ -8,7 +8,6 @@ from sqlite3 import Connection, Cursor
 from mysql.connector import MySQLConnection
 from mysql.connector.cursor import MySQLCursor
 
-
 try:
     # Python 3.11+
     from typing import TypedDict  # type: ignore[attr-defined]

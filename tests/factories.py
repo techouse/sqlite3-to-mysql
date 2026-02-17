@@ -5,7 +5,6 @@ import factory
 
 from . import faker_providers, models
 
-
 factory.Faker.add_provider(faker_providers.DateTimeProviders)
 
 

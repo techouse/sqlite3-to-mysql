@@ -23,7 +23,6 @@ from sqlite3_to_mysql import SQLite3toMySQL
 from sqlite3_to_mysql.cli import cli as sqlite3mysql
 from tests.conftest import MySQLCredentials
 
-
 SQLITE_SUPPORTS_JSONB: bool = sqlite3.sqlite_version_info >= (3, 45, 0)
 
 

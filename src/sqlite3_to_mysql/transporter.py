@@ -693,7 +693,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
             except sqlglot_errors.ParseError:
                 return s
 
-            expr = expr.transform(self._rewrite_sqlite_view_functions)
+            expr = t.cast(exp.Expression, expr.transform(self._rewrite_sqlite_view_functions))
 
             try:
                 return expr.sql(dialect="mysql")
@@ -775,7 +775,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
         expression.set("replace", True)
         expression.set("this", exp.to_identifier(safe_name))
 
-        expression = expression.transform(self._rewrite_sqlite_view_functions)
+        expression = t.cast(exp.Expression, expression.transform(self._rewrite_sqlite_view_functions))
 
         try:
             return expression.sql(dialect="mysql", identify=True)

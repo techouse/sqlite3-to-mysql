@@ -20,7 +20,6 @@ from docker.errors import NotFound
 from docker.models.containers import Container
 from faker import Faker
 from mysql.connector import MySQLConnection, errorcode
-from mysql.connector.connection_cext import CMySQLConnection
 from mysql.connector.pooling import PooledMySQLConnection
 from requests import HTTPError
 from sqlalchemy import create_engine
@@ -30,6 +29,12 @@ from sqlalchemy.orm import Session
 from sqlalchemy_utils import database_exists, drop_database
 
 from . import database, factories
+
+try:
+    from mysql.connector.connection_cext import CMySQLConnection
+except ImportError:
+    # Free-threaded Python builds fall back to the pure-Python connector.
+    CMySQLConnection = MySQLConnection
 
 
 def pytest_addoption(parser: "Parser") -> None:

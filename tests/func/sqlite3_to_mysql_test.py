@@ -14,7 +14,6 @@ from _pytest.capture import CaptureFixture
 from _pytest.logging import LogCaptureFixture
 from faker import Faker
 from mysql.connector import MySQLConnection, errorcode
-from mysql.connector.connection_cext import CMySQLConnection
 from mysql.connector.pooling import PooledMySQLConnection
 from pytest_mock import MockFixture
 from sqlalchemy import MetaData, Table, create_engine, inspect, select, text
@@ -25,6 +24,12 @@ from sqlalchemy.sql.elements import TextClause
 
 from sqlite3_to_mysql import SQLite3toMySQL
 from tests.conftest import Helpers, MySQLCredentials
+
+try:
+    from mysql.connector.connection_cext import CMySQLConnection
+except ImportError:
+    # Free-threaded Python builds fall back to the pure-Python connector.
+    CMySQLConnection = MySQLConnection
 
 
 @pytest.mark.usefixtures("sqlite_database", "mysql_instance")

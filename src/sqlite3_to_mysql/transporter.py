@@ -389,7 +389,7 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
             return None
         for dialect in ("mysql", "sqlite"):
             try:
-                return sqlglot.parse_one(stripped, read=dialect)
+                return t.cast(exp.Expression, sqlglot.parse_one(stripped, read=dialect))
             except sqlglot_errors.ParseError:
                 continue
         return None

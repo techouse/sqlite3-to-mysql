@@ -1,8 +1,13 @@
+# 2.5.7
+
+* [FIX] cast parsed SQL expressions to the correct type for type safety
+
 # 2.5.6
 
 * [FIX] improve typing compatibility by preserving transformed `sqlglot` expressions as typed MySQL/SQLite expressions
 * [CHORE] refresh GitHub Actions workflow dependencies, including `actions/checkout` v6 and newer Docker actions
-* [CHORE] update documentation and packaging metadata by refreshing badge links, fixing the CodeQL badge, bumping Sphinx to 9.1.0, and adding `mariadb`/`database` keywords
+* [CHORE] update documentation and packaging metadata by refreshing badge links, fixing the CodeQL badge, bumping Sphinx
+  to 9.1.0, and adding `mariadb`/`database` keywords
 * [CHORE] update the LICENSE copyright year to 2026 and remove unnecessary blank lines for cleaner formatting
 
 # 2.5.5

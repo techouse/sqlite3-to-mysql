@@ -1,3 +1,7 @@
+# 2.5.8
+
+* [CHORE] pin sqlglot to >=30.0.0,<31.0.0
+
 # 2.5.7
 
 * [FIX] cast parsed SQL expressions to the correct type for type safety

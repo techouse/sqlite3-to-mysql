@@ -1,5 +1,7 @@
+import io
 import json
 import socket
+import tarfile
 import typing as t
 from codecs import open
 from contextlib import contextmanager
@@ -103,21 +105,28 @@ def pytest_addoption(parser: "Parser") -> None:
 def cleanup_hanged_docker_containers() -> None:
     try:
         client: DockerClient = docker.from_env()
-        for container in client.containers.list():
-            if container.name == "pytest_sqlite3_to_mysql":
-                container.kill()
-                break
+        try:
+            for container in client.containers.list():
+                if container.name == "pytest_sqlite3_to_mysql":
+                    container.kill()
+                    break
+        finally:
+            client.close()
     except Exception:
         pass
 
 
-def pytest_keyboard_interrupt() -> None:
+def pytest_keyboard_interrupt(excinfo: t.Any) -> None:
+    del excinfo
     try:
         client: DockerClient = docker.from_env()
-        for container in client.containers.list():
-            if container.name == "pytest_sqlite3_to_mysql":
-                container.kill()
-                break
+        try:
+            for container in client.containers.list():
+                if container.name == "pytest_sqlite3_to_mysql":
+                    container.kill()
+                    break
+        finally:
+            client.close()
     except Exception:
         pass
 
@@ -239,6 +248,7 @@ def mysql_credentials(pytestconfig: Config) -> MySQLCredentials:
 
 @pytest.fixture(scope="session")
 def mysql_instance(mysql_credentials: MySQLCredentials, pytestconfig: Config) -> t.Iterator[MySQLConnection]:
+    client: t.Optional[DockerClient] = None
     container: t.Optional[Container] = None
     mysql_connection: t.Optional[t.Union[PooledMySQLConnection, MySQLConnection, CMySQLConnection]] = None
     mysql_available: bool = False
@@ -250,76 +260,161 @@ def mysql_instance(mysql_credentials: MySQLCredentials, pytestconfig: Config) ->
     else:
         use_docker = pytestconfig.getoption("use_docker")
 
-    if use_docker:
-        """Connecting to a MySQL server within a Docker container is quite tricky :P
-        Read more on the issue here https://hub.docker.com/_/mysql#no-connections-until-mysql-init-completes
-        """
-        try:
-            client = docker.from_env()
-        except Exception as err:
-            pytest.fail(str(err))
-
-        docker_mysql_image = pytestconfig.getoption("docker_mysql_image") or "mysql:latest"
-
-        if not any(docker_mysql_image in image.tags for image in client.images.list()):
-            print(f"Attempting to download Docker image {docker_mysql_image}'")
+    try:
+        if use_docker:
+            """Connecting to a MySQL server within a Docker container is quite tricky :P
+            Read more on the issue here https://hub.docker.com/_/mysql#no-connections-until-mysql-init-completes
+            """
             try:
-                client.images.pull(docker_mysql_image)
-            except (HTTPError, NotFound) as err:
+                client = docker.from_env()
+            except Exception as err:
                 pytest.fail(str(err))
 
-        container = client.containers.run(
-            image=docker_mysql_image,
-            name="pytest_sqlite3_to_mysql",
-            ports={
-                "3306/tcp": (
-                    mysql_credentials.host,
-                    f"{mysql_credentials.port}/tcp",
-                )
-            },
-            environment={
-                "MYSQL_RANDOM_ROOT_PASSWORD": "yes",
-                "MYSQL_USER": mysql_credentials.user,
-                "MYSQL_PASSWORD": mysql_credentials.password,
-                "MYSQL_DATABASE": mysql_credentials.database,
-            },
-            command=[
-                "--character-set-server=utf8mb4",
-                "--collation-server=utf8mb4_unicode_ci",
-            ],
-            detach=True,
-            auto_remove=True,
-        )
+            docker_mysql_image = pytestconfig.getoption("docker_mysql_image") or "mysql:latest"
 
-    while not mysql_available and mysql_connection_retries > 0:
-        try:
-            mysql_connection = mysql.connector.connect(
-                user=mysql_credentials.user,
-                password=mysql_credentials.password,
-                host=mysql_credentials.host,
-                port=mysql_credentials.port,
-                charset="utf8mb4",
-                collation="utf8mb4_unicode_ci",
+            if not any(docker_mysql_image in image.tags for image in client.images.list()):
+                print(f"Attempting to download Docker image {docker_mysql_image}'")
+                try:
+                    client.images.pull(docker_mysql_image)
+                except (HTTPError, NotFound) as err:
+                    pytest.fail(str(err))
+
+            container = client.containers.run(
+                image=docker_mysql_image,
+                name="pytest_sqlite3_to_mysql",
+                ports={
+                    "3306/tcp": (
+                        mysql_credentials.host,
+                        f"{mysql_credentials.port}/tcp",
+                    )
+                },
+                environment={
+                    "MYSQL_RANDOM_ROOT_PASSWORD": "yes",
+                    "MYSQL_USER": mysql_credentials.user,
+                    "MYSQL_PASSWORD": mysql_credentials.password,
+                    "MYSQL_DATABASE": mysql_credentials.database,
+                },
+                command=[
+                    "--character-set-server=utf8mb4",
+                    "--collation-server=utf8mb4_unicode_ci",
+                ],
+                detach=True,
+                auto_remove=True,
             )
-        except mysql.connector.Error as err:
-            if err.errno == errorcode.CR_SERVER_LOST:
-                # sleep for two seconds and retry the connection
-                sleep(2)
-            else:
-                raise
-        finally:
-            mysql_connection_retries -= 1
-            if mysql_connection and mysql_connection.is_connected():
-                mysql_available = True
-                mysql_connection.close()
-    else:
-        if not mysql_available and mysql_connection_retries <= 0:
-            raise ConnectionAbortedError("Maximum MySQL connection retries exhausted! Are you sure MySQL is running?")
 
-    yield  # type: ignore[misc]
+        while not mysql_available and mysql_connection_retries > 0:
+            try:
+                mysql_connection = mysql.connector.connect(
+                    user=mysql_credentials.user,
+                    password=mysql_credentials.password,
+                    host=mysql_credentials.host,
+                    port=mysql_credentials.port,
+                    charset="utf8mb4",
+                    collation="utf8mb4_unicode_ci",
+                )
+            except mysql.connector.Error as err:
+                if err.errno == errorcode.CR_SERVER_LOST:
+                    # sleep for two seconds and retry the connection
+                    sleep(2)
+                else:
+                    raise
+            finally:
+                mysql_connection_retries -= 1
+                if mysql_connection and mysql_connection.is_connected():
+                    mysql_available = True
+                    mysql_connection.close()
+        else:
+            if not mysql_available and mysql_connection_retries <= 0:
+                raise ConnectionAbortedError(
+                    "Maximum MySQL connection retries exhausted! Are you sure MySQL is running?"
+                )
 
-    if use_docker and container is not None:
-        container.kill()
+        yield  # type: ignore[misc]
+    finally:
+        if use_docker:
+            try:
+                if container is not None:
+                    container.kill()
+            finally:
+                if client is not None:
+                    client.close()
+
+
+class MySQLSSLCerts(t.NamedTuple):
+    """Paths to MySQL SSL certificate files extracted from the Docker container."""
+
+    ca: str
+    client_cert: str
+    client_key: str
+
+
+@pytest.fixture(scope="session")
+def mysql_ssl_certs(
+    mysql_instance: MySQLConnection,
+    pytestconfig: Config,
+    tmp_path_factory: pytest.TempPathFactory,
+) -> t.Optional[MySQLSSLCerts]:
+    del mysql_instance
+    db_credentials_file = abspath(join(dirname(__file__), "db_credentials.json"))
+    if isfile(db_credentials_file):
+        return None
+
+    if not pytestconfig.getoption("use_docker"):
+        return None
+
+    client: DockerClient = docker.from_env()
+    try:
+        container: t.Optional[Container] = None
+        for docker_container in client.containers.list():
+            if docker_container.name == "pytest_sqlite3_to_mysql":
+                container = docker_container
+                break
+
+        if container is None:
+            pytest.fail("MySQL test container is running, but SSL cert extraction could not find it")
+
+        ssl_dir = tmp_path_factory.mktemp("mysql_ssl_certs")
+        cert_files = {
+            "ca.pem": "ca.pem",
+            "client-cert.pem": "client-cert.pem",
+            "client-key.pem": "client-key.pem",
+        }
+
+        extracted: t.Dict[str, str] = {}
+        for filename, dest_name in cert_files.items():
+            try:
+                data_stream, _stat = container.get_archive(f"/var/lib/mysql/{filename}")
+            except NotFound:
+                return None
+
+            buf = io.BytesIO()
+            for chunk in data_stream:
+                buf.write(chunk)
+            buf.seek(0)
+            with tarfile.open(fileobj=buf) as tar:
+                member = next(
+                    (tar_member for tar_member in tar.getmembers() if Path(tar_member.name).name == filename),
+                    None,
+                )
+                if member is None:
+                    pytest.fail(f"Docker returned an archive for {filename}, but the file was not present")
+
+                fobj = tar.extractfile(member)
+                if fobj is None:
+                    pytest.fail(f"Could not read {filename} from the Docker archive")
+
+                with fobj:
+                    dest_path = ssl_dir / dest_name
+                    dest_path.write_bytes(fobj.read())
+                    extracted[filename] = str(dest_path)
+
+        return MySQLSSLCerts(
+            ca=extracted["ca.pem"],
+            client_cert=extracted["client-cert.pem"],
+            client_key=extracted["client-key.pem"],
+        )
+    finally:
+        client.close()
 
 
 @pytest.fixture()

@@ -103,6 +103,199 @@ def test_cli_collation_validation(
     assert "Invalid value for '--collation'" in result.output
 
 
+def test_cli_ssl_options_passed_to_transporter(
+    cli_runner: CliRunner,
+    sqlite_database: str,
+    mysql_credentials: MySQLCredentials,
+    tmp_path,
+    mocker: MockerFixture,
+) -> None:
+    transporter_ctor = mocker.patch("sqlite3_to_mysql.cli.SQLite3toMySQL", autospec=True)
+    transporter_ctor.return_value.transfer.return_value = None
+    ca_file = tmp_path / "ca.pem"
+    cert_file = tmp_path / "client-cert.pem"
+    key_file = tmp_path / "client-key.pem"
+    for cert_path in (ca_file, cert_file, key_file):
+        cert_path.write_text("fake")
+
+    result = cli_runner.invoke(
+        sqlite3mysql,
+        [
+            "-f",
+            sqlite_database,
+            "-d",
+            mysql_credentials.database,
+            "-u",
+            mysql_credentials.user,
+            "--mysql-ssl-ca",
+            str(ca_file),
+            "--mysql-ssl-cert",
+            str(cert_file),
+            "--mysql-ssl-key",
+            str(key_file),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert transporter_ctor.call_args.kwargs["mysql_ssl_ca"] == str(ca_file)
+    assert transporter_ctor.call_args.kwargs["mysql_ssl_cert"] == str(cert_file)
+    assert transporter_ctor.call_args.kwargs["mysql_ssl_key"] == str(key_file)
+    assert transporter_ctor.call_args.kwargs["mysql_ssl_disabled"] is False
+
+
+def test_cli_ssl_options_default_to_none(
+    cli_runner: CliRunner,
+    sqlite_database: str,
+    mysql_credentials: MySQLCredentials,
+    mocker: MockerFixture,
+) -> None:
+    transporter_ctor = mocker.patch("sqlite3_to_mysql.cli.SQLite3toMySQL", autospec=True)
+    transporter_ctor.return_value.transfer.return_value = None
+
+    result = cli_runner.invoke(
+        sqlite3mysql,
+        [
+            "-f",
+            sqlite_database,
+            "-d",
+            mysql_credentials.database,
+            "-u",
+            mysql_credentials.user,
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert transporter_ctor.call_args.kwargs["mysql_ssl_ca"] is None
+    assert transporter_ctor.call_args.kwargs["mysql_ssl_cert"] is None
+    assert transporter_ctor.call_args.kwargs["mysql_ssl_key"] is None
+    assert transporter_ctor.call_args.kwargs["mysql_ssl_disabled"] is False
+
+
+def test_cli_skip_ssl_with_ssl_options_rejected(
+    cli_runner: CliRunner,
+    sqlite_database: str,
+    mysql_credentials: MySQLCredentials,
+    tmp_path,
+    mocker: MockerFixture,
+) -> None:
+    transporter_ctor = mocker.patch("sqlite3_to_mysql.cli.SQLite3toMySQL", autospec=True)
+    ca_file = tmp_path / "ca.pem"
+    ca_file.write_text("fake")
+
+    result = cli_runner.invoke(
+        sqlite3mysql,
+        [
+            "-f",
+            sqlite_database,
+            "-d",
+            mysql_credentials.database,
+            "-u",
+            mysql_credentials.user,
+            "--skip-ssl",
+            "--mysql-ssl-ca",
+            str(ca_file),
+        ],
+    )
+
+    assert result.exit_code > 0
+    assert "mutually exclusive" in result.output
+    transporter_ctor.assert_not_called()
+
+
+def test_cli_mysql_socket_with_ssl_options_rejected(
+    cli_runner: CliRunner,
+    sqlite_database: str,
+    mysql_credentials: MySQLCredentials,
+    tmp_path,
+    mocker: MockerFixture,
+) -> None:
+    transporter_ctor = mocker.patch("sqlite3_to_mysql.cli.SQLite3toMySQL", autospec=True)
+    socket_file = tmp_path / "mysql.sock"
+    ca_file = tmp_path / "ca.pem"
+    socket_file.write_text("")
+    ca_file.write_text("fake")
+
+    result = cli_runner.invoke(
+        sqlite3mysql,
+        [
+            "-f",
+            sqlite_database,
+            "-d",
+            mysql_credentials.database,
+            "-u",
+            mysql_credentials.user,
+            "--mysql-socket",
+            str(socket_file),
+            "--mysql-ssl-ca",
+            str(ca_file),
+        ],
+    )
+
+    assert result.exit_code > 0
+    assert "mutually exclusive" in result.output
+    transporter_ctor.assert_not_called()
+
+
+def test_cli_ssl_cert_without_key_rejected(
+    cli_runner: CliRunner,
+    sqlite_database: str,
+    mysql_credentials: MySQLCredentials,
+    tmp_path,
+    mocker: MockerFixture,
+) -> None:
+    transporter_ctor = mocker.patch("sqlite3_to_mysql.cli.SQLite3toMySQL", autospec=True)
+    cert_file = tmp_path / "client-cert.pem"
+    cert_file.write_text("fake")
+
+    result = cli_runner.invoke(
+        sqlite3mysql,
+        [
+            "-f",
+            sqlite_database,
+            "-d",
+            mysql_credentials.database,
+            "-u",
+            mysql_credentials.user,
+            "--mysql-ssl-cert",
+            str(cert_file),
+        ],
+    )
+
+    assert result.exit_code > 0
+    assert "must be provided together" in result.output
+    transporter_ctor.assert_not_called()
+
+
+def test_cli_ssl_key_without_cert_rejected(
+    cli_runner: CliRunner,
+    sqlite_database: str,
+    mysql_credentials: MySQLCredentials,
+    tmp_path,
+    mocker: MockerFixture,
+) -> None:
+    transporter_ctor = mocker.patch("sqlite3_to_mysql.cli.SQLite3toMySQL", autospec=True)
+    key_file = tmp_path / "client-key.pem"
+    key_file.write_text("fake")
+
+    result = cli_runner.invoke(
+        sqlite3mysql,
+        [
+            "-f",
+            sqlite_database,
+            "-d",
+            mysql_credentials.database,
+            "-u",
+            mysql_credentials.user,
+            "--mysql-ssl-key",
+            str(key_file),
+        ],
+    )
+
+    assert result.exit_code > 0
+    assert "must be provided together" in result.output
+    transporter_ctor.assert_not_called()
+
+
 def test_types_typed_dict_fallback(monkeypatch: pytest.MonkeyPatch) -> None:
     import typing
 
@@ -367,6 +560,213 @@ def test_rewrite_sqlite_view_functions_time_to_str_with_modifier_list() -> None:
     transformed = SQLite3toMySQL._rewrite_sqlite_view_functions(node)
     assert isinstance(transformed, exp.TimeToStr)
     assert isinstance(transformed.this, exp.UtcTimestamp)
+
+
+class TestSSLOptions:
+    """Tests for MySQL SSL certificate options."""
+
+    def _make_instance(
+        self,
+        sqlite_database: str,
+        mocker: MockerFixture,
+        **extra_kwargs: t.Any,
+    ) -> t.Tuple[SQLite3toMySQL, t.Dict[str, t.Any]]:
+        connect_kwargs: t.Dict[str, t.Any] = {}
+
+        class FakeCursor:
+            def execute(self, statement: t.Any) -> None:
+                del statement
+
+            def fetchone(self) -> t.Tuple[str, str]:
+                return ("version", "8.0.30")
+
+            def close(self) -> None:
+                pass
+
+        class FakeMySQLConnection:
+            def __init__(self) -> None:
+                self.database = None
+
+            def is_connected(self) -> bool:
+                return True
+
+            def cursor(self, *args: t.Any, **kwargs: t.Any) -> FakeCursor:
+                del args, kwargs
+                return FakeCursor()
+
+            def commit(self) -> None:
+                pass
+
+        def fake_connect(**kwargs: t.Any) -> FakeMySQLConnection:
+            connect_kwargs.update(kwargs)
+            return FakeMySQLConnection()
+
+        mocker.patch("sqlite3_to_mysql.transporter.mysql.connector.connect", side_effect=fake_connect)
+        mocker.patch("sqlite3_to_mysql.transporter.mysql.connector.MySQLConnection", FakeMySQLConnection)
+        mocker.patch(
+            "sqlite3_to_mysql.transporter.CharacterSet.get_default_collation",
+            return_value=("utf8mb4_unicode_ci", None),
+        )
+
+        kwargs: t.Dict[str, t.Any] = {
+            "sqlite_file": sqlite_database,
+            "mysql_user": "user",
+            "mysql_password": "pass",
+            "mysql_database": "demo",
+        }
+        kwargs.update(extra_kwargs)
+
+        return SQLite3toMySQL(**kwargs), connect_kwargs
+
+    def test_ssl_params_passed_to_mysql_connector(
+        self,
+        sqlite_database: str,
+        mocker: MockerFixture,
+    ) -> None:
+        instance, connect_kwargs = self._make_instance(
+            sqlite_database,
+            mocker,
+            mysql_ssl_ca="/path/to/ca.pem",
+            mysql_ssl_cert="/path/to/client-cert.pem",
+            mysql_ssl_key="/path/to/client-key.pem",
+        )
+
+        assert instance._mysql_ssl_ca == "/path/to/ca.pem"
+        assert instance._mysql_ssl_cert == "/path/to/client-cert.pem"
+        assert instance._mysql_ssl_key == "/path/to/client-key.pem"
+        assert connect_kwargs["ssl_ca"] == "/path/to/ca.pem"
+        assert connect_kwargs["ssl_cert"] == "/path/to/client-cert.pem"
+        assert connect_kwargs["ssl_key"] == "/path/to/client-key.pem"
+        assert connect_kwargs["ssl_verify_cert"] is True
+
+    def test_ssl_params_default_to_none(
+        self,
+        sqlite_database: str,
+        mocker: MockerFixture,
+    ) -> None:
+        instance, connect_kwargs = self._make_instance(sqlite_database, mocker)
+
+        assert instance._mysql_ssl_ca is None
+        assert instance._mysql_ssl_cert is None
+        assert instance._mysql_ssl_key is None
+        assert connect_kwargs["ssl_ca"] is None
+        assert connect_kwargs["ssl_cert"] is None
+        assert connect_kwargs["ssl_key"] is None
+        assert connect_kwargs["ssl_verify_cert"] is False
+
+    def test_ssl_ca_only(
+        self,
+        sqlite_database: str,
+        mocker: MockerFixture,
+    ) -> None:
+        instance, connect_kwargs = self._make_instance(
+            sqlite_database,
+            mocker,
+            mysql_ssl_ca="/path/to/ca.pem",
+        )
+
+        assert instance._mysql_ssl_ca == "/path/to/ca.pem"
+        assert instance._mysql_ssl_cert is None
+        assert instance._mysql_ssl_key is None
+        assert connect_kwargs["ssl_ca"] == "/path/to/ca.pem"
+        assert connect_kwargs["ssl_verify_cert"] is True
+
+    def test_ssl_cert_and_key_without_ca(
+        self,
+        sqlite_database: str,
+        mocker: MockerFixture,
+    ) -> None:
+        instance, connect_kwargs = self._make_instance(
+            sqlite_database,
+            mocker,
+            mysql_ssl_cert="/path/to/client-cert.pem",
+            mysql_ssl_key="/path/to/client-key.pem",
+        )
+
+        assert instance._mysql_ssl_ca is None
+        assert instance._mysql_ssl_cert == "/path/to/client-cert.pem"
+        assert instance._mysql_ssl_key == "/path/to/client-key.pem"
+        assert connect_kwargs["ssl_ca"] is None
+        assert connect_kwargs["ssl_cert"] == "/path/to/client-cert.pem"
+        assert connect_kwargs["ssl_key"] == "/path/to/client-key.pem"
+        assert connect_kwargs["ssl_verify_cert"] is False
+
+    def test_ssl_empty_strings_treated_as_none(
+        self,
+        sqlite_database: str,
+        mocker: MockerFixture,
+    ) -> None:
+        instance, connect_kwargs = self._make_instance(
+            sqlite_database,
+            mocker,
+            mysql_ssl_ca="",
+            mysql_ssl_cert="",
+            mysql_ssl_key="",
+        )
+
+        assert instance._mysql_ssl_ca is None
+        assert instance._mysql_ssl_cert is None
+        assert instance._mysql_ssl_key is None
+        assert connect_kwargs["ssl_ca"] is None
+        assert connect_kwargs["ssl_cert"] is None
+        assert connect_kwargs["ssl_key"] is None
+
+    def test_ssl_disabled_with_ssl_options_raises(
+        self,
+        sqlite_database: str,
+        mocker: MockerFixture,
+    ) -> None:
+        with pytest.raises(ValueError, match="Cannot use SSL certificate options when SSL is disabled"):
+            self._make_instance(
+                sqlite_database,
+                mocker,
+                mysql_ssl_ca="/path/to/ca.pem",
+                mysql_ssl_disabled=True,
+            )
+
+    def test_ssl_cert_without_key_raises(
+        self,
+        sqlite_database: str,
+        mocker: MockerFixture,
+    ) -> None:
+        with pytest.raises(ValueError, match="mysql_ssl_cert and mysql_ssl_key must be provided together"):
+            self._make_instance(
+                sqlite_database,
+                mocker,
+                mysql_ssl_cert="/path/to/client-cert.pem",
+            )
+
+    def test_ssl_key_without_cert_raises(
+        self,
+        sqlite_database: str,
+        mocker: MockerFixture,
+    ) -> None:
+        with pytest.raises(ValueError, match="mysql_ssl_cert and mysql_ssl_key must be provided together"):
+            self._make_instance(
+                sqlite_database,
+                mocker,
+                mysql_ssl_key="/path/to/client-key.pem",
+            )
+
+    def test_mysql_socket_with_ssl_options_raises(
+        self,
+        sqlite_database: str,
+        tmp_path,
+        mocker: MockerFixture,
+    ) -> None:
+        socket_file = tmp_path / "mysql.sock"
+        socket_file.write_text("")
+
+        with pytest.raises(
+            ValueError,
+            match="Cannot use SSL certificate options when connecting through a MySQL socket",
+        ):
+            self._make_instance(
+                sqlite_database,
+                mocker,
+                mysql_socket=str(socket_file),
+                mysql_ssl_ca="/path/to/ca.pem",
+            )
 
 
 def _make_transfer_stub(mocker: MockFixture) -> SQLite3toMySQL:

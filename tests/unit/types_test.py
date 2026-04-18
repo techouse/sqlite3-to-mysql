@@ -26,6 +26,9 @@ class TestTypes:
             "mysql_host": "localhost",
             "mysql_port": 3306,
             "mysql_socket": "/var/run/mysqld/mysqld.sock",
+            "mysql_ssl_ca": "ca.pem",
+            "mysql_ssl_cert": "client-cert.pem",
+            "mysql_ssl_key": "client-key.pem",
             "mysql_ssl_disabled": True,
             "chunk": 1000,
             "quiet": False,
@@ -56,6 +59,9 @@ class TestTypes:
         assert params["mysql_host"] == "localhost"
         assert params["mysql_port"] == 3306
         assert params["mysql_socket"] == "/var/run/mysqld/mysqld.sock"
+        assert params["mysql_ssl_ca"] == "ca.pem"
+        assert params["mysql_ssl_cert"] == "client-cert.pem"
+        assert params["mysql_ssl_key"] == "client-key.pem"
         assert params["mysql_ssl_disabled"] is True
         assert params["chunk"] == 1000
         assert params["quiet"] is False
@@ -99,6 +105,9 @@ class TestTypes:
                 self._mysql_host = "localhost"
                 self._mysql_port = 3306
                 self._mysql_socket = "/var/run/mysqld/mysqld.sock"
+                self._mysql_ssl_ca = "ca.pem"
+                self._mysql_ssl_cert = "client-cert.pem"
+                self._mysql_ssl_key = "client-key.pem"
                 self._mysql_ssl_disabled = True
                 self._chunk_size = 1000
                 self._quiet = False
@@ -141,6 +150,9 @@ class TestTypes:
         assert instance._mysql_host == "localhost"
         assert instance._mysql_port == 3306
         assert instance._mysql_socket == "/var/run/mysqld/mysqld.sock"
+        assert instance._mysql_ssl_ca == "ca.pem"
+        assert instance._mysql_ssl_cert == "client-cert.pem"
+        assert instance._mysql_ssl_key == "client-key.pem"
         assert instance._mysql_ssl_disabled is True
         assert instance._chunk_size == 1000
         assert instance._quiet is False

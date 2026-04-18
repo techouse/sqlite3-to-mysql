@@ -138,7 +138,19 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
         else:
             self._without_foreign_keys = bool(kwargs.get("without_foreign_keys", False))
 
+        self._mysql_ssl_ca = kwargs.get("mysql_ssl_ca") or None
+        self._mysql_ssl_cert = kwargs.get("mysql_ssl_cert") or None
+        self._mysql_ssl_key = kwargs.get("mysql_ssl_key") or None
         self._mysql_ssl_disabled = bool(kwargs.get("mysql_ssl_disabled", False))
+
+        if self._mysql_ssl_disabled and any((self._mysql_ssl_ca, self._mysql_ssl_cert, self._mysql_ssl_key)):
+            raise ValueError("Cannot use SSL certificate options when SSL is disabled")
+
+        if self._mysql_socket and any((self._mysql_ssl_ca, self._mysql_ssl_cert, self._mysql_ssl_key)):
+            raise ValueError("Cannot use SSL certificate options when connecting through a MySQL socket")
+
+        if bool(self._mysql_ssl_cert) != bool(self._mysql_ssl_key):
+            raise ValueError("mysql_ssl_cert and mysql_ssl_key must be provided together")
 
         # Expect an integer chunk size; normalize to None when unset/invalid or <= 0
         _chunk = kwargs.get("chunk")
@@ -213,6 +225,10 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
         else:
             connection_args["host"] = self._mysql_host
             connection_args["port"] = self._mysql_port
+            connection_args["ssl_ca"] = self._mysql_ssl_ca
+            connection_args["ssl_cert"] = self._mysql_ssl_cert
+            connection_args["ssl_key"] = self._mysql_ssl_key
+            connection_args["ssl_verify_cert"] = self._mysql_ssl_ca is not None
             if self._mysql_ssl_disabled:
                 connection_args["ssl_disabled"] = True
 

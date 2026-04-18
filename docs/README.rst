@@ -28,8 +28,11 @@ Connection Options
 
 - ``-h, --mysql-host TEXT``: MySQL host. Defaults to localhost.
 - ``-P, --mysql-port INTEGER``: MySQL port. Defaults to 3306.
-- ``-S, --skip-ssl``: Disable MySQL connection encryption.
 - ``--mysql-socket TEXT``: Path to MySQL unix socket file.
+- ``--mysql-ssl-ca PATH``: Path to SSL CA certificate file.
+- ``--mysql-ssl-cert PATH``: Path to SSL certificate file. Must be provided together with ``--mysql-ssl-key``.
+- ``--mysql-ssl-key PATH``: Path to SSL key file. Must be provided together with ``--mysql-ssl-cert``.
+- ``-S, --skip-ssl``: Disable MySQL connection encryption. Cannot be used together with ``--mysql-ssl-*`` options.
 
 Transfer Options
 """"""""""""""""
@@ -45,7 +48,7 @@ Transfer Options
 - ``--mysql-string-type TEXT``: MySQL default string field type. Defaults to VARCHAR(255).
 - ``--mysql-text-type [LONGTEXT|MEDIUMTEXT|TEXT|TINYTEXT]``: MySQL default text field type. Defaults to TEXT.
 - ``--mysql-charset TEXT``: MySQL database and table character set. Defaults to utf8mb4.
-` ``--mysql-collation TEXT``: MySQL database and table collation
+- ``--mysql-collation TEXT``: MySQL database and table collation.
 - ``-T, --use-fulltext``: Use FULLTEXT indexes on TEXT columns. Will throw an error if your MySQL version does not support InnoDB FULLTEXT indexes!
 - ``-X, --without-foreign-keys``: Do not transfer foreign keys.
 - ``-W, --ignore-duplicate-keys``: Ignore duplicate keys. The default behavior is to create new ones with a numerical suffix, e.g. 'existing_key' -> 'existing_key_1'

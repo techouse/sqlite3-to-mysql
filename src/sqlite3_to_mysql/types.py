@@ -29,6 +29,9 @@ class SQLite3toMySQLParams(TypedDict):
     mysql_host: t.Optional[str]
     mysql_port: t.Optional[int]
     mysql_socket: t.Optional[t.Union[str, "os.PathLike[t.Any]"]]
+    mysql_ssl_ca: t.Optional[t.Union[str, "os.PathLike[t.Any]"]]
+    mysql_ssl_cert: t.Optional[t.Union[str, "os.PathLike[t.Any]"]]
+    mysql_ssl_key: t.Optional[t.Union[str, "os.PathLike[t.Any]"]]
     mysql_ssl_disabled: t.Optional[bool]
     chunk: t.Optional[int]
     quiet: t.Optional[bool]
@@ -61,6 +64,9 @@ class SQLite3toMySQLAttributes:
     _mysql_host: t.Optional[str]
     _mysql_port: t.Optional[int]
     _mysql_socket: t.Optional[t.Union[str, "os.PathLike[t.Any]"]]
+    _mysql_ssl_ca: t.Optional[t.Union[str, "os.PathLike[t.Any]"]]
+    _mysql_ssl_cert: t.Optional[t.Union[str, "os.PathLike[t.Any]"]]
+    _mysql_ssl_key: t.Optional[t.Union[str, "os.PathLike[t.Any]"]]
     _mysql_ssl_disabled: bool
     _chunk_size: t.Optional[int]
     _quiet: bool

@@ -60,7 +60,13 @@ Options:
   -h, --mysql-host TEXT           MySQL host. Defaults to localhost.
   -P, --mysql-port INTEGER        MySQL port. Defaults to 3306.
   -k, --mysql-socket PATH         Path to MySQL unix socket file.
-  -S, --skip-ssl                  Disable MySQL connection encryption.
+  --mysql-ssl-ca PATH             Path to SSL CA certificate file.
+  --mysql-ssl-cert PATH           Path to SSL certificate file. Must be
+                                  provided together with --mysql-ssl-key.
+  --mysql-ssl-key PATH            Path to SSL key file. Must be provided
+                                  together with --mysql-ssl-cert.
+  -S, --skip-ssl                  Disable MySQL connection encryption. Cannot
+                                  be used with --mysql-ssl-* options.
   -i, --mysql-insert-method [DEFAULT|IGNORE|UPDATE]
                                   MySQL insert method. DEFAULT will throw
                                   errors when encountering duplicate records;

@@ -34,6 +34,12 @@ Connection Options
 - ``--mysql-ssl-key PATH``: Path to SSL key file. Must be provided together with ``--mysql-ssl-cert``. Cannot be used together with ``--mysql-socket``.
 - ``-S, --skip-ssl``: Disable MySQL connection encryption. Cannot be used together with ``--mysql-ssl-*`` options.
 
+MySQL SSL note: server certificate verification requires ``--mysql-ssl-ca``. Internally,
+``_mysql_ssl_ca`` sets ``connection_args["ssl_verify_cert"]``; ``_mysql_ssl_cert`` and
+``_mysql_ssl_key`` only provide client certificate authentication. When ``--mysql-ssl-cert`` and
+``--mysql-ssl-key`` are used without ``--mysql-ssl-ca``, neither ``ssl_verify_cert`` nor
+``ssl_verify_identity`` is enabled.
+
 Transfer Options
 """"""""""""""""
 

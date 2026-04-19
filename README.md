@@ -100,6 +100,11 @@ Options:
   --help                          Show this message and exit.
 ```
 
+MySQL SSL note: server certificate verification requires `--mysql-ssl-ca`. Internally, `_mysql_ssl_ca`
+sets `connection_args["ssl_verify_cert"]`; `_mysql_ssl_cert` and `_mysql_ssl_key` only provide client
+certificate authentication. When `--mysql-ssl-cert` and `--mysql-ssl-key` are used without
+`--mysql-ssl-ca`, neither `ssl_verify_cert` nor `ssl_verify_identity` is enabled.
+
 #### Docker
 
 If you don't want to install the tool on your system, you can use the Docker image instead.

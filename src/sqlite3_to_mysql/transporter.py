@@ -249,7 +249,6 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
             connection_args["ssl_cert"] = self._mysql_ssl_cert
             connection_args["ssl_key"] = self._mysql_ssl_key
             connection_args["ssl_verify_cert"] = self._mysql_ssl_ca is not None
-            connection_args["ssl_verify_identity"] = self._mysql_ssl_ca is not None
             if self._mysql_ssl_disabled:
                 connection_args["ssl_disabled"] = True
 

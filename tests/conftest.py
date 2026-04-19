@@ -1,5 +1,6 @@
 import io
 import json
+import os
 import socket
 import tarfile
 import typing as t
@@ -341,11 +342,61 @@ def mysql_instance(mysql_credentials: MySQLCredentials, pytestconfig: Config) ->
 
 
 class MySQLSSLCerts(t.NamedTuple):
-    """Paths to MySQL SSL certificate files extracted from the Docker container."""
+    """Paths to MySQL SSL certificate files for functional tests."""
 
     ca: str
     client_cert: str
     client_key: str
+
+
+def _mysql_ssl_certs_from_paths(
+    ca: t.Union[str, Path],
+    client_cert: t.Union[str, Path],
+    client_key: t.Union[str, Path],
+    source: str,
+) -> MySQLSSLCerts:
+    certs = MySQLSSLCerts(
+        ca=str(Path(ca).expanduser().resolve()),
+        client_cert=str(Path(client_cert).expanduser().resolve()),
+        client_key=str(Path(client_key).expanduser().resolve()),
+    )
+    cert_paths = (Path(certs.ca), Path(certs.client_cert), Path(certs.client_key))
+    missing_paths = [str(cert_path) for cert_path in cert_paths if not cert_path.is_file()]
+    if missing_paths:
+        pytest.fail(f"{source} MySQL SSL cert file does not exist: {', '.join(missing_paths)}")
+
+    unreadable_paths = [str(cert_path) for cert_path in cert_paths if not os.access(cert_path, os.R_OK)]
+    if unreadable_paths:
+        pytest.fail(f"{source} MySQL SSL cert file is not readable: {', '.join(unreadable_paths)}")
+
+    return certs
+
+
+def _mysql_ssl_certs_from_environment() -> t.Optional[MySQLSSLCerts]:
+    ca = os.environ.get("MYSQL_SSL_CA")
+    client_cert = os.environ.get("MYSQL_SSL_CERT")
+    client_key = os.environ.get("MYSQL_SSL_KEY")
+    if not any((ca, client_cert, client_key)):
+        return None
+
+    if not all((ca, client_cert, client_key)):
+        pytest.fail("MYSQL_SSL_CA, MYSQL_SSL_CERT, and MYSQL_SSL_KEY must be set together")
+
+    assert ca is not None
+    assert client_cert is not None
+    assert client_key is not None
+    return _mysql_ssl_certs_from_paths(ca, client_cert, client_key, "Configured")
+
+
+def _mysql_ssl_certs_from_home() -> t.Optional[MySQLSSLCerts]:
+    home = Path.home()
+    ca = home / "ca.pem"
+    client_cert = home / "client-cert.pem"
+    client_key = home / "client-key.pem"
+    if not all(cert_path.is_file() for cert_path in (ca, client_cert, client_key)):
+        return None
+
+    return _mysql_ssl_certs_from_paths(ca, client_cert, client_key, "Home directory")
 
 
 @pytest.fixture(scope="session")
@@ -354,14 +405,21 @@ def mysql_ssl_certs(
     pytestconfig: Config,
     tmp_path_factory: pytest.TempPathFactory,
 ) -> t.Optional[MySQLSSLCerts]:
-    # This dependency starts the MySQL container before we extract generated certs.
+    # This dependency starts MySQL before we collect matching SSL certs.
     del mysql_instance
+    configured_ssl_certs = _mysql_ssl_certs_from_environment() or _mysql_ssl_certs_from_home()
+    if configured_ssl_certs is not None:
+        return configured_ssl_certs
+
     db_credentials_file = abspath(join(dirname(__file__), "db_credentials.json"))
     if isfile(db_credentials_file):
-        pytest.skip("SSL cert extraction requires the Docker-managed MySQL test container")
+        pytest.skip(
+            "SSL cert paths are required when using tests/db_credentials.json; set MYSQL_SSL_CA, MYSQL_SSL_CERT, "
+            "and MYSQL_SSL_KEY or copy ca.pem, client-cert.pem, and client-key.pem to $HOME"
+        )
 
     if not pytestconfig.getoption("use_docker"):
-        pytest.skip("SSL cert extraction requires Docker")
+        pytest.skip("SSL cert extraction requires Docker or configured SSL cert paths")
 
     client: DockerClient = docker.from_env()
     try:

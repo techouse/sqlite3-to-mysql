@@ -104,11 +104,11 @@ class TestTypes:
                 self._mysql_password = "password"
                 self._mysql_host = "localhost"
                 self._mysql_port = 3306
-                self._mysql_socket = "/var/run/mysqld/mysqld.sock"
+                self._mysql_socket = None
                 self._mysql_ssl_ca = "ca.pem"
                 self._mysql_ssl_cert = "client-cert.pem"
                 self._mysql_ssl_key = "client-key.pem"
-                self._mysql_ssl_disabled = True
+                self._mysql_ssl_disabled = False
                 self._chunk_size = 1000
                 self._quiet = False
                 self._logger = MagicMock(spec=Logger)
@@ -149,11 +149,11 @@ class TestTypes:
         assert instance._mysql_password == "password"
         assert instance._mysql_host == "localhost"
         assert instance._mysql_port == 3306
-        assert instance._mysql_socket == "/var/run/mysqld/mysqld.sock"
+        assert instance._mysql_socket is None
         assert instance._mysql_ssl_ca == "ca.pem"
         assert instance._mysql_ssl_cert == "client-cert.pem"
         assert instance._mysql_ssl_key == "client-key.pem"
-        assert instance._mysql_ssl_disabled is True
+        assert instance._mysql_ssl_disabled is False
         assert instance._chunk_size == 1000
         assert instance._quiet is False
         assert instance._log_file == "log.txt"

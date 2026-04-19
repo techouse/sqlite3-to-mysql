@@ -80,7 +80,7 @@ _copyright_header: str = f"sqlite3mysql version {package_version} Copyright (c) 
 @click.option(
     "-k",
     "--mysql-socket",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, dir_okay=False, file_okay=True),
     default=None,
     help="Path to MySQL unix socket file. Cannot be used with --mysql-ssl-* options.",
 )

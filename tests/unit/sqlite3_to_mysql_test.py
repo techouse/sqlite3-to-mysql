@@ -236,6 +236,34 @@ def test_cli_mysql_socket_with_ssl_options_rejected(
     transporter_ctor.assert_not_called()
 
 
+def test_cli_mysql_socket_directory_rejected(
+    cli_runner: CliRunner,
+    sqlite_database: str,
+    mysql_credentials: MySQLCredentials,
+    tmp_path,
+    mocker: MockerFixture,
+) -> None:
+    transporter_ctor = mocker.patch("sqlite3_to_mysql.cli.SQLite3toMySQL", autospec=True)
+
+    result = cli_runner.invoke(
+        sqlite3mysql,
+        [
+            "-f",
+            sqlite_database,
+            "-d",
+            mysql_credentials.database,
+            "-u",
+            mysql_credentials.user,
+            "--mysql-socket",
+            str(tmp_path),
+        ],
+    )
+
+    assert result.exit_code > 0
+    assert "is a directory" in result.output
+    transporter_ctor.assert_not_called()
+
+
 def test_cli_ssl_cert_without_key_rejected(
     cli_runner: CliRunner,
     sqlite_database: str,
@@ -681,6 +709,26 @@ class TestSSLOptions:
         assert instance._mysql_ssl_key is None
         assert connect_kwargs["ssl_ca"] == str(ca_file.resolve())
         assert connect_kwargs["ssl_verify_cert"] is True
+
+    def test_ssl_ca_expands_home_directory(
+        self,
+        sqlite_database: str,
+        tmp_path,
+        monkeypatch: pytest.MonkeyPatch,
+        mocker: MockerFixture,
+    ) -> None:
+        ca_file = tmp_path / "ca.pem"
+        ca_file.write_text("fake")
+        monkeypatch.setenv("HOME", str(tmp_path))
+
+        instance, connect_kwargs = self._make_instance(
+            sqlite_database,
+            mocker,
+            mysql_ssl_ca="~/ca.pem",
+        )
+
+        assert instance._mysql_ssl_ca == str(ca_file.resolve())
+        assert connect_kwargs["ssl_ca"] == str(ca_file.resolve())
 
     def test_ssl_cert_and_key_without_ca(
         self,

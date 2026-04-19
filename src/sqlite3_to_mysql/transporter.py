@@ -10,6 +10,7 @@ from decimal import Decimal
 from itertools import chain
 from math import ceil
 from os.path import isfile, realpath
+from pathlib import Path
 from sys import stdout
 
 import mysql.connector
@@ -101,12 +102,12 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
         if not path:
             return None
 
-        resolved_path = realpath(str(path))
-        if not isfile(resolved_path):
+        resolved_path = Path(path).expanduser().resolve()
+        if not resolved_path.is_file():
             raise FileNotFoundError(f"{description} does not exist")
         if not os.access(resolved_path, os.R_OK):
             raise PermissionError(f"{description} is not readable")
-        return resolved_path
+        return str(resolved_path)
 
     def __init__(self, **kwargs: Unpack[SQLite3toMySQLParams]):
         """Constructor."""

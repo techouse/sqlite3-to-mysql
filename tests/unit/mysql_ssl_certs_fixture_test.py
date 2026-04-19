@@ -24,6 +24,9 @@ def _write_ssl_cert_files(directory: Path) -> MySQLSSLCerts:
 
 
 def test_mysql_ssl_certs_from_environment(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.delenv("MYSQL_SSL_CA", raising=False)
+    monkeypatch.delenv("MYSQL_SSL_CERT", raising=False)
+    monkeypatch.delenv("MYSQL_SSL_KEY", raising=False)
     certs = _write_ssl_cert_files(tmp_path)
     monkeypatch.setenv("MYSQL_SSL_CA", certs.ca)
     monkeypatch.setenv("MYSQL_SSL_CERT", certs.client_cert)
@@ -36,6 +39,9 @@ def test_mysql_ssl_certs_from_environment_requires_all_paths(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
+    monkeypatch.delenv("MYSQL_SSL_CA", raising=False)
+    monkeypatch.delenv("MYSQL_SSL_CERT", raising=False)
+    monkeypatch.delenv("MYSQL_SSL_KEY", raising=False)
     monkeypatch.setenv("MYSQL_SSL_CA", str(tmp_path / "ca.pem"))
 
     with pytest.raises(pytest.fail.Exception, match="must be set together"):
@@ -44,6 +50,6 @@ def test_mysql_ssl_certs_from_environment_requires_all_paths(
 
 def test_mysql_ssl_certs_from_home(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     certs = _write_ssl_cert_files(tmp_path)
-    monkeypatch.setattr(Path, "home", lambda: tmp_path)
+    monkeypatch.setattr(Path, "home", staticmethod(lambda: tmp_path), raising=True)
 
     assert _mysql_ssl_certs_from_home() == certs

@@ -423,13 +423,9 @@ def mysql_ssl_certs(
 
     client: DockerClient = docker.from_env()
     try:
-        container: t.Optional[Container] = None
-        for docker_container in client.containers.list():
-            if docker_container.name == "pytest_sqlite3_to_mysql":
-                container = docker_container
-                break
-
-        if container is None:
+        try:
+            container: Container = client.containers.get("pytest_sqlite3_to_mysql")
+        except NotFound:
             pytest.fail("MySQL test container is running, but SSL cert extraction could not find it")
 
         ssl_dir = tmp_path_factory.mktemp("mysql_ssl_certs")

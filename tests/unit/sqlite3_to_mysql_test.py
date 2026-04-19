@@ -645,6 +645,7 @@ class TestSSLOptions:
         assert connect_kwargs["ssl_cert"] == str(cert_file.resolve())
         assert connect_kwargs["ssl_key"] == str(key_file.resolve())
         assert connect_kwargs["ssl_verify_cert"] is True
+        assert connect_kwargs["ssl_verify_identity"] is True
 
     def test_ssl_params_default_to_none(
         self,
@@ -660,6 +661,7 @@ class TestSSLOptions:
         assert connect_kwargs["ssl_cert"] is None
         assert connect_kwargs["ssl_key"] is None
         assert connect_kwargs["ssl_verify_cert"] is False
+        assert connect_kwargs["ssl_verify_identity"] is False
 
     def test_ssl_ca_only(
         self,
@@ -681,6 +683,7 @@ class TestSSLOptions:
         assert instance._mysql_ssl_key is None
         assert connect_kwargs["ssl_ca"] == str(ca_file.resolve())
         assert connect_kwargs["ssl_verify_cert"] is True
+        assert connect_kwargs["ssl_verify_identity"] is True
 
     def test_ssl_cert_and_key_without_ca(
         self,
@@ -707,6 +710,7 @@ class TestSSLOptions:
         assert connect_kwargs["ssl_cert"] == str(cert_file.resolve())
         assert connect_kwargs["ssl_key"] == str(key_file.resolve())
         assert connect_kwargs["ssl_verify_cert"] is False
+        assert connect_kwargs["ssl_verify_identity"] is False
 
     def test_ssl_empty_strings_treated_as_none(
         self,

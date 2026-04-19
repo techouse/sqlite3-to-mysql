@@ -59,7 +59,8 @@ Options:
   --mysql-password TEXT           MySQL password
   -h, --mysql-host TEXT           MySQL host. Defaults to localhost.
   -P, --mysql-port INTEGER        MySQL port. Defaults to 3306.
-  -k, --mysql-socket PATH         Path to MySQL unix socket file.
+  -k, --mysql-socket PATH         Path to MySQL unix socket file. Cannot be
+                                  used with --mysql-ssl-* options.
   --mysql-ssl-ca PATH             Path to SSL CA certificate file.
   --mysql-ssl-cert PATH           Path to SSL certificate file. Must be
                                   provided together with --mysql-ssl-key.

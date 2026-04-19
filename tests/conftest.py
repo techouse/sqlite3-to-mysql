@@ -18,7 +18,7 @@ from _pytest.config.argparsing import Parser
 from _pytest.legacypath import TempdirFactory
 from click.testing import CliRunner
 from docker import DockerClient
-from docker.errors import NotFound
+from docker.errors import APIError, NotFound
 from docker.models.containers import Container
 from faker import Faker
 from mysql.connector import MySQLConnection, errorcode
@@ -334,7 +334,10 @@ def mysql_instance(mysql_credentials: MySQLCredentials, pytestconfig: Config) ->
         if use_docker:
             try:
                 if container is not None:
-                    container.kill()
+                    try:
+                        container.kill()
+                    except (APIError, NotFound):
+                        pass
             finally:
                 if client is not None:
                     client.close()

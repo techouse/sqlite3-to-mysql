@@ -64,9 +64,9 @@ class SQLite3toMySQLAttributes:
     _mysql_host: t.Optional[str]
     _mysql_port: t.Optional[int]
     _mysql_socket: t.Optional[t.Union[str, "os.PathLike[t.Any]"]]
-    _mysql_ssl_ca: t.Optional[t.Union[str, "os.PathLike[t.Any]"]]
-    _mysql_ssl_cert: t.Optional[t.Union[str, "os.PathLike[t.Any]"]]
-    _mysql_ssl_key: t.Optional[t.Union[str, "os.PathLike[t.Any]"]]
+    _mysql_ssl_ca: t.Optional[str]
+    _mysql_ssl_cert: t.Optional[str]
+    _mysql_ssl_key: t.Optional[str]
     _mysql_ssl_disabled: bool
     _chunk_size: t.Optional[int]
     _quiet: bool

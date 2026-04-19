@@ -621,22 +621,29 @@ class TestSSLOptions:
     def test_ssl_params_passed_to_mysql_connector(
         self,
         sqlite_database: str,
+        tmp_path,
         mocker: MockerFixture,
     ) -> None:
+        ca_file = tmp_path / "ca.pem"
+        cert_file = tmp_path / "client-cert.pem"
+        key_file = tmp_path / "client-key.pem"
+        for cert_path in (ca_file, cert_file, key_file):
+            cert_path.write_text("fake")
+
         instance, connect_kwargs = self._make_instance(
             sqlite_database,
             mocker,
-            mysql_ssl_ca="/path/to/ca.pem",
-            mysql_ssl_cert="/path/to/client-cert.pem",
-            mysql_ssl_key="/path/to/client-key.pem",
+            mysql_ssl_ca=ca_file,
+            mysql_ssl_cert=cert_file,
+            mysql_ssl_key=key_file,
         )
 
-        assert instance._mysql_ssl_ca == "/path/to/ca.pem"
-        assert instance._mysql_ssl_cert == "/path/to/client-cert.pem"
-        assert instance._mysql_ssl_key == "/path/to/client-key.pem"
-        assert connect_kwargs["ssl_ca"] == "/path/to/ca.pem"
-        assert connect_kwargs["ssl_cert"] == "/path/to/client-cert.pem"
-        assert connect_kwargs["ssl_key"] == "/path/to/client-key.pem"
+        assert instance._mysql_ssl_ca == str(ca_file.resolve())
+        assert instance._mysql_ssl_cert == str(cert_file.resolve())
+        assert instance._mysql_ssl_key == str(key_file.resolve())
+        assert connect_kwargs["ssl_ca"] == str(ca_file.resolve())
+        assert connect_kwargs["ssl_cert"] == str(cert_file.resolve())
+        assert connect_kwargs["ssl_key"] == str(key_file.resolve())
         assert connect_kwargs["ssl_verify_cert"] is True
 
     def test_ssl_params_default_to_none(
@@ -657,38 +664,48 @@ class TestSSLOptions:
     def test_ssl_ca_only(
         self,
         sqlite_database: str,
+        tmp_path,
         mocker: MockerFixture,
     ) -> None:
+        ca_file = tmp_path / "ca.pem"
+        ca_file.write_text("fake")
+
         instance, connect_kwargs = self._make_instance(
             sqlite_database,
             mocker,
-            mysql_ssl_ca="/path/to/ca.pem",
+            mysql_ssl_ca=ca_file,
         )
 
-        assert instance._mysql_ssl_ca == "/path/to/ca.pem"
+        assert instance._mysql_ssl_ca == str(ca_file.resolve())
         assert instance._mysql_ssl_cert is None
         assert instance._mysql_ssl_key is None
-        assert connect_kwargs["ssl_ca"] == "/path/to/ca.pem"
+        assert connect_kwargs["ssl_ca"] == str(ca_file.resolve())
         assert connect_kwargs["ssl_verify_cert"] is True
 
     def test_ssl_cert_and_key_without_ca(
         self,
         sqlite_database: str,
+        tmp_path,
         mocker: MockerFixture,
     ) -> None:
+        cert_file = tmp_path / "client-cert.pem"
+        key_file = tmp_path / "client-key.pem"
+        cert_file.write_text("fake")
+        key_file.write_text("fake")
+
         instance, connect_kwargs = self._make_instance(
             sqlite_database,
             mocker,
-            mysql_ssl_cert="/path/to/client-cert.pem",
-            mysql_ssl_key="/path/to/client-key.pem",
+            mysql_ssl_cert=cert_file,
+            mysql_ssl_key=key_file,
         )
 
         assert instance._mysql_ssl_ca is None
-        assert instance._mysql_ssl_cert == "/path/to/client-cert.pem"
-        assert instance._mysql_ssl_key == "/path/to/client-key.pem"
+        assert instance._mysql_ssl_cert == str(cert_file.resolve())
+        assert instance._mysql_ssl_key == str(key_file.resolve())
         assert connect_kwargs["ssl_ca"] is None
-        assert connect_kwargs["ssl_cert"] == "/path/to/client-cert.pem"
-        assert connect_kwargs["ssl_key"] == "/path/to/client-key.pem"
+        assert connect_kwargs["ssl_cert"] == str(cert_file.resolve())
+        assert connect_kwargs["ssl_key"] == str(key_file.resolve())
         assert connect_kwargs["ssl_verify_cert"] is False
 
     def test_ssl_empty_strings_treated_as_none(
@@ -710,6 +727,32 @@ class TestSSLOptions:
         assert connect_kwargs["ssl_ca"] is None
         assert connect_kwargs["ssl_cert"] is None
         assert connect_kwargs["ssl_key"] is None
+
+    @pytest.mark.parametrize(
+        "ssl_kwargs,expected_message",
+        [
+            ({"mysql_ssl_ca": "missing-ca.pem"}, "MySQL SSL CA certificate file does not exist"),
+            (
+                {
+                    "mysql_ssl_cert": "missing-client-cert.pem",
+                    "mysql_ssl_key": "missing-client-key.pem",
+                },
+                "MySQL SSL certificate file does not exist",
+            ),
+        ],
+    )
+    def test_ssl_missing_files_raise(
+        self,
+        sqlite_database: str,
+        tmp_path,
+        mocker: MockerFixture,
+        ssl_kwargs: t.Dict[str, str],
+        expected_message: str,
+    ) -> None:
+        kwargs = {key: tmp_path / value for key, value in ssl_kwargs.items()}
+
+        with pytest.raises(FileNotFoundError, match=expected_message):
+            self._make_instance(sqlite_database, mocker, **kwargs)
 
     def test_ssl_disabled_with_ssl_options_raises(
         self,

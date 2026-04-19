@@ -92,6 +92,22 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
 
     MYSQL_CONNECTOR_VERSION: version.Version = version.parse(mysql_connector_version_string)
 
+    @staticmethod
+    def _normalize_mysql_ssl_file(
+        path: t.Optional[t.Union[str, "os.PathLike[t.Any]"]],
+        description: str,
+    ) -> t.Optional[str]:
+        """Validate and normalize a MySQL SSL certificate path."""
+        if not path:
+            return None
+
+        resolved_path = realpath(str(path))
+        if not isfile(resolved_path):
+            raise FileNotFoundError(f"{description} does not exist")
+        if not os.access(resolved_path, os.R_OK):
+            raise PermissionError(f"{description} is not readable")
+        return resolved_path
+
     def __init__(self, **kwargs: Unpack[SQLite3toMySQLParams]):
         """Constructor."""
         if kwargs.get("sqlite_file") is None:
@@ -138,19 +154,23 @@ class SQLite3toMySQL(SQLite3toMySQLAttributes):
         else:
             self._without_foreign_keys = bool(kwargs.get("without_foreign_keys", False))
 
-        self._mysql_ssl_ca = kwargs.get("mysql_ssl_ca") or None
-        self._mysql_ssl_cert = kwargs.get("mysql_ssl_cert") or None
-        self._mysql_ssl_key = kwargs.get("mysql_ssl_key") or None
+        mysql_ssl_ca = kwargs.get("mysql_ssl_ca") or None
+        mysql_ssl_cert = kwargs.get("mysql_ssl_cert") or None
+        mysql_ssl_key = kwargs.get("mysql_ssl_key") or None
         self._mysql_ssl_disabled = bool(kwargs.get("mysql_ssl_disabled", False))
 
-        if self._mysql_ssl_disabled and any((self._mysql_ssl_ca, self._mysql_ssl_cert, self._mysql_ssl_key)):
+        if self._mysql_ssl_disabled and any((mysql_ssl_ca, mysql_ssl_cert, mysql_ssl_key)):
             raise ValueError("Cannot use SSL certificate options when SSL is disabled")
 
-        if self._mysql_socket and any((self._mysql_ssl_ca, self._mysql_ssl_cert, self._mysql_ssl_key)):
+        if self._mysql_socket and any((mysql_ssl_ca, mysql_ssl_cert, mysql_ssl_key)):
             raise ValueError("Cannot use SSL certificate options when connecting through a MySQL socket")
 
-        if bool(self._mysql_ssl_cert) != bool(self._mysql_ssl_key):
+        if bool(mysql_ssl_cert) != bool(mysql_ssl_key):
             raise ValueError("mysql_ssl_cert and mysql_ssl_key must be provided together")
+
+        self._mysql_ssl_ca = self._normalize_mysql_ssl_file(mysql_ssl_ca, "MySQL SSL CA certificate file")
+        self._mysql_ssl_cert = self._normalize_mysql_ssl_file(mysql_ssl_cert, "MySQL SSL certificate file")
+        self._mysql_ssl_key = self._normalize_mysql_ssl_file(mysql_ssl_key, "MySQL SSL key file")
 
         # Expect an integer chunk size; normalize to None when unset/invalid or <= 0
         _chunk = kwargs.get("chunk")

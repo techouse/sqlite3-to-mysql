@@ -14,7 +14,7 @@ from sqlite3_to_mysql.types import SQLite3toMySQLAttributes, SQLite3toMySQLParam
 class TestTypes:
     def test_sqlite3_to_mysql_params_typing(self) -> None:
         """Test SQLite3toMySQLParams typing."""
-        # Create a runtime-valid params dict with all declared fields.
+        # Create a typing example with all declared fields and a valid SSL option combination.
         params: SQLite3toMySQLParams = {
             "sqlite_file": "test.db",
             "sqlite_tables": ["table1", "table2"],

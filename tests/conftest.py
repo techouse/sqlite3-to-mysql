@@ -410,7 +410,7 @@ def mysql_ssl_certs(
                         if dest_name == "client-key.pem":
                             dest_path.chmod(0o600)
                         extracted[filename] = str(dest_path)
-        except (NotFound, OSError, RuntimeError, tarfile.TarError) as err:
+        except (APIError, NotFound, OSError, RuntimeError, tarfile.TarError) as err:
             for dest_path in written_paths:
                 dest_path.unlink(missing_ok=True)
             pytest.fail(f"Could not extract MySQL SSL certs from the Docker container: {err}")

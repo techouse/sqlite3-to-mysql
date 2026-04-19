@@ -14,7 +14,7 @@ from sqlite3_to_mysql.types import SQLite3toMySQLAttributes, SQLite3toMySQLParam
 class TestTypes:
     def test_sqlite3_to_mysql_params_typing(self) -> None:
         """Test SQLite3toMySQLParams typing."""
-        # Create a valid params dict
+        # Create a runtime-valid params dict with all declared fields.
         params: SQLite3toMySQLParams = {
             "sqlite_file": "test.db",
             "sqlite_tables": ["table1", "table2"],
@@ -25,11 +25,11 @@ class TestTypes:
             "mysql_password": "password",
             "mysql_host": "localhost",
             "mysql_port": 3306,
-            "mysql_socket": "/var/run/mysqld/mysqld.sock",
+            "mysql_socket": None,
             "mysql_ssl_ca": "ca.pem",
             "mysql_ssl_cert": "client-cert.pem",
             "mysql_ssl_key": "client-key.pem",
-            "mysql_ssl_disabled": True,
+            "mysql_ssl_disabled": False,
             "chunk": 1000,
             "quiet": False,
             "log_file": "log.txt",
@@ -58,11 +58,11 @@ class TestTypes:
         assert params["mysql_password"] == "password"
         assert params["mysql_host"] == "localhost"
         assert params["mysql_port"] == 3306
-        assert params["mysql_socket"] == "/var/run/mysqld/mysqld.sock"
+        assert params["mysql_socket"] is None
         assert params["mysql_ssl_ca"] == "ca.pem"
         assert params["mysql_ssl_cert"] == "client-cert.pem"
         assert params["mysql_ssl_key"] == "client-key.pem"
-        assert params["mysql_ssl_disabled"] is True
+        assert params["mysql_ssl_disabled"] is False
         assert params["chunk"] == 1000
         assert params["quiet"] is False
         assert params["log_file"] == "log.txt"

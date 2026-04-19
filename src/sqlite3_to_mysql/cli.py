@@ -82,27 +82,37 @@ _copyright_header: str = f"sqlite3mysql version {package_version} Copyright (c) 
     "--mysql-socket",
     type=click.Path(exists=True),
     default=None,
-    help="Path to MySQL unix socket file.",
+    help="Path to MySQL unix socket file. Cannot be used with --mysql-ssl-* options.",
 )
 @click.option(
     "--mysql-ssl-ca",
     type=click.Path(exists=True, dir_okay=False, file_okay=True, readable=True),
+    metavar="PATH",
     default=None,
-    help="Path to SSL CA certificate file.",
+    help="Path to SSL CA certificate file. Cannot be used with --mysql-socket or --skip-ssl.",
 )
 @click.option(
     "--mysql-ssl-cert",
     type=click.Path(exists=True, dir_okay=False, file_okay=True, readable=True),
+    metavar="PATH",
     default=None,
-    help="Path to SSL certificate file.",
+    help="Path to SSL certificate file. Must be provided together with --mysql-ssl-key. "
+    "Cannot be used with --mysql-socket or --skip-ssl.",
 )
 @click.option(
     "--mysql-ssl-key",
     type=click.Path(exists=True, dir_okay=False, file_okay=True, readable=True),
+    metavar="PATH",
     default=None,
-    help="Path to SSL key file.",
+    help="Path to SSL key file. Must be provided together with --mysql-ssl-cert. "
+    "Cannot be used with --mysql-socket or --skip-ssl.",
 )
-@click.option("-S", "--skip-ssl", is_flag=True, help="Disable MySQL connection encryption.")
+@click.option(
+    "-S",
+    "--skip-ssl",
+    is_flag=True,
+    help="Disable MySQL connection encryption. Cannot be used with --mysql-ssl-* options.",
+)
 @click.option(
     "-i",
     "--mysql-insert-method",

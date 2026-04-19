@@ -285,7 +285,7 @@ def mysql_instance(mysql_credentials: MySQLCredentials, pytestconfig: Config) ->
                 ports={
                     "3306/tcp": (
                         mysql_credentials.host,
-                        f"{mysql_credentials.port}/tcp",
+                        mysql_credentials.port,
                     )
                 },
                 environment={

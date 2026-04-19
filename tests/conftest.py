@@ -276,7 +276,7 @@ def mysql_instance(mysql_credentials: MySQLCredentials, pytestconfig: Config) ->
                 print(f"Attempting to download Docker image {docker_mysql_image}'")
                 try:
                     client.images.pull(docker_mysql_image)
-                except (HTTPError, NotFound) as err:
+                except (APIError, HTTPError, NotFound) as err:
                     pytest.fail(str(err))
 
             container = client.containers.run(
@@ -313,7 +313,7 @@ def mysql_instance(mysql_credentials: MySQLCredentials, pytestconfig: Config) ->
                     collation="utf8mb4_unicode_ci",
                 )
             except mysql.connector.Error as err:
-                if err.errno == errorcode.CR_SERVER_LOST:
+                if err.errno in (errorcode.CR_SERVER_LOST, errorcode.CR_CONN_HOST_ERROR):
                     # sleep for two seconds and retry the connection
                     sleep(2)
                 else:
@@ -358,10 +358,10 @@ def mysql_ssl_certs(
     del mysql_instance
     db_credentials_file = abspath(join(dirname(__file__), "db_credentials.json"))
     if isfile(db_credentials_file):
-        return None
+        pytest.skip("SSL cert extraction requires the Docker-managed MySQL test container")
 
     if not pytestconfig.getoption("use_docker"):
-        return None
+        pytest.skip("SSL cert extraction requires Docker")
 
     client: DockerClient = docker.from_env()
     try:
@@ -410,10 +410,10 @@ def mysql_ssl_certs(
                         if dest_name == "client-key.pem":
                             dest_path.chmod(0o600)
                         extracted[filename] = str(dest_path)
-        except (NotFound, OSError, RuntimeError, tarfile.TarError):
+        except (NotFound, OSError, RuntimeError, tarfile.TarError) as err:
             for dest_path in written_paths:
                 dest_path.unlink(missing_ok=True)
-            return None
+            pytest.fail(f"Could not extract MySQL SSL certs from the Docker container: {err}")
 
         return MySQLSSLCerts(
             ca=extracted["ca.pem"],

@@ -14,11 +14,11 @@ from sqlite3_to_mysql.types import SQLite3toMySQLAttributes, SQLite3toMySQLParam
 class TestTypes:
     def test_sqlite3_to_mysql_params_typing(self) -> None:
         """Test SQLite3toMySQLParams typing."""
-        # Create a typing example with all declared fields and a valid SSL option combination.
+        # Create a typing example with all declared fields and valid option combinations.
         params: SQLite3toMySQLParams = {
             "sqlite_file": "test.db",
             "sqlite_tables": ["table1", "table2"],
-            "exclude_sqlite_tables": ["skip_this"],
+            "exclude_sqlite_tables": None,
             "sqlite_views_as_tables": False,
             "without_foreign_keys": False,
             "mysql_user": "user",
@@ -51,7 +51,7 @@ class TestTypes:
         # Test that all fields are accessible
         assert params["sqlite_file"] == "test.db"
         assert params["sqlite_tables"] == ["table1", "table2"]
-        assert params["exclude_sqlite_tables"] == ["skip_this"]
+        assert params["exclude_sqlite_tables"] is None
         assert params["sqlite_views_as_tables"] is False
         assert params["without_foreign_keys"] is False
         assert params["mysql_user"] == "user"

@@ -28,7 +28,7 @@ Connection Options
 
 - ``-h, --mysql-host TEXT``: MySQL host. Defaults to localhost.
 - ``-P, --mysql-port INTEGER``: MySQL port. Defaults to 3306.
-- ``--mysql-socket PATH``: Path to MySQL unix socket file. Cannot be used together with ``--mysql-ssl-*`` options.
+- ``-k, --mysql-socket PATH``: Path to MySQL unix socket file. Cannot be used together with ``--mysql-ssl-*`` options.
 - ``--mysql-ssl-ca PATH``: Path to SSL CA certificate file. Cannot be used together with ``--mysql-socket`` or ``--skip-ssl``.
 - ``--mysql-ssl-cert PATH``: Path to SSL certificate file. Must be provided together with ``--mysql-ssl-key``. Cannot be used together with ``--mysql-socket`` or ``--skip-ssl``.
 - ``--mysql-ssl-key PATH``: Path to SSL key file. Must be provided together with ``--mysql-ssl-cert``. Cannot be used together with ``--mysql-socket`` or ``--skip-ssl``.

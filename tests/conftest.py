@@ -274,7 +274,7 @@ def mysql_instance(mysql_credentials: MySQLCredentials, pytestconfig: Config) ->
             docker_mysql_image = pytestconfig.getoption("docker_mysql_image") or "mysql:latest"
 
             if not any(docker_mysql_image in image.tags for image in client.images.list()):
-                print(f"Attempting to download Docker image {docker_mysql_image}'")
+                print(f"Attempting to download Docker image {docker_mysql_image}")
                 try:
                     client.images.pull(docker_mysql_image)
                 except (APIError, HTTPError, NotFound) as err:

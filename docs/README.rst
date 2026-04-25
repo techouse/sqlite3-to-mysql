@@ -28,8 +28,16 @@ Connection Options
 
 - ``-h, --mysql-host TEXT``: MySQL host. Defaults to localhost.
 - ``-P, --mysql-port INTEGER``: MySQL port. Defaults to 3306.
-- ``-S, --skip-ssl``: Disable MySQL connection encryption.
-- ``--mysql-socket TEXT``: Path to MySQL unix socket file.
+- ``-k, --mysql-socket PATH``: Path to MySQL unix socket file. Cannot be used together with ``--mysql-ssl-*`` options.
+- ``--mysql-ssl-ca PATH``: Path to SSL CA certificate file. Cannot be used together with ``--mysql-socket`` or ``--skip-ssl``.
+- ``--mysql-ssl-cert PATH``: Path to SSL certificate file. Must be provided together with ``--mysql-ssl-key``. Cannot be used together with ``--mysql-socket`` or ``--skip-ssl``.
+- ``--mysql-ssl-key PATH``: Path to SSL key file. Must be provided together with ``--mysql-ssl-cert``. Cannot be used together with ``--mysql-socket`` or ``--skip-ssl``.
+- ``-S, --skip-ssl``: Disable MySQL connection encryption. Cannot be used together with ``--mysql-ssl-*`` options.
+
+MySQL SSL note: when ``--mysql-ssl-ca`` is provided, MySQL Connector/Python verifies the server
+certificate chain. ``--mysql-ssl-cert`` and ``--mysql-ssl-key`` enable client certificate
+authentication. These options do not enable hostname identity verification. If you provide only the
+client certificate and key without ``--mysql-ssl-ca``, the server certificate is not verified.
 
 Transfer Options
 """"""""""""""""
@@ -45,7 +53,7 @@ Transfer Options
 - ``--mysql-string-type TEXT``: MySQL default string field type. Defaults to VARCHAR(255).
 - ``--mysql-text-type [LONGTEXT|MEDIUMTEXT|TEXT|TINYTEXT]``: MySQL default text field type. Defaults to TEXT.
 - ``--mysql-charset TEXT``: MySQL database and table character set. Defaults to utf8mb4.
-` ``--mysql-collation TEXT``: MySQL database and table collation
+- ``--mysql-collation TEXT``: MySQL database and table collation.
 - ``-T, --use-fulltext``: Use FULLTEXT indexes on TEXT columns. Will throw an error if your MySQL version does not support InnoDB FULLTEXT indexes!
 - ``-X, --without-foreign-keys``: Do not transfer foreign keys.
 - ``-W, --ignore-duplicate-keys``: Ignore duplicate keys. The default behavior is to create new ones with a numerical suffix, e.g. 'existing_key' -> 'existing_key_1'

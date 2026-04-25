@@ -14,19 +14,22 @@ from sqlite3_to_mysql.types import SQLite3toMySQLAttributes, SQLite3toMySQLParam
 class TestTypes:
     def test_sqlite3_to_mysql_params_typing(self) -> None:
         """Test SQLite3toMySQLParams typing."""
-        # Create a valid params dict
+        # Create a typing example with all declared fields and valid option combinations.
         params: SQLite3toMySQLParams = {
             "sqlite_file": "test.db",
             "sqlite_tables": ["table1", "table2"],
-            "exclude_sqlite_tables": ["skip_this"],
+            "exclude_sqlite_tables": None,
             "sqlite_views_as_tables": False,
             "without_foreign_keys": False,
             "mysql_user": "user",
             "mysql_password": "password",
             "mysql_host": "localhost",
             "mysql_port": 3306,
-            "mysql_socket": "/var/run/mysqld/mysqld.sock",
-            "mysql_ssl_disabled": True,
+            "mysql_socket": None,
+            "mysql_ssl_ca": "ca.pem",
+            "mysql_ssl_cert": "client-cert.pem",
+            "mysql_ssl_key": "client-key.pem",
+            "mysql_ssl_disabled": False,
             "chunk": 1000,
             "quiet": False,
             "log_file": "log.txt",
@@ -48,15 +51,18 @@ class TestTypes:
         # Test that all fields are accessible
         assert params["sqlite_file"] == "test.db"
         assert params["sqlite_tables"] == ["table1", "table2"]
-        assert params["exclude_sqlite_tables"] == ["skip_this"]
+        assert params["exclude_sqlite_tables"] is None
         assert params["sqlite_views_as_tables"] is False
         assert params["without_foreign_keys"] is False
         assert params["mysql_user"] == "user"
         assert params["mysql_password"] == "password"
         assert params["mysql_host"] == "localhost"
         assert params["mysql_port"] == 3306
-        assert params["mysql_socket"] == "/var/run/mysqld/mysqld.sock"
-        assert params["mysql_ssl_disabled"] is True
+        assert params["mysql_socket"] is None
+        assert params["mysql_ssl_ca"] == "ca.pem"
+        assert params["mysql_ssl_cert"] == "client-cert.pem"
+        assert params["mysql_ssl_key"] == "client-key.pem"
+        assert params["mysql_ssl_disabled"] is False
         assert params["chunk"] == 1000
         assert params["quiet"] is False
         assert params["log_file"] == "log.txt"
@@ -98,8 +104,11 @@ class TestTypes:
                 self._mysql_password = "password"
                 self._mysql_host = "localhost"
                 self._mysql_port = 3306
-                self._mysql_socket = "/var/run/mysqld/mysqld.sock"
-                self._mysql_ssl_disabled = True
+                self._mysql_socket = None
+                self._mysql_ssl_ca = "ca.pem"
+                self._mysql_ssl_cert = "client-cert.pem"
+                self._mysql_ssl_key = "client-key.pem"
+                self._mysql_ssl_disabled = False
                 self._chunk_size = 1000
                 self._quiet = False
                 self._logger = MagicMock(spec=Logger)
@@ -140,8 +149,11 @@ class TestTypes:
         assert instance._mysql_password == "password"
         assert instance._mysql_host == "localhost"
         assert instance._mysql_port == 3306
-        assert instance._mysql_socket == "/var/run/mysqld/mysqld.sock"
-        assert instance._mysql_ssl_disabled is True
+        assert instance._mysql_socket is None
+        assert instance._mysql_ssl_ca == "ca.pem"
+        assert instance._mysql_ssl_cert == "client-cert.pem"
+        assert instance._mysql_ssl_key == "client-key.pem"
+        assert instance._mysql_ssl_disabled is False
         assert instance._chunk_size == 1000
         assert instance._quiet is False
         assert instance._log_file == "log.txt"

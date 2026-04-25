@@ -59,8 +59,19 @@ Options:
   --mysql-password TEXT           MySQL password
   -h, --mysql-host TEXT           MySQL host. Defaults to localhost.
   -P, --mysql-port INTEGER        MySQL port. Defaults to 3306.
-  -k, --mysql-socket PATH         Path to MySQL unix socket file.
-  -S, --skip-ssl                  Disable MySQL connection encryption.
+  -k, --mysql-socket PATH         Path to MySQL unix socket file. Cannot be
+                                  used with --mysql-ssl-* options.
+  --mysql-ssl-ca PATH             Path to SSL CA certificate file. Cannot be
+                                  used with --mysql-socket or --skip-ssl.
+  --mysql-ssl-cert PATH           Path to SSL certificate file. Must be
+                                  provided together with --mysql-ssl-key.
+                                  Cannot be used with --mysql-socket or
+                                  --skip-ssl.
+  --mysql-ssl-key PATH            Path to SSL key file. Must be provided
+                                  together with --mysql-ssl-cert. Cannot be
+                                  used with --mysql-socket or --skip-ssl.
+  -S, --skip-ssl                  Disable MySQL connection encryption. Cannot
+                                  be used with --mysql-ssl-* options.
   -i, --mysql-insert-method [DEFAULT|IGNORE|UPDATE]
                                   MySQL insert method. DEFAULT will throw
                                   errors when encountering duplicate records;
@@ -92,6 +103,11 @@ Options:
   --version                       Show the version and exit.
   --help                          Show this message and exit.
 ```
+
+MySQL SSL note: when `--mysql-ssl-ca` is provided, MySQL Connector/Python verifies the server
+certificate chain. `--mysql-ssl-cert` and `--mysql-ssl-key` enable client certificate authentication.
+These options do not enable hostname identity verification. If you provide only the client certificate
+and key without `--mysql-ssl-ca`, the server certificate is not verified.
 
 #### Docker
 

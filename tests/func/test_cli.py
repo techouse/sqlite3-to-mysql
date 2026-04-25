@@ -13,7 +13,7 @@ from sqlalchemy.engine import Engine, Inspector
 from sqlite3_to_mysql import SQLite3toMySQL
 from sqlite3_to_mysql import __version__ as package_version
 from sqlite3_to_mysql.cli import cli as sqlite3mysql
-from tests.conftest import MySQLCredentials
+from tests.conftest import MySQLCredentials, MySQLSSLCerts
 
 
 @pytest.mark.cli
@@ -842,3 +842,181 @@ class TestSQLite3toMySQL:
             f"{sqlite3mysql.name} version {package_version} Copyright (c) 2018-{datetime.now().year} Klemen Tusar"
             in result.output
         )
+
+
+@pytest.mark.cli
+@pytest.mark.usefixtures("mysql_instance")
+class TestSQLite3toMySQLSSL:
+    def test_ssl_connection_with_all_options(
+        self,
+        cli_runner: CliRunner,
+        sqlite_database: str,
+        mysql_database: Engine,
+        mysql_credentials: MySQLCredentials,
+        mysql_ssl_certs: t.Optional["MySQLSSLCerts"],
+    ) -> None:
+        del mysql_database
+        if mysql_ssl_certs is None:
+            pytest.skip("SSL certs not available for this environment")
+
+        result: Result = cli_runner.invoke(
+            sqlite3mysql,
+            [
+                "-f",
+                sqlite_database,
+                "-d",
+                mysql_credentials.database,
+                "-u",
+                mysql_credentials.user,
+                "--mysql-password",
+                mysql_credentials.password,
+                "-h",
+                mysql_credentials.host,
+                "-P",
+                str(mysql_credentials.port),
+                "--mysql-ssl-ca",
+                str(mysql_ssl_certs.ca),
+                "--mysql-ssl-cert",
+                str(mysql_ssl_certs.client_cert),
+                "--mysql-ssl-key",
+                str(mysql_ssl_certs.client_key),
+            ],
+        )
+
+        assert result.exit_code == 0
+
+    def test_ssl_connection_ca_only(
+        self,
+        cli_runner: CliRunner,
+        sqlite_database: str,
+        mysql_database: Engine,
+        mysql_credentials: MySQLCredentials,
+        mysql_ssl_certs: t.Optional["MySQLSSLCerts"],
+    ) -> None:
+        del mysql_database
+        if mysql_ssl_certs is None:
+            pytest.skip("SSL certs not available for this environment")
+
+        result: Result = cli_runner.invoke(
+            sqlite3mysql,
+            [
+                "-f",
+                sqlite_database,
+                "-d",
+                mysql_credentials.database,
+                "-u",
+                mysql_credentials.user,
+                "--mysql-password",
+                mysql_credentials.password,
+                "-h",
+                mysql_credentials.host,
+                "-P",
+                str(mysql_credentials.port),
+                "--mysql-ssl-ca",
+                str(mysql_ssl_certs.ca),
+            ],
+        )
+
+        assert result.exit_code == 0
+
+    def test_ssl_connection_cert_and_key_without_ca(
+        self,
+        cli_runner: CliRunner,
+        sqlite_database: str,
+        mysql_database: Engine,
+        mysql_credentials: MySQLCredentials,
+        mysql_ssl_certs: t.Optional["MySQLSSLCerts"],
+    ) -> None:
+        del mysql_database
+        if mysql_ssl_certs is None:
+            pytest.skip("SSL certs not available for this environment")
+
+        result: Result = cli_runner.invoke(
+            sqlite3mysql,
+            [
+                "-f",
+                sqlite_database,
+                "-d",
+                mysql_credentials.database,
+                "-u",
+                mysql_credentials.user,
+                "--mysql-password",
+                mysql_credentials.password,
+                "-h",
+                mysql_credentials.host,
+                "-P",
+                str(mysql_credentials.port),
+                "--mysql-ssl-cert",
+                str(mysql_ssl_certs.client_cert),
+                "--mysql-ssl-key",
+                str(mysql_ssl_certs.client_key),
+            ],
+        )
+
+        assert result.exit_code == 0
+
+    def test_ssl_connection_cert_without_key_fails(
+        self,
+        cli_runner: CliRunner,
+        sqlite_database: str,
+        mysql_credentials: MySQLCredentials,
+        mysql_ssl_certs: t.Optional["MySQLSSLCerts"],
+    ) -> None:
+        if mysql_ssl_certs is None:
+            pytest.skip("SSL certs not available for this environment")
+
+        result: Result = cli_runner.invoke(
+            sqlite3mysql,
+            [
+                "-f",
+                sqlite_database,
+                "-d",
+                mysql_credentials.database,
+                "-u",
+                mysql_credentials.user,
+                "--mysql-password",
+                mysql_credentials.password,
+                "-h",
+                mysql_credentials.host,
+                "-P",
+                str(mysql_credentials.port),
+                "--mysql-ssl-cert",
+                str(mysql_ssl_certs.client_cert),
+            ],
+        )
+
+        assert result.exit_code > 0
+        assert "must be provided together" in result.output
+
+    def test_ssl_connection_key_without_cert_fails(
+        self,
+        cli_runner: CliRunner,
+        sqlite_database: str,
+        mysql_credentials: MySQLCredentials,
+        mysql_ssl_certs: t.Optional["MySQLSSLCerts"],
+    ) -> None:
+        if mysql_ssl_certs is None:
+            pytest.skip("SSL certs not available for this environment")
+
+        result: Result = cli_runner.invoke(
+            sqlite3mysql,
+            [
+                "-f",
+                sqlite_database,
+                "-d",
+                mysql_credentials.database,
+                "-u",
+                mysql_credentials.user,
+                "--mysql-password",
+                mysql_credentials.password,
+                "-h",
+                mysql_credentials.host,
+                "-P",
+                str(mysql_credentials.port),
+                "--mysql-ssl-key",
+                str(mysql_ssl_certs.client_key),
+            ],
+        )
+
+        assert result.exit_code > 0
+        assert "must be provided together" in result.output

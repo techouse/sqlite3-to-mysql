@@ -80,11 +80,39 @@ _copyright_header: str = f"sqlite3mysql version {package_version} Copyright (c) 
 @click.option(
     "-k",
     "--mysql-socket",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, dir_okay=False, file_okay=True),
     default=None,
-    help="Path to MySQL unix socket file.",
+    help="Path to MySQL unix socket file. Cannot be used with --mysql-ssl-* options.",
 )
-@click.option("-S", "--skip-ssl", is_flag=True, help="Disable MySQL connection encryption.")
+@click.option(
+    "--mysql-ssl-ca",
+    type=click.Path(exists=True, dir_okay=False, file_okay=True, readable=True),
+    metavar="PATH",
+    default=None,
+    help="Path to SSL CA certificate file. Cannot be used with --mysql-socket or --skip-ssl.",
+)
+@click.option(
+    "--mysql-ssl-cert",
+    type=click.Path(exists=True, dir_okay=False, file_okay=True, readable=True),
+    metavar="PATH",
+    default=None,
+    help="Path to SSL certificate file. Must be provided together with --mysql-ssl-key. "
+    "Cannot be used with --mysql-socket or --skip-ssl.",
+)
+@click.option(
+    "--mysql-ssl-key",
+    type=click.Path(exists=True, dir_okay=False, file_okay=True, readable=True),
+    metavar="PATH",
+    default=None,
+    help="Path to SSL key file. Must be provided together with --mysql-ssl-cert. "
+    "Cannot be used with --mysql-socket or --skip-ssl.",
+)
+@click.option(
+    "-S",
+    "--skip-ssl",
+    is_flag=True,
+    help="Disable MySQL connection encryption. Cannot be used with --mysql-ssl-* options.",
+)
 @click.option(
     "-i",
     "--mysql-insert-method",
@@ -162,6 +190,9 @@ def cli(
     mysql_host: str,
     mysql_port: int,
     mysql_socket: t.Optional[str],
+    mysql_ssl_ca: t.Optional[str],
+    mysql_ssl_cert: t.Optional[str],
+    mysql_ssl_key: t.Optional[str],
     skip_ssl: bool,
     mysql_insert_method: str,
     mysql_truncate_tables: bool,
@@ -205,6 +236,19 @@ def cli(
                 "Please use only one of them."
             )
 
+        if skip_ssl and any((mysql_ssl_ca, mysql_ssl_cert, mysql_ssl_key)):
+            raise click.ClickException(
+                "--skip-ssl and --mysql-ssl-ca/--mysql-ssl-cert/--mysql-ssl-key are mutually exclusive."
+            )
+
+        if mysql_socket and any((mysql_ssl_ca, mysql_ssl_cert, mysql_ssl_key)):
+            raise click.ClickException(
+                "--mysql-socket and --mysql-ssl-ca/--mysql-ssl-cert/--mysql-ssl-key are mutually exclusive."
+            )
+
+        if bool(mysql_ssl_cert) != bool(mysql_ssl_key):
+            raise click.ClickException("--mysql-ssl-cert and --mysql-ssl-key must be provided together.")
+
         SQLite3toMySQL(
             sqlite_file=sqlite_file,
             sqlite_tables=sqlite_tables or tuple(),
@@ -217,6 +261,9 @@ def cli(
             mysql_host=mysql_host,
             mysql_port=None if mysql_socket else mysql_port,
             mysql_socket=mysql_socket,
+            mysql_ssl_ca=mysql_ssl_ca,
+            mysql_ssl_cert=mysql_ssl_cert,
+            mysql_ssl_key=mysql_ssl_key,
             mysql_ssl_disabled=skip_ssl,
             mysql_insert_method=mysql_insert_method,
             mysql_truncate_tables=mysql_truncate_tables,

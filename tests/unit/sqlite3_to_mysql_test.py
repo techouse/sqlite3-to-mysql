@@ -199,6 +199,7 @@ def test_cli_skip_ssl_with_ssl_options_rejected(
 
     assert result.exit_code > 0
     assert "mutually exclusive" in result.output
+    assert "Error: Error:" not in result.output
     transporter_ctor.assert_not_called()
 
 
@@ -233,6 +234,7 @@ def test_cli_mysql_socket_with_ssl_options_rejected(
 
     assert result.exit_code > 0
     assert "mutually exclusive" in result.output
+    assert "Error: Error:" not in result.output
     transporter_ctor.assert_not_called()
 
 
@@ -291,6 +293,7 @@ def test_cli_ssl_cert_without_key_rejected(
 
     assert result.exit_code > 0
     assert "must be provided together" in result.output
+    assert "Error: Error:" not in result.output
     transporter_ctor.assert_not_called()
 
 
@@ -321,6 +324,7 @@ def test_cli_ssl_key_without_cert_rejected(
 
     assert result.exit_code > 0
     assert "must be provided together" in result.output
+    assert "Error: Error:" not in result.output
     transporter_ctor.assert_not_called()
 
 

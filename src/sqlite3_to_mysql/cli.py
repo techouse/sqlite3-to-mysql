@@ -238,16 +238,16 @@ def cli(
 
         if skip_ssl and any((mysql_ssl_ca, mysql_ssl_cert, mysql_ssl_key)):
             raise click.ClickException(
-                "Error: --skip-ssl and --mysql-ssl-ca/--mysql-ssl-cert/--mysql-ssl-key are mutually exclusive."
+                "--skip-ssl and --mysql-ssl-ca/--mysql-ssl-cert/--mysql-ssl-key are mutually exclusive."
             )
 
         if mysql_socket and any((mysql_ssl_ca, mysql_ssl_cert, mysql_ssl_key)):
             raise click.ClickException(
-                "Error: --mysql-socket and --mysql-ssl-ca/--mysql-ssl-cert/--mysql-ssl-key are mutually exclusive."
+                "--mysql-socket and --mysql-ssl-ca/--mysql-ssl-cert/--mysql-ssl-key are mutually exclusive."
             )
 
         if bool(mysql_ssl_cert) != bool(mysql_ssl_key):
-            raise click.ClickException("Error: --mysql-ssl-cert and --mysql-ssl-key must be provided together.")
+            raise click.ClickException("--mysql-ssl-cert and --mysql-ssl-key must be provided together.")
 
         SQLite3toMySQL(
             sqlite_file=sqlite_file,

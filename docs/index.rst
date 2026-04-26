@@ -68,7 +68,7 @@ Indices and tables
    :target: https://pypi.org/project/sqlite3-to-mysql/
 .. |MySQL Support| image:: https://img.shields.io/static/v1?logo=mysql&label=MySQL&message=5.5+%7C+5.6+%7C+5.7+%7C+8.0+%7C+8.4&color=2b5d80
    :target: https://github.com/techouse/sqlite3-to-mysql/actions/workflows/test.yml
-.. |MariaDB Support| image:: https://img.shields.io/static/v1?logo=mariadb&label=MariaDB&message=5.5+%7C+10.0+%7C+10.6+%7C+10.11+%7C+11.4+%7C+11.6+%7C+11.8&color=C0765A
+.. |MariaDB Support| image:: https://img.shields.io/static/v1?logo=mariadb&label=MariaDB&message=5.5+%7C+10.0+%7C+10.6+%7C+10.11+%7C+11.4+%7C+11.8&color=C0765A
    :target: https://github.com/techouse/sqlite3-to-mysql/actions/workflows/test.yml
 .. |GitHub license| image:: https://img.shields.io/github/license/techouse/sqlite3-to-mysql
    :target: https://github.com/techouse/sqlite3-to-mysql/blob/master/LICENSE

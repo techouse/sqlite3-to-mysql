@@ -36,8 +36,9 @@ Common Tasks
 
 - Use ``--mysql-skip-transfer-data`` to create schema only.
 - Use ``--mysql-skip-create-tables`` to transfer data into an existing MySQL schema.
-- Use ``--sqlite-tables`` or ``--exclude-sqlite-tables`` to transfer a table
-  subset; this disables foreign key transfer.
+- Use either table filter (``--sqlite-tables`` or
+  ``--exclude-sqlite-tables``) to transfer a table subset; this disables
+  foreign key transfer.
 - Use ``--mysql-ssl-ca``, ``--mysql-ssl-cert``, and ``--mysql-ssl-key`` for
   certificate-based MySQL connections.
 

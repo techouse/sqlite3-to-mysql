@@ -104,7 +104,7 @@ Use these options to adapt the base command:
 Warn before producing commands with these invalid or risky combinations:
 
 - `--sqlite-tables` and `--exclude-sqlite-tables` are mutually exclusive.
-- `--sqlite-tables` or `--exclude-sqlite-tables` disables foreign key transfer.
+- Either table filter (`--sqlite-tables` or `--exclude-sqlite-tables`) disables foreign key transfer.
 - `--mysql-skip-create-tables` and `--mysql-skip-transfer-data` cannot be used together because there would be nothing
   to do.
 - `--mysql-skip-create-tables` alone requires existing compatible target MySQL tables.

@@ -280,8 +280,8 @@ Combinations and caveats
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 - ``--sqlite-tables`` and ``--exclude-sqlite-tables`` are mutually exclusive.
-- ``--sqlite-tables`` or ``--exclude-sqlite-tables`` automatically disables
-  foreign key transfer.
+- Either table filter (``--sqlite-tables`` or ``--exclude-sqlite-tables``)
+  automatically disables foreign key transfer.
 - ``--mysql-skip-create-tables`` and ``--mysql-skip-transfer-data`` cannot be
   used together because there would be nothing to do.
 - ``--mysql-skip-create-tables`` requires compatible target MySQL tables to

@@ -137,6 +137,7 @@ Warn about these cases:
 - `--sqlite-tables` and `--exclude-sqlite-tables` imply `--without-foreign-keys`.
 - `--mysql-skip-create-tables` assumes compatible target tables already exist.
 - `--mysql-truncate-tables` deletes existing rows from matching target tables before inserting.
+- Native view creation drops any target table with the same name as a SQLite view before creating the MySQL view.
 - `--mysql-insert-method DEFAULT` lets duplicate records fail.
 - `--use-fulltext` fails early when the target server does not support InnoDB FULLTEXT indexes.
 - `--mysql-ssl-cert` and `--mysql-ssl-key` without `--mysql-ssl-ca` authenticate the client but do not verify the server
@@ -153,7 +154,8 @@ Warn about these cases:
 - Fractional seconds: MySQL `>= 5.6.4`, MariaDB `>= 10.1.2`.
 - InnoDB FULLTEXT indexes: MySQL `>= 5.6.0`, MariaDB `>= 10.0.5`.
 - Identifiers are truncated to MySQL's 64-character limit.
-- Native MySQL views are created by default; `--sqlite-views-as-tables` materializes SQLite views as MySQL tables.
+- Native MySQL views are created by default; a target table with the same name as a SQLite view is dropped before the
+  view is created. `--sqlite-views-as-tables` materializes SQLite views as MySQL tables instead.
 
 ## Response Shape
 

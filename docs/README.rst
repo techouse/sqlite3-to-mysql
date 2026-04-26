@@ -110,14 +110,16 @@ Behavior notes
 ^^^^^^^^^^^^^^
 
 - The target database is created automatically when it does not exist.
-- Tables are created with ``CREATE TABLE IF NOT EXISTS``; existing tables are
-  not dropped.
+- Tables are created with ``CREATE TABLE IF NOT EXISTS``, so matching target
+  tables are kept.
 - ``--mysql-truncate-tables`` truncates matching target tables before data is
   inserted.
 - The default insert mode is ``IGNORE``. Use ``DEFAULT`` to let duplicate
   records fail, or ``UPDATE`` to update existing rows on duplicate keys.
-- Native MySQL views are created by default. Use ``--sqlite-views-as-tables``
-  to materialize SQLite views as MySQL tables.
+- Native MySQL views are created by default. If a target table has the same name
+  as a SQLite view, that target table is dropped before the MySQL view is
+  created. Use ``--sqlite-views-as-tables`` to materialize SQLite views as MySQL
+  tables.
 - ``--with-rowid`` adds an explicit ``rowid`` column only for SQLite tables
   that have a rowid.
 - Table, view, column, index, and constraint names are truncated to MySQL's

@@ -1,8 +1,7 @@
 SQLite3 to MySQL
 ================
 
-A Python command-line tool for transferring schema, indexes, foreign keys, views, and data from SQLite 3 to MySQL or
-MariaDB.
+A Python CLI for transferring SQLite 3 schema and data to MySQL or MariaDB.
 
 |PyPI| |PyPI - Downloads| |Homebrew Formula Downloads| |PyPI - Python Version|
 |MySQL Support| |MariaDB Support| |GitHub license| |Contributor Covenant|
@@ -12,16 +11,37 @@ MariaDB.
 Installation
 ------------
 
-.. code:: bash
+.. code-block:: bash
 
    pip install sqlite3-to-mysql
 
 Basic Usage
 -----------
 
-.. code:: bash
+Use the password prompt for interactive use:
 
-   sqlite3mysql -f path/to/foo.sqlite -d foo_db -u foo_user -p
+.. code-block:: bash
+
+   sqlite3mysql -f ./app.sqlite3 -d app_db -u app_user -p -h 127.0.0.1 -P 3306
+
+Tested Databases
+----------------
+
+See the `GitHub Actions CI matrix
+<https://github.com/techouse/sqlite3-to-mysql/blob/master/.github/workflows/test.yml>`__
+for the current MySQL and MariaDB versions tested by the project.
+
+Common Tasks
+------------
+
+- Use ``--mysql-skip-transfer-data`` to create schema only.
+- Use ``--mysql-skip-create-tables`` to transfer data into an existing MySQL schema.
+- Use ``--sqlite-tables`` or ``--exclude-sqlite-tables`` to transfer a table
+  subset; this disables foreign key transfer.
+- Use ``--mysql-ssl-ca``, ``--mysql-ssl-cert``, and ``--mysql-ssl-key`` for
+  certificate-based MySQL connections.
+
+See :doc:`README` for full recipes, option notes, and MySQL/MariaDB caveats.
 
 .. toctree::
    :maxdepth: 2
@@ -46,9 +66,9 @@ Indices and tables
 .. |PyPI - Python Version| image:: https://img.shields.io/pypi/pyversions/sqlite3-to-mysql?logo=python
    :target: https://pypi.org/project/sqlite3-to-mysql/
 .. |MySQL Support| image:: https://img.shields.io/static/v1?logo=mysql&label=MySQL&message=5.5+%7C+5.6+%7C+5.7+%7C+8.0+%7C+8.4&color=2b5d80
-   :target: https://img.shields.io/static/v1?label=MySQL&message=5.5+%7C+5.6+%7C+5.7+%7C+8.0+%7C+8.4&color=2b5d80
+   :target: https://github.com/techouse/sqlite3-to-mysql/actions/workflows/test.yml
 .. |MariaDB Support| image:: https://img.shields.io/static/v1?logo=mariadb&label=MariaDB&message=5.5+%7C+10.0+%7C+10.6+%7C+10.11+%7C+11.4+%7C+11.6+%7C+11.8&color=C0765A
-   :target: https://img.shields.io/static/v1?label=MariaDB&message=5.5+%7C+10.0+%7C+10.6+%7C+10.11+%7C+11.4+%7C+11.6+%7C+11.8&color=C0765A
+   :target: https://github.com/techouse/sqlite3-to-mysql/actions/workflows/test.yml
 .. |GitHub license| image:: https://img.shields.io/github/license/techouse/sqlite3-to-mysql
    :target: https://github.com/techouse/sqlite3-to-mysql/blob/master/LICENSE
 .. |Contributor Covenant| image:: https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg?logo=contributorcovenant

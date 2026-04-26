@@ -112,3 +112,9 @@ venv.bak/
 # Potential leftovers
 tests/db_credentials.json
 test.db
+
+# AI related
+.junie/
+
+# VS Code settings
+.history

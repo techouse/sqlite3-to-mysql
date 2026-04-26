@@ -1,3 +1,18 @@
+# 2.6.0
+
+* [FEAT] add MySQL SSL certificate options `--mysql-ssl-ca`, `--mysql-ssl-cert`, and `--mysql-ssl-key`,
+  forward them to MySQL Connector/Python, and enable certificate-chain verification when a CA is provided
+* [FIX] validate MySQL SSL option combinations in both the CLI and transporter, including conflicts with
+  `--skip-ssl` and `--mysql-socket` plus the client cert/key pairing requirement
+* [FIX] normalize and validate MySQL SSL certificate paths for direct transporter callers, including `PathLike`
+  values and `~` home-directory paths
+* [CHORE] update README and Sphinx docs for the MySQL SSL options, socket conflicts, cert/key behavior, and
+  certificate verification semantics
+* [CHORE] add unit and functional SSL coverage, including Docker-generated CA/client certificate tests and
+  configured certificate paths for CI
+* [CHORE] harden Docker test fixtures by closing Docker clients, retrying transient MySQL startup errors, handling
+  Docker API errors, cleaning partial SSL cert extraction, and fixing the MySQL container port binding
+
 # 2.5.8
 
 * [CHORE] pin sqlglot to >=30.0.0,<31.0.0

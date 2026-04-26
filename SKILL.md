@@ -14,8 +14,9 @@ Before finalizing a command, determine:
 
 - SQLite source path: `--sqlite-file`.
 - Target connection: `--mysql-database`, `--mysql-user`, and one of host/port or socket.
-- Password handling: prefer `--prompt-mysql-password` for interactive use; use `--mysql-password` only when the user
-  needs non-interactive execution.
+- Password handling: prefer `--prompt-mysql-password` for interactive use. Use `--mysql-password` only for
+  non-interactive automation when the value is injected by a CI secret store or secret manager, and warn that it still
+  places the secret in process argv where process listings, logs, or shell history can expose it.
 - Transfer scope: all tables, `--sqlite-tables`, or `--exclude-sqlite-tables`.
 - Existing-table behavior: create missing tables, `--mysql-skip-create-tables`, `--mysql-skip-transfer-data`, or
   `--mysql-truncate-tables`.
@@ -39,6 +40,15 @@ sqlite3mysql \
     --mysql-user app_user \
     --prompt-mysql-password
 ```
+
+Non-interactive automation with a secret-managed environment variable:
+
+```bash
+sqlite3mysql -f app.sqlite3 -d app_db -u app_user --mysql-password "$MYSQL_PASSWORD"
+```
+
+When using this pattern, tell the user to inject `MYSQL_PASSWORD` from a CI secret store or secret manager and avoid
+logging expanded commands.
 
 Non-default TCP host and port:
 
@@ -121,6 +131,10 @@ docker run -it \
     --mysql-host host.docker.internal
 ```
 
+When suggesting Docker, explain that `--mysql-password` is still a CLI argument inside the container. Prefer
+`--prompt-mysql-password` for interactive runs; for automation, inject `MYSQL_PASSWORD` from a secret manager or CI
+secret store and avoid logging expanded commands.
+
 ## Invalid or Risky Combinations
 
 Never suggest these combinations:
@@ -138,6 +152,8 @@ Warn about these cases:
 - `--mysql-skip-create-tables` assumes compatible target tables already exist.
 - `--mysql-truncate-tables` deletes existing rows from matching target tables before inserting.
 - Native view creation drops any target table with the same name as a SQLite view before creating the MySQL view.
+- `--mysql-password` exposes the password through process argv and may leak through process listings, logs, or shell
+  history; prefer `--prompt-mysql-password` for interactive use and never suggest literal passwords.
 - `--mysql-insert-method DEFAULT` lets duplicate records fail.
 - `--use-fulltext` fails early when the target server does not support InnoDB FULLTEXT indexes.
 - `--mysql-ssl-cert` and `--mysql-ssl-key` without `--mysql-ssl-ca` authenticate the client but do not verify the server

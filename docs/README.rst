@@ -34,6 +34,17 @@ Connect to a non-default host or port:
 
    sqlite3mysql -f app.sqlite3 -d app_db -u app_user -p -h 127.0.0.1 -P 3307
 
+For interactive use, prefer ``--prompt-mysql-password`` (``-p``) so the
+password is not passed through the process argument list.
+
+For non-interactive automation, ``--mysql-password`` can pass a value from a
+secret-managed environment variable. Command-line arguments may be visible in
+process listings or CI logs, and literal values may be stored in shell history:
+
+.. code-block:: bash
+
+   sqlite3mysql -f app.sqlite3 -d app_db -u app_user --mysql-password "$MYSQL_PASSWORD"
+
 Transfer only selected tables:
 
 .. code-block:: bash
@@ -216,6 +227,12 @@ If you do not want to install the tool on your system, use the Docker image:
 This mounts the current host directory into the container as the working
 directory. On Docker Desktop, ``host.docker.internal`` lets the container
 connect back to a MySQL server running on the host.
+
+The example uses ``--mysql-password`` for non-interactive container usage. The
+password is still passed as a command-line argument inside the container and may
+be visible through process listings or logs. For interactive runs, prefer
+``--prompt-mysql-password``; for automation, inject ``MYSQL_PASSWORD`` from a
+secret manager or CI secret store and avoid logging expanded commands.
 
 Homebrew
 ^^^^^^^^

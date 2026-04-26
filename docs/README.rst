@@ -1,108 +1,226 @@
 Usage
 -----
 
-Options
-^^^^^^^
-
-The command line options for the ``sqlite3mysql`` tool are as follows:
+Install the package and run ``sqlite3mysql`` against a readable SQLite database
+and a reachable MySQL or MariaDB server.
 
 .. code-block:: bash
 
-   sqlite3mysql [OPTIONS]
+   pip install sqlite3-to-mysql
+   sqlite3mysql \
+       --sqlite-file path/to/app.sqlite3 \
+       --mysql-database app_db \
+       --mysql-user app_user \
+       --prompt-mysql-password
 
-Required Options
-""""""""""""""""
+Run ``sqlite3mysql --help`` for the complete command line reference.
 
-- ``-f, --sqlite-file PATH``: SQLite3 database file  [required]
-- ``-d, --mysql-database TEXT``: MySQL database name  [required]
-- ``-u, --mysql-user TEXT``: MySQL user  [required]
+Requirements
+^^^^^^^^^^^^
 
-Password Options
-""""""""""""""""
+- Python 3.9 or newer.
+- A readable SQLite 3 database file.
+- A reachable MySQL or MariaDB server.
+- A MySQL user that can connect, create the target database when it does not
+  exist, create tables and views, insert data, add indexes, and add foreign
+  keys.
 
-- ``-p, --prompt-mysql-password``: Prompt for MySQL password
-- ``--mysql-password TEXT``: MySQL password
+Common workflows
+^^^^^^^^^^^^^^^^
 
-Connection Options
-""""""""""""""""""
+Connect to a non-default host or port:
 
-- ``-h, --mysql-host TEXT``: MySQL host. Defaults to localhost.
-- ``-P, --mysql-port INTEGER``: MySQL port. Defaults to 3306.
-- ``-k, --mysql-socket PATH``: Path to MySQL unix socket file. Cannot be used together with ``--mysql-ssl-*`` options.
-- ``--mysql-ssl-ca PATH``: Path to SSL CA certificate file. Cannot be used together with ``--mysql-socket`` or ``--skip-ssl``.
-- ``--mysql-ssl-cert PATH``: Path to SSL certificate file. Must be provided together with ``--mysql-ssl-key``. Cannot be used together with ``--mysql-socket`` or ``--skip-ssl``.
-- ``--mysql-ssl-key PATH``: Path to SSL key file. Must be provided together with ``--mysql-ssl-cert``. Cannot be used together with ``--mysql-socket`` or ``--skip-ssl``.
-- ``-S, --skip-ssl``: Disable MySQL connection encryption. Cannot be used together with ``--mysql-ssl-*`` options.
+.. code-block:: bash
 
-MySQL SSL note: when ``--mysql-ssl-ca`` is provided, MySQL Connector/Python verifies the server
-certificate chain. ``--mysql-ssl-cert`` and ``--mysql-ssl-key`` enable client certificate
-authentication. These options do not enable hostname identity verification. If you provide only the
-client certificate and key without ``--mysql-ssl-ca``, the server certificate is not verified.
+   sqlite3mysql -f app.sqlite3 -d app_db -u app_user -p -h 127.0.0.1 -P 3307
 
-Transfer Options
-""""""""""""""""
+Transfer only selected tables:
 
-- ``-t, --sqlite-tables TUPLE``: Transfer only these specific tables (space separated table names). Implies ``--without-foreign-keys`` which inhibits the transfer of foreign keys. Can not be used together with ``--exclude-sqlite-tables``.
-- ``-e, --exclude-sqlite-tables TUPLE``: Exclude these specific tables (space separated table names). Implies ``--without-foreign-keys`` which inhibits the transfer of foreign keys. Can not be used together with ``--sqlite-tables``.
-- ``-A, --sqlite-views-as-tables``: Materialize SQLite views as tables in MySQL instead of creating matching MySQL views (legacy behavior).
-- ``-E, --mysql-truncate-tables``: Truncates existing tables before inserting data.
-- ``-K, --mysql-skip-create-tables``: Skip creating tables in MySQL.
-- ``-i, --mysql-insert-method [UPDATE|IGNORE|DEFAULT]``: MySQL insert method. DEFAULT will throw errors when encountering duplicate records; UPDATE will update existing rows; IGNORE will ignore insert errors. Defaults to IGNORE.
-- ``-J, --mysql-skip-transfer-data``: Skip transferring data to MySQL.
-- ``--mysql-integer-type TEXT``: MySQL default integer field type. Defaults to INT(11).
-- ``--mysql-string-type TEXT``: MySQL default string field type. Defaults to VARCHAR(255).
-- ``--mysql-text-type [LONGTEXT|MEDIUMTEXT|TEXT|TINYTEXT]``: MySQL default text field type. Defaults to TEXT.
-- ``--mysql-charset TEXT``: MySQL database and table character set. Defaults to utf8mb4.
-- ``--mysql-collation TEXT``: MySQL database and table collation.
-- ``-T, --use-fulltext``: Use FULLTEXT indexes on TEXT columns. Will throw an error if your MySQL version does not support InnoDB FULLTEXT indexes!
-- ``-X, --without-foreign-keys``: Do not transfer foreign keys.
-- ``-W, --ignore-duplicate-keys``: Ignore duplicate keys. The default behavior is to create new ones with a numerical suffix, e.g. 'existing_key' -> 'existing_key_1'
-- ``--with-rowid``: Transfer rowid columns.
-- ``-c, --chunk INTEGER``: Chunk reading/writing SQL records
+.. code-block:: bash
 
-Other Options
-"""""""""""""
+   sqlite3mysql -f app.sqlite3 -d app_db -u app_user -p --sqlite-tables users posts comments
 
-- ``-l, --log-file PATH``: Log file
-- ``-q, --quiet``: Quiet. Display only errors.
-- ``--debug``: Debug mode. Will throw exceptions.
-- ``--version``: Show the version and exit.
-- ``--help``: Show help message and exit.
+Transfer everything except selected tables:
+
+.. code-block:: bash
+
+   sqlite3mysql -f app.sqlite3 -d app_db -u app_user -p --exclude-sqlite-tables audit_logs cache_entries
+
+Create tables without copying data:
+
+.. code-block:: bash
+
+   sqlite3mysql -f app.sqlite3 -d app_db -u app_user -p --mysql-skip-transfer-data
+
+Copy data into tables that already exist:
+
+.. code-block:: bash
+
+   sqlite3mysql -f app.sqlite3 -d app_db -u app_user -p --mysql-skip-create-tables
+
+Truncate matching target tables before inserting data:
+
+.. code-block:: bash
+
+   sqlite3mysql -f app.sqlite3 -d app_db -u app_user -p --mysql-truncate-tables
+
+Update existing rows when inserts hit duplicate keys:
+
+.. code-block:: bash
+
+   sqlite3mysql -f app.sqlite3 -d app_db -u app_user -p --mysql-insert-method UPDATE
+
+Use a Unix socket:
+
+.. code-block:: bash
+
+   sqlite3mysql -f app.sqlite3 -d app_db -u app_user -p --mysql-socket /var/run/mysqld/mysqld.sock
+
+Use TLS with a CA certificate:
+
+.. code-block:: bash
+
+   sqlite3mysql \
+       -f app.sqlite3 \
+       -d app_db \
+       -u app_user \
+       -p \
+       --mysql-ssl-ca /path/to/ca.pem
+
+Use client certificate authentication:
+
+.. code-block:: bash
+
+   sqlite3mysql \
+       -f app.sqlite3 \
+       -d app_db \
+       -u app_user \
+       -p \
+       --mysql-ssl-ca /path/to/ca.pem \
+       --mysql-ssl-cert /path/to/client-cert.pem \
+       --mysql-ssl-key /path/to/client-key.pem
+
+Write logs to a file and suppress progress output:
+
+.. code-block:: bash
+
+   sqlite3mysql -f app.sqlite3 -d app_db -u app_user -p --quiet --log-file transfer.log
+
+Behavior notes
+^^^^^^^^^^^^^^
+
+- The target database is created automatically when it does not exist.
+- Tables are created with ``CREATE TABLE IF NOT EXISTS``; existing tables are
+  not dropped.
+- ``--mysql-truncate-tables`` truncates matching target tables before data is
+  inserted.
+- The default insert mode is ``IGNORE``. Use ``DEFAULT`` to let duplicate
+  records fail, or ``UPDATE`` to update existing rows on duplicate keys.
+- Native MySQL views are created by default. Use ``--sqlite-views-as-tables``
+  to materialize SQLite views as MySQL tables.
+- ``--with-rowid`` adds an explicit ``rowid`` column only for SQLite tables
+  that have a rowid.
+- Table, view, column, index, and constraint names are truncated to MySQL's
+  64-character identifier limit.
+- Foreign key checks are disabled during transfer and re-enabled before the
+  command exits.
+- If MySQL rejects a table because of invalid default values, table creation is
+  retried without default values.
+
+Option caveats
+^^^^^^^^^^^^^^
+
+- ``--sqlite-tables`` and ``--exclude-sqlite-tables`` are mutually exclusive.
+- Either table filter implies ``--without-foreign-keys``, because partial
+  transfers cannot safely recreate all foreign key relationships.
+- ``--mysql-skip-create-tables`` and ``--mysql-skip-transfer-data`` cannot be
+  used together.
+- ``--mysql-socket`` cannot be combined with ``--mysql-ssl-ca``,
+  ``--mysql-ssl-cert``, or ``--mysql-ssl-key``.
+- ``--skip-ssl`` cannot be combined with ``--mysql-ssl-ca``,
+  ``--mysql-ssl-cert``, or ``--mysql-ssl-key``.
+- ``--mysql-ssl-cert`` and ``--mysql-ssl-key`` must be provided together.
+- ``--mysql-collation`` must be valid for the selected ``--mysql-charset``.
+- ``--use-fulltext`` requires a target server with InnoDB FULLTEXT support. If
+  the server does not support it, the command fails before transfer starts.
+
+MySQL SSL note: when ``--mysql-ssl-ca`` is provided, MySQL Connector/Python
+verifies the server certificate chain. ``--mysql-ssl-cert`` and
+``--mysql-ssl-key`` enable client certificate authentication. These options do
+not enable hostname identity verification. If you provide only the client
+certificate and key without ``--mysql-ssl-ca``, the server certificate is not
+verified.
+
+MySQL and MariaDB compatibility
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+MariaDB began as a MySQL fork, but server capabilities and SQL syntax have
+diverged. The transfer logic checks the server version and adjusts behavior for
+several features:
+
+.. list-table::
+   :header-rows: 1
+
+   * - Feature
+     - MySQL
+     - MariaDB
+     - Notes
+   * - JSON support
+     - ``>= 5.7.8``
+     - ``>= 10.2.7``
+     - SQLite ``JSONB`` maps to ``JSON`` when supported, otherwise to the configured text type.
+   * - ``UPDATE`` insert alias
+     - ``>= 8.0.19``
+     - Not used
+     - MariaDB keeps the older duplicate-key update form.
+   * - Expression defaults
+     - ``>= 8.0.13``
+     - ``>= 10.2.0``
+     - Older servers may require defaults to be omitted or simplified.
+   * - ``CURRENT_TIMESTAMP`` for ``DATETIME``
+     - ``>= 5.6.5``
+     - ``>= 10.0.1``
+     - Older servers cannot use this default on ``DATETIME``.
+   * - Fractional seconds
+     - ``>= 5.6.4``
+     - ``>= 10.1.2``
+     - Fractional precision is preserved only when supported.
+   * - InnoDB FULLTEXT indexes
+     - ``>= 5.6.0``
+     - ``>= 10.0.5``
+     - Required for ``--use-fulltext``.
+
+SQLite ``JSONB`` value conversion requires SQLite 3.45 or newer. With older
+SQLite versions, JSONB columns can still be selected, but the SQLite ``json()``
+conversion function is not used during transfer.
 
 Docker
 ^^^^^^
 
-If you don’t want to install the tool on your system, you can use the
-Docker image instead.
+If you do not want to install the tool on your system, use the Docker image:
 
-.. code:: bash
+.. code-block:: bash
 
    docker run -it \
-       --workdir $(pwd) \
-       --volume $(pwd):$(pwd) \
+       --workdir "$(pwd)" \
+       --volume "$(pwd):$(pwd)" \
        --rm ghcr.io/techouse/sqlite3-to-mysql:latest \
-       --sqlite-file baz.db \
-       --mysql-user foo \
-       --mysql-password bar \
-       --mysql-database baz \
+       --sqlite-file app.sqlite3 \
+       --mysql-user app_user \
+       --mysql-password "$MYSQL_PASSWORD" \
+       --mysql-database app_db \
        --mysql-host host.docker.internal
 
-This will mount your host current working directory (pwd) inside the
-Docker container as the current working directory. Any files Docker
-would write to the current working directory are written to the host
-directory where you did docker run. Note that you have to also use a
-`special
-hostname <https://docs.docker.com/desktop/networking/#use-cases-and-workarounds-for-all-platforms>`__
-``host.docker.internal`` to access your host machine from inside the
-Docker container.
+This mounts the current host directory into the container as the working
+directory. On Docker Desktop, ``host.docker.internal`` lets the container
+connect back to a MySQL server running on the host.
 
 Homebrew
 ^^^^^^^^
 
-If you’re on macOS, you can install the tool using
-`Homebrew <https://brew.sh/>`__.
+If you are on macOS, you can install the tool using `Homebrew <https://brew.sh/>`__.
 
-.. code:: bash
+.. code-block:: bash
 
    brew install sqlite3-to-mysql
    sqlite3mysql --help

@@ -5,10 +5,10 @@
 ## Architecture Snapshot
 - Core package lives in `src/sqlite3_to_mysql/`.
   - `cli.py` defines the `sqlite3mysql` Click CLI and validates option interplay (mutual exclusions, implied flags).
-  - `transporter.py` implements the end-to-end transfer in class `SQLite3toMySQL.transfer()`: create DB (if missing), create tables, optionally truncate, bulk insert (chunked or streamed), then indices and foreign keys.
+  - `transporter.py` implements the end-to-end transfer in class `SQLite3toMySQL.transfer()`: create DB (if missing), create tables, optionally truncate, bulk insert (chunked or streamed), then indices, foreign keys, and native views.
   - `mysql_utils.py` & `sqlite_utils.py` encapsulate dialect/version feature checks, type adaptation and identifier safety (`safe_identifier_length`). Keep new MySQL capability gates here.
   - `types.py` provides typed param/attribute structures consumed via `Unpack` in `SQLite3toMySQL.__init__`.
-- Data flow: CLI → construct `SQLite3toMySQL` → introspect SQLite schema via PRAGMA → create MySQL schema → transfer rows (streamed / chunked) → add indices → add foreign keys.
+- Data flow: CLI → construct `SQLite3toMySQL` → introspect SQLite schema via PRAGMA → create MySQL schema → transfer rows (streamed / chunked) → add indices → add foreign keys → create views.
 - Generated/ephemeral outputs: logs (optional), progress bars (`tqdm`), created MySQL objects.
 
 ## Key Behaviors & Patterns
@@ -20,23 +20,38 @@
 - Index creation may recurse on duplicate names, appending numeric suffix. Respect `_ignore_duplicate_keys` to skip retries.
 - Chunked data transfer controlled by `--chunk`; when present uses `fetchmany` loop, else full `fetchall` with `tqdm` progress.
 - Foreign keys only added when neither table include/exclude filters nor `--without-foreign-keys` effective.
+- Native MySQL views are created by default. `--sqlite-views-as-tables` materializes SQLite views as MySQL tables instead.
+- SQLite `JSONB` maps to MySQL `JSON` only when the target supports JSON; SQLite value conversion through `json()` requires SQLite 3.45+.
 
 ## CLI Option Conventions
 - Mutually exclusive: `--sqlite-tables` vs `--exclude-sqlite-tables`; setting either implies `--without-foreign-keys`.
 - Disallow simultaneous `-K` (skip create) and `-J` (skip transfer) — early exit.
 - Insert method: `IGNORE` (default), `UPDATE` (uses ON DUPLICATE KEY UPDATE with optional VALUES alias), `DEFAULT` (no modifiers).
+- Mutually exclusive SSL/socket combinations: `--mysql-socket` cannot be combined with `--mysql-ssl-*`; `--skip-ssl` cannot be combined with `--mysql-ssl-*`.
+- `--mysql-ssl-cert` and `--mysql-ssl-key` must be supplied together. A client cert/key without `--mysql-ssl-ca` does not verify the server certificate.
+- Validate `--mysql-collation` against the selected `--mysql-charset`.
+- `--use-fulltext` fails early when the target server lacks InnoDB FULLTEXT support.
+
+## MySQL / MariaDB Nuances
+- JSON support: MySQL `>=5.7.8`, MariaDB `>=10.2.7`; otherwise SQLite `JSONB` falls back to the configured text type.
+- `UPDATE` insert method uses the MySQL `VALUES (...) AS __new__` alias only on MySQL `>=8.0.19`; MariaDB always keeps the older duplicate-key update form.
+- Expression defaults: MySQL `>=8.0.13`, MariaDB `>=10.2.0`.
+- `CURRENT_TIMESTAMP` on `DATETIME`: MySQL `>=5.6.5`, MariaDB `>=10.0.1`.
+- Fractional seconds: MySQL `>=5.6.4`, MariaDB `>=10.1.2`.
+- InnoDB FULLTEXT indexes: MySQL `>=5.6.0`, MariaDB `>=10.0.5`.
+- Keep all new server capability gates in `mysql_utils.py`, then cache booleans on `SQLite3toMySQL` during initialization.
 
 ## Development Workflow
 - Local env: `python3 -m venv env && source env/bin/activate && pip install -e . && pip install -r requirements_dev.txt`.
 - Run tests with coverage: `pytest -v --cov=src/sqlite3_to_mysql` (unit: `tests/unit`, functional/CLI: `tests/func`). Functional tests need running MySQL (e.g. `docker run --rm -d -e MYSQL_ROOT_PASSWORD=test -p 3306:3306 mysql:8`). Credentials from `tests/db_credentials.json`.
-- Full quality gate: `tox -e linters` (runs black, isort, flake8, pylint, bandit, mypy). Use `tox -e python3.12` for test subset.
+- Full quality gate: `tox -e linters` (runs black, isort, flake8, pylint, bandit, mypy). Use `tox -e python3.14` for a single interpreter.
 - Formatting: Black (120 cols) + isort profile=black; Flake8 enforces 88-col soft cap—avoid long chained expressions in one line.
 
 ## Adding Features Safely
 - Add new MySQL/SQLite capability checks in `mysql_utils.py` / `sqlite_utils.py`, expose booleans during `__init__` for downstream logic.
 - For new CLI flags: define in `cli.py` above `cli()` with clear help text; maintain mutual exclusion patterns and keep error messages consistent with existing ones.
 - Ensure new behavior gets unit tests (isolate pure functions) plus at least one functional test hitting the CLI.
-- Avoid editing files in `build/`, `docs/_build`, `htmlcov/`—treat them as generated.
+- Avoid editing files in `build/`, `dist/`, `docs/_build/`, `htmlcov/`—treat them as generated.
 
 ## Performance Considerations
 - Prefer prepared cursors (`cursor(prepared=True)`) like existing code; batch inserts via `executemany`.
@@ -48,7 +63,7 @@
 
 ## Contribution Style
 - Single-concern commits with gitmoji prefix (e.g., `:sparkles:` for features). Update `CHANGELOG.md` for user-facing changes.
-- Preserve type hints; new public interfaces should be annotated and, if user-facing, reflected in docs (`docs/`).
+- Preserve type hints; new public interfaces should be annotated and, if user-facing, reflected in `README.md`, `docs/README.rst`, `SKILL.md`, and `CHANGELOG.md`.
 
 ---
 Feedback welcome: Clarify any missing workflow, edge case, or pattern you need—request updates and this doc will iterate.

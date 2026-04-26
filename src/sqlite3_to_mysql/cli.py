@@ -62,7 +62,7 @@ _copyright_header: str = f"sqlite3mysql version {package_version} Copyright (c) 
     "--ignore-duplicate-keys",
     is_flag=True,
     help="Ignore duplicate keys. The default behavior is to create new ones with a numerical suffix, e.g. "
-    "'exising_key' -> 'existing_key_1'",
+    "'existing_key' -> 'existing_key_1'",
 )
 @click.option("-d", "--mysql-database", default=None, help="MySQL database name", required=True)
 @click.option("-u", "--mysql-user", default=None, help="MySQL user", required=True)

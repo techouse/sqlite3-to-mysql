@@ -63,7 +63,7 @@
 
 ## Contribution Style
 - Single-concern commits with gitmoji prefix (e.g., `:sparkles:` for features). Update `CHANGELOG.md` for user-facing changes.
-- Preserve type hints; new public interfaces should be annotated and, if user-facing, reflected in `README.md`, `docs/README.rst`, `SKILL.md`, and `CHANGELOG.md`.
+- Preserve type hints; new public interfaces should be annotated and, if user-facing, reflected in `README.md`, `docs/README.rst`, `skills/sqlite3-to-mysql/SKILL.md`, and `CHANGELOG.md`.
 
 ---
 Feedback welcome: Clarify any missing workflow, edge case, or pattern you need—request updates and this doc will iterate.

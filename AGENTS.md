@@ -8,7 +8,8 @@
   factories are under `tests/factories.py` and `tests/database.py`.
 - Generated artefacts belong in `build/`, `dist/`, `docs/_build/`, and `htmlcov/`; avoid committing edits to these
   directories and prefer changes in `src/`, `tests/`, or source docs.
-- User-facing CLI behavior should stay aligned across `README.md`, `docs/README.rst`, and the agent-facing `SKILL.md`.
+- User-facing CLI behavior should stay aligned across `README.md`, `docs/README.rst`, and the agent-facing
+  `skills/sqlite3-to-mysql/SKILL.md`.
 
 ## Build, Test, and Development Commands
 
@@ -42,7 +43,7 @@
 
 - Reuse the git history’s gitmoji prefix style (`:sparkles: add bulk row copy support`) and keep each commit scoped to a
   single concern.
-- Reference related issues in commit bodies or the PR description, and update `CHANGELOG.md`, docs, and `SKILL.md` when
-  user-facing behavior shifts.
+- Reference related issues in commit bodies or the PR description, and update `CHANGELOG.md`, docs, and
+  `skills/sqlite3-to-mysql/SKILL.md` when user-facing behavior shifts.
 - Before opening a PR, ensure `tox` completes successfully, document operational changes, and attach CLI logs or
   screenshots when UX output is affected.

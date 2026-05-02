@@ -13,12 +13,14 @@ interactions related to the project.
 
 Ensuring backward compatibility is an imperative requirement.
 
-Currently, the tool supports Python versions 3.9, 3.10, 3.11, 3.12, 3.13, and 3.14.
+Currently, the tool supports Python versions 3.9, 3.10, 3.11, 3.12, 3.13, and 3.14, including
+3.14t (free-threaded).
 
 ## MySQL version support
 
-This tool is intended to fully support MySQL versions 5.5, 5.6, 5.7, and 8.0, including major forks like MariaDB.
-We should prioritize and be dedicated to maintaining compatibility with these versions for a smooth user experience.
+This tool is intended to fully support MySQL versions 5.5, 5.6, 5.7, 8.0, 8.4, and 9.7, including
+major forks like MariaDB. We should prioritize and be dedicated to maintaining compatibility with these versions for a
+smooth user experience.
 
 ## Testing
 

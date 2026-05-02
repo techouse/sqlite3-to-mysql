@@ -25,6 +25,7 @@ class TestMySQLUtils:
             ("5.7.8", Version("5.7.8")),
             ("8.0.0", Version("8.0.0")),
             ("9.0.0", Version("9.0.0")),
+            ("9.7.0", Version("9.7.0")),
             ("10.2.6-mariadb", Version("10.2.6")),
             ("10.2.7-mariadb", Version("10.2.7")),
             ("11.4.0-mariadb", Version("11.4.0")),
@@ -40,6 +41,7 @@ class TestMySQLUtils:
             ("5.7.8", True),
             ("8.0.0", True),
             ("9.0.0", True),
+            ("9.7.0", True),
             ("10.2.6-mariadb", False),
             ("10.2.7-mariadb", True),
             ("11.4.0-mariadb", True),
@@ -56,6 +58,7 @@ class TestMySQLUtils:
             ("8.0.18", False),
             ("8.0.19", True),
             ("9.0.0", True),
+            ("9.7.0", True),
             ("10.2.6-mariadb", False),
             ("10.2.7-mariadb", False),
             ("11.4.0-mariadb", False),
@@ -71,6 +74,7 @@ class TestMySQLUtils:
             ("5.5.0", False),
             ("5.6.0", True),
             ("8.0.0", True),
+            ("9.7.0", True),
             ("10.0.4-mariadb", False),
             ("10.0.5-mariadb", True),
             ("10.2.6-mariadb", True),
@@ -221,6 +225,7 @@ class TestMySQLUtils:
             ("8.0.12", False),
             ("8.0.13", True),
             ("8.0.13-8ubuntu1", True),
+            ("9.7.0", True),
             ("5.7.44", False),
         ],
     )
@@ -248,6 +253,7 @@ class TestMySQLUtils:
             ("5.6.4", False),
             ("5.6.5", True),
             ("5.6.5-ps-log", True),
+            ("9.7.0", True),
             ("5.5.62", False),
         ],
     )
@@ -274,6 +280,7 @@ class TestMySQLUtils:
             ("5.6.3", False),
             ("5.6.4", True),
             ("5.7.44-0ubuntu0.18.04.1", True),
+            ("9.7.0", True),
         ],
     )
     def test_fractional_seconds_mysql(self, ver: str, expected: bool) -> None:

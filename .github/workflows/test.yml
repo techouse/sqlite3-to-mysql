@@ -505,6 +505,48 @@ jobs:
             experimental: true
             py: "3.14t"
 
+          - toxenv: "python3.9"
+            db: "mysql:9.7"
+            legacy_db: 0
+            experimental: true
+            py: "3.9"
+
+          - toxenv: "python3.10"
+            db: "mysql:9.7"
+            legacy_db: 0
+            experimental: true
+            py: "3.10"
+
+          - toxenv: "python3.11"
+            db: "mysql:9.7"
+            legacy_db: 0
+            experimental: true
+            py: "3.11"
+
+          - toxenv: "python3.12"
+            db: "mysql:9.7"
+            legacy_db: 0
+            experimental: true
+            py: "3.12"
+
+          - toxenv: "python3.13"
+            db: "mysql:9.7"
+            legacy_db: 0
+            experimental: true
+            py: "3.13"
+
+          - toxenv: "python3.14"
+            db: "mysql:9.7"
+            legacy_db: 0
+            experimental: false
+            py: "3.14"
+
+          - toxenv: "python3.14t"
+            db: "mysql:9.7"
+            legacy_db: 0
+            experimental: true
+            py: "3.14t"
+
     continue-on-error: ${{ matrix.experimental }}
     services:
       mysql:
@@ -551,7 +593,7 @@ jobs:
           set -e
           
           case "$DB" in
-            'mysql:8.0'|'mysql:8.4')
+            'mysql:8.0'|'mysql:8.4'|'mysql:9.7')
               mysql -h127.0.0.1 -uroot -e "SET GLOBAL local_infile=on"
               docker cp mysqld:/var/lib/mysql/public_key.pem "${HOME}"
 
@@ -675,7 +717,7 @@ jobs:
               nopass_caching_sha2 IDENTIFIED WITH "caching_sha2_password"
               PASSWORD EXPIRE NEVER;
               GRANT RELOAD ON *.* TO user_caching_sha2;'
-          elif [ "$DB" == 'mysql:8.4' ]; then
+          elif [[ "$DB" == 'mysql:8.4' || "$DB" == 'mysql:9.7' ]]; then
             WITH_PLUGIN='with caching_sha2_password'
             USER_CREATION_COMMANDS='
               CREATE USER

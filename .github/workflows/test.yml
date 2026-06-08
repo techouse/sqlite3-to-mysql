@@ -759,7 +759,7 @@ jobs:
         env:
           OS: ubuntu-latest
           PYTHON: ${{ matrix.py }}
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@v7
         continue-on-error: true
         with:
           token: ${{ secrets.CODECOV_TOKEN }}

@@ -1,3 +1,11 @@
+# 2.6.1
+
+* [FEAT] add MySQL 9.7 support
+* [DOCS] clarify project usage and update MySQL 9.7 documentation
+* [CHORE] stop upgrading pip during Docker image builds
+* [CHORE] update GitHub Actions dependencies
+* [TEST] add MySQL 9.7 test coverage
+
 # 2.6.0
 
 * [FEAT] add MySQL SSL certificate options `--mysql-ssl-ca`, `--mysql-ssl-cert`, and `--mysql-ssl-key`,

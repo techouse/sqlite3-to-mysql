@@ -785,7 +785,7 @@ jobs:
           MYSQL_USER: tester
           MYSQL_PASSWORD: testpass
           MYSQL_DATABASE: test_db
-          MYSQL_HOST: 0.0.0.0
+          MYSQL_HOST: 127.0.0.1
           MYSQL_PORT: 3306
         run: |
           set -e
@@ -937,7 +937,7 @@ jobs:
           MYSQL_USER: tester
           MYSQL_PASSWORD: testpass
           MYSQL_DATABASE: test_db
-          MYSQL_HOST: 0.0.0.0
+          MYSQL_HOST: 127.0.0.1
           MYSQL_PORT: 3306
         run: |
           set -e

@@ -42,6 +42,14 @@ class TestSQLiteUtils:
         assert convert_timedelta(b"00:00:00") == timedelta(hours=0, minutes=0, seconds=0)
         assert convert_timedelta(b"100:30:45") == timedelta(hours=100, minutes=30, seconds=45)
 
+    def test_convert_timedelta_error(self) -> None:
+        """Test convert_timedelta function with invalid duration."""
+        with pytest.raises(ValueError):
+            convert_timedelta(b"not a time")
+
+        with pytest.raises(ValueError):
+            convert_timedelta(b"")
+
     def test_unicase_compare(self) -> None:
         """Test unicase_compare function."""
         # Test with lowercase strings

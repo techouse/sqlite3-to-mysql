@@ -31,7 +31,10 @@ def adapt_timedelta(value) -> str:
 
 def convert_timedelta(value) -> timedelta:
     """Convert %H:%M:%S string to datetime.timedelta."""
-    return timedelta(seconds=parse(value.decode()))
+    seconds = parse(value.decode())
+    if seconds is None:
+        raise ValueError(f"TIME field contains an invalid value: {value!r}")
+    return timedelta(seconds=seconds)
 
 
 def unicase_compare(string_1: str, string_2: str) -> int:
